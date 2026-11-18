@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-18 13:01:33",
+  "updated": "2026-11-18 23:11:21",
   "rules_per_shard_max": 100000,
   "modules": {
     "shadowrocket_promax_cdn": {
@@ -32,7 +32,7 @@
   "functional_sections": {
     "Body Rewrite": 90,
     "Header Rewrite": 0,
-    "MITM": 733,
+    "MITM": 765,
     "Map Local": 1245,
     "Script": 272,
     "URL Rewrite": 546
@@ -40,8 +40,8 @@
   "verified_rolling_feeds": {
     "ThreatIntel_TIF": {
       "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt",
-      "version": "2026.1117.2313.49",
-      "declared_entries": 420881
+      "version": "2026.1118.0815.32",
+      "declared_entries": 420137
     }
   },
   "shards": [
@@ -51,7 +51,7 @@
       "label_zh": "应用去广告",
       "purpose": "各 App 去广告域名规则（脚本/重写已并入 PROMAX，勿单独安装专项模块）",
       "shard_index": 1,
-      "rule_count": 2450,
+      "rule_count": 2451,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FLocal%2Elist"
     },
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 83534,
+      "rule_count": 83682,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -141,7 +141,7 @@
       "label_zh": "隐私追踪",
       "purpose": "Privacy / tracking-protection / 防追踪列表",
       "shard_index": 1,
-      "rule_count": 4919,
+      "rule_count": 4927,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FPrivacy%2Elist"
     },
@@ -261,7 +261,7 @@
       "label_zh": "综合拦截·Ultimate",
       "purpose": "HaGeZi Multi ULTIMATE（广告、跟踪与安全混合源）",
       "shard_index": 2,
-      "rule_count": 67166,
+      "rule_count": 67588,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -301,7 +301,7 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 4,
-      "rule_count": 19020,
+      "rule_count": 18001,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist"
     },
@@ -311,7 +311,7 @@
       "label_zh": "威胁情报·补充",
       "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
       "shard_index": 1,
-      "rule_count": 66120,
+      "rule_count": 66841,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
     }

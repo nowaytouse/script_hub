@@ -6,6 +6,9 @@
 | --- | --- |
 | [app2smile/rules](https://github.com/app2smile/rules) | [MIT](app2smile-MIT.txt) |
 | [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
+| [217heidai/adblockfilters 维护者补充规则](https://github.com/217heidai/adblockfilters/blob/main/rules/myblock.txt) | [GPL-3.0](https://github.com/217heidai/adblockfilters/blob/main/LICENSE) |
+| [AdGuard 移动广告服务器规则](https://github.com/AdguardTeam/AdguardFilters/blob/master/MobileFilter/sections/adservers.txt) | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |
+| [AWAvenue 秋风纯广告规则](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
 | [Steven Black — 仅作者原始 hosts](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
 | [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
@@ -15,6 +18,8 @@
 | [Greek AdBlock Filter — 仅已审核广告主机](https://github.com/kargig/greek-adblockplus-filter/blob/master/void-gr-filters.txt) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
 接入范围以[源清单](../Links/)为准。转换、去重、分类与安全隔离不改变原许可；App 参数保留普通视频帖，CNAME clickthrough / microsites 全集不启用。
+
+广告编译器直接读取 217heidai 的 `myblock.txt` 补充规则、AdGuard 和 AWAvenue 的原始规则。它将无条件的域名拦截转换为精确主机规则，在合并前检查各来源自己的放行例外，并应用共用的服务保护规则。发布的精选规则保留各来源署名及 GPL-3.0 条款。
 
 ## Brave 浏览器选项
 

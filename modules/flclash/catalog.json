@@ -603,7 +603,7 @@
     },
     {
       "source": "modules/surge/head_expanse/🌟 AdBlock Helper .sgmodule",
-      "source_md5_change_fingerprint": "8672c78e40a4db7a14d8992cc898e90e",
+      "source_md5_change_fingerprint": "a2d02852ecc0f14f7b32f8de31202e19",
       "path": "modules/flclash/head_expanse/ScriptHub.AdBlock.Helper.Preview.sgmodule",
       "github_path": "modules/flclash/head_expanse/github/ScriptHub.AdBlock.Helper.Preview.sgmodule",
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/flclash/head%5Fexpanse/ScriptHub%2EAdBlock%2EHelper%2EPreview%2Esgmodule",
@@ -2241,20 +2241,20 @@
     },
     {
       "source": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "source_md5_change_fingerprint": "3fe4ef346466c7df63e66db2da815b34",
+      "source_md5_change_fingerprint": "9dd94f0c9a82b87dfa48ba6e02106fd0",
       "path": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
       "github_path": "modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule",
       "install_url": null,
       "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/github/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
       "projection": {
-        "input_lines": 785421,
-        "emitted_lines": 779461,
-        "active_lines": 779460,
+        "input_lines": 785280,
+        "emitted_lines": 779317,
+        "active_lines": 779316,
         "sections": {
           "Body Rewrite": 3,
           "MITM": 1,
           "Map Local": 24,
-          "Rule": 779356,
+          "Rule": 779212,
           "URL Rewrite": 77
         },
         "diagnostics": [
@@ -2470,7 +2470,7 @@
   "promax_routing": [
     {
       "source": "rulesets/AdBlock/AdBlock_Local.list",
-      "source_bytes": 75665,
+      "source_bytes": 75694,
       "source_rule_line": 1220,
       "source_policy": "REJECT",
       "source_options": [
@@ -2479,15 +2479,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "6622dee00f0088b8688f8a3e49d2ac7f",
+      "source_md5_change_fingerprint": "f2198d326737c238a80f41d6c6ab292a",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 89253,
+      "projected_bytes": 89289,
       "projection": {
-        "input_lines": 2450,
-        "emitted_lines": 2367,
-        "active_lines": 2367,
+        "input_lines": 2451,
+        "emitted_lines": 2368,
+        "active_lines": 2368,
         "sections": {
-          "Rule": 2367
+          "Rule": 2368
         },
         "diagnostics": [
           {
@@ -2497,19 +2497,13 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 297,
+            "line": 298,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 299,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 349,
+            "line": 300,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -2983,13 +2977,19 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1587,
+            "line": 428,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 1588,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Protected service or encrypted resolver"
           },
           {
-            "line": 1810,
+            "line": 1811,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -2999,7 +2999,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_01.list",
-      "source_bytes": 3152276,
+      "source_bytes": 3152263,
       "source_rule_line": 1226,
       "source_policy": "REJECT",
       "source_options": [
@@ -3008,15 +3008,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "d2a988879431d097704c2df28e02e776",
+      "source_md5_change_fingerprint": "d0ad9400315a92ab75eed37e3d60229c",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3829533,
+      "projected_bytes": 3829357,
       "projection": {
         "input_lines": 100000,
-        "emitted_lines": 99485,
-        "active_lines": 99485,
+        "emitted_lines": 99482,
+        "active_lines": 99482,
         "sections": {
-          "Rule": 99485
+          "Rule": 99482
         },
         "diagnostics": [
           {
@@ -3092,127 +3092,127 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1300,
+            "line": 1280,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1308,
+            "line": 1281,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1313,
+            "line": 1282,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1342,
+            "line": 1303,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1365,
+            "line": 1311,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1366,
+            "line": 1316,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1379,
+            "line": 1345,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1432,
+            "line": 1368,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1433,
+            "line": 1369,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1465,
+            "line": 1382,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1490,
+            "line": 1435,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1648,
+            "line": 1436,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1667,
+            "line": 1468,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1691,
+            "line": 1493,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1757,
+            "line": 1651,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1766,
+            "line": 1670,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1771,
+            "line": 1694,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1829,
+            "line": 1760,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1839,
+            "line": 1769,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1840,
+            "line": 1774,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1841,
+            "line": 1832,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3224,7 +3224,19 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
+            "line": 1843,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
             "line": 1844,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 1845,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3236,169 +3248,169 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1851,
+            "line": 1850,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1872,
+            "line": 1854,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1911,
+            "line": 1875,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1948,
+            "line": 1914,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 1957,
+            "line": 1951,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2068,
+            "line": 1960,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2182,
+            "line": 2071,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2758,
+            "line": 2185,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2796,
+            "line": 2761,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2878,
+            "line": 2799,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3071,
+            "line": 2881,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3182,
+            "line": 3074,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3254,
+            "line": 3185,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3440,
+            "line": 3257,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3715,
+            "line": 3443,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 3743,
+            "line": 3718,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4175,
+            "line": 3746,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4177,
+            "line": 4178,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4510,
+            "line": 4180,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4551,
+            "line": 4513,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4559,
+            "line": 4554,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4633,
+            "line": 4562,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4722,
+            "line": 4636,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4723,
+            "line": 4725,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5123,
+            "line": 4726,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5274,
+            "line": 5126,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5276,
+            "line": 5277,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5904,
+            "line": 5279,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3410,199 +3422,199 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5921,
+            "line": 5910,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5958,
+            "line": 5924,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6468,
+            "line": 5961,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6656,
+            "line": 6471,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6758,
+            "line": 6659,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6773,
+            "line": 6761,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6861,
+            "line": 6776,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6866,
+            "line": 6864,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6892,
+            "line": 6869,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 6957,
+            "line": 6895,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7099,
+            "line": 6960,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7138,
+            "line": 7102,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7158,
+            "line": 7141,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7215,
+            "line": 7161,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7322,
+            "line": 7218,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 7340,
+            "line": 7325,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8036,
+            "line": 7343,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8133,
+            "line": 8039,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8134,
+            "line": 8136,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8135,
+            "line": 8137,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8184,
+            "line": 8138,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8265,
+            "line": 8187,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8266,
+            "line": 8268,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8363,
+            "line": 8269,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8364,
+            "line": 8366,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8458,
+            "line": 8367,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8463,
+            "line": 8461,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8501,
+            "line": 8466,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8547,
+            "line": 8504,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8574,
+            "line": 8550,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8588,
+            "line": 8577,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8598,
+            "line": 8591,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8628,
+            "line": 8601,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3614,241 +3626,235 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8635,
+            "line": 8634,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8636,
+            "line": 8638,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 8799,
+            "line": 8639,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9169,
+            "line": 8802,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9170,
+            "line": 9173,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9332,
+            "line": 9174,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9343,
+            "line": 9336,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9404,
+            "line": 9347,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9440,
+            "line": 9408,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9478,
+            "line": 9444,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9512,
+            "line": 9482,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9517,
+            "line": 9516,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 9521,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Protected service or encrypted resolver"
           },
           {
-            "line": 9596,
+            "line": 9600,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9610,
+            "line": 9614,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9674,
+            "line": 9678,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 9686,
+            "line": 9690,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10023,
+            "line": 10027,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10626,
+            "line": 10630,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10761,
+            "line": 10765,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10762,
+            "line": 10766,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10838,
+            "line": 10842,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10848,
+            "line": 10852,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10870,
+            "line": 10874,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10871,
+            "line": 10875,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11006,
+            "line": 11010,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11007,
+            "line": 11011,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11017,
+            "line": 11021,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11304,
+            "line": 11308,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11674,
+            "line": 11678,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11682,
+            "line": 11686,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11959,
+            "line": 11963,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12017,
+            "line": 12021,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12032,
+            "line": 12036,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12043,
+            "line": 12047,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12155,
+            "line": 12159,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12177,
+            "line": 12181,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12232,
+            "line": 12236,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12474,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 12491,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 12494,
+            "line": 12478,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3860,61 +3866,67 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12501,
+            "line": 12498,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12508,
+            "line": 12499,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12530,
+            "line": 12505,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12656,
+            "line": 12512,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12658,
+            "line": 12534,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12756,
+            "line": 12660,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 12757,
+            "line": 12662,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13146,
+            "line": 12760,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13152,
+            "line": 12761,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13199,
+            "line": 13150,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 13156,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -3926,145 +3938,139 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13282,
+            "line": 13207,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13392,
+            "line": 13286,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13417,
+            "line": 13396,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13427,
+            "line": 13421,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13450,
+            "line": 13431,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13503,
+            "line": 13454,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13904,
+            "line": 13507,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13910,
+            "line": 13908,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13911,
+            "line": 13914,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13933,
+            "line": 13915,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13935,
+            "line": 13937,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13941,
+            "line": 13939,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14113,
+            "line": 13945,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14149,
+            "line": 14117,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14150,
+            "line": 14153,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14242,
+            "line": 14154,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14282,
+            "line": 14246,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14366,
+            "line": 14286,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14367,
+            "line": 14370,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14418,
+            "line": 14371,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14430,
+            "line": 14422,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14606,
+            "line": 14434,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14623,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 14626,
+            "line": 14610,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -4076,73 +4082,61 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
+            "line": 14630,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
             "line": 14631,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14772,
+            "line": 14635,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 16324,
+            "line": 14776,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 16374,
+            "line": 16328,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 16411,
+            "line": 16378,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 16722,
+            "line": 16415,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 16990,
+            "line": 16726,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 17251,
+            "line": 16994,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 17454,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 17455,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 17456,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 17457,
+            "line": 17255,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -5762,355 +5756,379 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 22146,
+            "line": 17727,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 22187,
+            "line": 17728,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 17729,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 17730,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 22151,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 22192,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Protected service or encrypted resolver"
           },
           {
-            "line": 22968,
+            "line": 22973,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 22969,
+            "line": 22974,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 28427,
+            "line": 28434,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 31944,
+            "line": 31952,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 36898,
+            "line": 36907,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 37127,
+            "line": 37136,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 37456,
+            "line": 37465,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 37458,
+            "line": 37467,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38538,
+            "line": 38547,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38623,
+            "line": 38632,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38689,
+            "line": 38697,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38759,
+            "line": 38767,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38761,
+            "line": 38769,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 38813,
+            "line": 38821,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39146,
+            "line": 39154,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39147,
+            "line": 39155,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39148,
+            "line": 39156,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39149,
+            "line": 39157,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39182,
+            "line": 39190,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39245,
+            "line": 39253,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40705,
+            "line": 40713,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40919,
+            "line": 40927,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40975,
+            "line": 40983,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40976,
+            "line": 40984,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40977,
+            "line": 40985,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41434,
+            "line": 41442,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41531,
+            "line": 41539,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41534,
+            "line": 41542,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41672,
+            "line": 41680,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41768,
+            "line": 41776,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 41866,
+            "line": 41874,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 42282,
+            "line": 42290,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 42349,
+            "line": 42357,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 42402,
+            "line": 42410,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 42435,
+            "line": 42443,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 47293,
+            "line": 47303,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 51237,
+            "line": 51247,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 51243,
+            "line": 51253,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 53016,
+            "line": 53026,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 54964,
+            "line": 54974,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 54966,
+            "line": 54976,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 55116,
+            "line": 55126,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 55136,
+            "line": 55146,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 56160,
+            "line": 56173,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 62786,
+            "line": 62803,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 63735,
+            "line": 63753,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64235,
+            "line": 64253,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64236,
+            "line": 64254,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64237,
+            "line": 64255,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 66690,
+            "line": 66708,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 70918,
+            "line": 70937,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 73277,
+            "line": 73297,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 73507,
+            "line": 73527,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 86191,
+            "line": 86211,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 89796,
+            "line": 89816,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 92234,
+            "line": 92255,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 97565,
+            "line": 97585,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -6120,7 +6138,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_02.list",
-      "source_bytes": 3364738,
+      "source_bytes": 3364739,
       "source_rule_line": 1227,
       "source_policy": "REJECT",
       "source_options": [
@@ -6129,9 +6147,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "f936f085fc49ddb5c4a3a7217c595b8a",
+      "source_md5_change_fingerprint": "c3b7cfc7b571fc910bea398565ea175c",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 4062684,
+      "projected_bytes": 4062685,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99963,
@@ -6147,217 +6165,217 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 1244,
+            "line": 1264,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 4942,
+            "line": 4964,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10578,
+            "line": 10600,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10951,
+            "line": 10973,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10956,
+            "line": 10978,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 11671,
+            "line": 11694,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 13675,
+            "line": 13697,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 23325,
+            "line": 23352,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 23889,
+            "line": 23916,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 27916,
+            "line": 27946,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 27922,
+            "line": 27952,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 27951,
+            "line": 27981,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 31451,
+            "line": 31482,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 37112,
+            "line": 37148,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 39676,
+            "line": 39715,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40825,
+            "line": 40866,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40826,
+            "line": 40867,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 43349,
+            "line": 43394,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 54919,
+            "line": 54964,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 61860,
+            "line": 61910,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 63566,
+            "line": 63617,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 63575,
+            "line": 63626,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64788,
+            "line": 64844,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 66544,
+            "line": 66602,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 68793,
+            "line": 68851,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 68794,
+            "line": 68852,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 68795,
+            "line": 68853,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 69441,
+            "line": 69499,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 69442,
+            "line": 69500,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 74731,
+            "line": 74795,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 76343,
+            "line": 76406,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 76345,
+            "line": 76408,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83295,
+            "line": 83369,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 84536,
+            "line": 84612,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 87487,
+            "line": 87567,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 91142,
+            "line": 91224,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -6367,7 +6385,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_03.list",
-      "source_bytes": 3357248,
+      "source_bytes": 3357187,
       "source_rule_line": 1228,
       "source_policy": "REJECT",
       "source_options": [
@@ -6376,9 +6394,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "3bc55d0cc6aa909450a76beaac4ae149",
+      "source_md5_change_fingerprint": "0a36720b6465cfd4613f127cf783aa4c",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 4054806,
+      "projected_bytes": 4054745,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99955,
@@ -6394,271 +6412,271 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 2763,
+            "line": 2846,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2764,
+            "line": 2847,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2765,
+            "line": 2848,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2766,
+            "line": 2849,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2767,
+            "line": 2850,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2768,
+            "line": 2851,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 2769,
+            "line": 2852,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 5240,
+            "line": 5323,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10406,
+            "line": 10492,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10985,
+            "line": 11071,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 15256,
+            "line": 15342,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 15589,
+            "line": 15675,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 17844,
+            "line": 17929,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Protected service or encrypted resolver"
           },
           {
-            "line": 17902,
+            "line": 17987,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 18121,
+            "line": 18206,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 18136,
+            "line": 18221,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 18445,
+            "line": 18530,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 19435,
+            "line": 19520,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 25711,
+            "line": 25798,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35303,
+            "line": 35397,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35459,
+            "line": 35553,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35461,
+            "line": 35555,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35462,
+            "line": 35556,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35463,
+            "line": 35557,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35470,
+            "line": 35564,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35627,
+            "line": 35721,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35734,
+            "line": 35828,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 35735,
+            "line": 35829,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40284,
+            "line": 40377,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 43845,
+            "line": 43940,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 48411,
+            "line": 48507,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 52958,
+            "line": 53055,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 55214,
+            "line": 55313,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 59609,
+            "line": 59712,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 60017,
+            "line": 60120,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 60609,
+            "line": 60712,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64785,
+            "line": 64891,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 64964,
+            "line": 65070,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 65449,
+            "line": 65556,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 81909,
+            "line": 82017,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 85461,
+            "line": 85570,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 86251,
+            "line": 86360,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 87916,
+            "line": 88025,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 89953,
+            "line": 90063,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 90029,
+            "line": 90139,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -6668,7 +6686,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_04.list",
-      "source_bytes": 2786178,
+      "source_bytes": 2791043,
       "source_rule_line": 1229,
       "source_policy": "REJECT",
       "source_options": [
@@ -6677,15 +6695,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "133a892c68c3459b58886a5281bc8358",
+      "source_md5_change_fingerprint": "0e0df368c56b4022bcfbf1490db03f1d",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3350698,
+      "projected_bytes": 3356599,
       "projection": {
-        "input_lines": 83534,
-        "emitted_lines": 83100,
-        "active_lines": 83100,
+        "input_lines": 83682,
+        "emitted_lines": 83248,
+        "active_lines": 83248,
         "sections": {
-          "Rule": 83100
+          "Rule": 83248
         },
         "diagnostics": [
           {
@@ -6695,145 +6713,103 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 10409,
+            "line": 10524,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 10410,
+            "line": 10525,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14501,
+            "line": 14616,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 14502,
+            "line": 14617,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 17322,
+            "line": 17437,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 17351,
+            "line": 17466,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 20385,
+            "line": 20500,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 26943,
+            "line": 27057,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 26993,
+            "line": 27107,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 31709,
+            "line": 31826,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 34790,
+            "line": 34909,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 40809,
+            "line": 40928,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 44356,
+            "line": 44475,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 46129,
+            "line": 46249,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 46819,
+            "line": 46940,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 47698,
+            "line": 47820,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 47701,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47802,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47805,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47902,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47911,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47912,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47913,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 47914,
+            "line": 47823,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -6851,991 +6827,145 @@
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 48540,
+            "line": 48024,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 48541,
+            "line": 48033,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 48625,
+            "line": 48034,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 48628,
+            "line": 48035,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 51885,
+            "line": 48036,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 52313,
+            "line": 48046,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 56568,
+            "line": 48049,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 60394,
+            "line": 48662,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 62877,
+            "line": 48663,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 66059,
+            "line": 48747,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 70415,
+            "line": 48750,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 70524,
+            "line": 52015,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 71154,
+            "line": 52443,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 71260,
+            "line": 56699,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 75861,
+            "line": 60528,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 76624,
+            "line": 63013,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 80521,
+            "line": 66197,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83151,
+            "line": 70555,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83152,
+            "line": 70664,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83153,
+            "line": 71295,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83154,
+            "line": 71401,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83155,
+            "line": 76004,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83156,
+            "line": 76768,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           },
           {
-            "line": 83157,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83158,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83159,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83160,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83161,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83162,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83163,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83164,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83165,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83166,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83167,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83168,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83169,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83170,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83171,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83172,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83173,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83174,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83175,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83176,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83177,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83178,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83179,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83180,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83181,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83182,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83183,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83184,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83185,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83186,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83187,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83188,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83189,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83190,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83191,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83192,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83193,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83194,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83195,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83196,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83197,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83198,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83199,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83200,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83201,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83202,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83203,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83204,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83205,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83206,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83207,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83208,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83209,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83210,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83211,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83212,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83213,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83214,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83215,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83216,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83217,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83218,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83219,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83220,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83221,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83222,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83223,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83224,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83225,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83226,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83227,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83228,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83229,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83230,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83231,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83232,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83233,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83234,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83235,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83236,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83237,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83238,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83239,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83240,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83241,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83242,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83243,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83244,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83245,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83246,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83247,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83248,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83249,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83250,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83251,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83252,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83253,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83254,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83255,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83256,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83257,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83258,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83259,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83260,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83261,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83262,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83263,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83264,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83265,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83266,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83267,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83268,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83269,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83270,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83271,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83272,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83273,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83274,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83275,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83276,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83277,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83278,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83279,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83280,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83281,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83282,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83283,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83284,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83285,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83286,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83287,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83288,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83289,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83290,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83291,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83292,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83293,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83294,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83295,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83296,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83297,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
-          },
-          {
-            "line": 83298,
+            "line": 80667,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
@@ -9285,13 +8415,901 @@
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83540,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83541,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83542,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83543,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83544,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83545,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83546,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83547,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83548,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83549,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83550,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83551,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83552,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83553,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83554,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83555,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83556,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83557,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83558,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83559,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83560,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83561,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83562,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83563,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83564,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83565,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83566,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83567,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83568,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83569,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83570,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83571,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83572,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83573,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83574,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83575,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83576,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83577,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83578,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83579,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83580,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83581,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83582,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83583,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83584,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83585,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83586,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83587,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83588,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83589,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83590,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83591,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83592,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83593,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83594,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83595,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83596,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83597,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83598,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83599,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83600,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83601,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83602,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83603,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83604,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83605,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83606,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83607,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83608,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83609,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83610,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83611,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83612,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83613,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83614,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83615,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83616,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83617,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83618,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83619,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83620,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83621,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83622,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83623,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83624,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83625,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83626,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83627,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83628,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83629,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83630,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83631,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83632,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83633,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83634,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83635,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83636,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83637,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83638,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83639,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83640,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83641,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83642,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83643,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83644,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83645,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83646,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83647,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83648,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83649,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83650,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83651,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83652,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83653,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83654,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83655,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83656,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83657,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83658,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83659,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83660,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83661,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83662,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83663,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83664,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83665,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83666,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83667,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83668,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83669,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83670,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83671,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83672,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83673,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83674,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83675,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83676,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83677,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83678,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83679,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83680,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83681,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83682,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83683,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83684,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83685,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83686,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          },
+          {
+            "line": 83687,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
           }
         ]
       }
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Privacy.list",
-      "source_bytes": 188586,
+      "source_bytes": 188874,
       "source_rule_line": 1231,
       "source_policy": "REJECT",
       "source_options": [
@@ -9300,15 +9318,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "8bd7a6a1f2b5ea1ce60afc177de796a2",
+      "source_md5_change_fingerprint": "79814ef584bc5b5d1a5e142aa5de861d",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 222876,
+      "projected_bytes": 223220,
       "projection": {
-        "input_lines": 4919,
-        "emitted_lines": 4919,
-        "active_lines": 4919,
+        "input_lines": 4927,
+        "emitted_lines": 4927,
+        "active_lines": 4927,
         "sections": {
-          "Rule": 4919
+          "Rule": 4927
         },
         "diagnostics": [
           {
@@ -9353,7 +9371,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
-      "source_bytes": 3273583,
+      "source_bytes": 3283425,
       "source_rule_line": 1249,
       "source_policy": "REJECT",
       "source_options": [
@@ -9362,9 +9380,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "003cd073e265e286d09de3d806cf219f",
+      "source_md5_change_fingerprint": "5dc659e5881cc76087b2d0d74aac59e4",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3973442,
+      "projected_bytes": 3983284,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -9384,7 +9402,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
-      "source_bytes": 3258008,
+      "source_bytes": 3259541,
       "source_rule_line": 1250,
       "source_policy": "REJECT",
       "source_options": [
@@ -9393,9 +9411,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "2e591f57bbe2caeca52479459fee4ede",
+      "source_md5_change_fingerprint": "7da5ea9a30d024ca36a0f4944ef7489b",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3957867,
+      "projected_bytes": 3959400,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -9415,7 +9433,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
-      "source_bytes": 3276764,
+      "source_bytes": 3273578,
       "source_rule_line": 1251,
       "source_policy": "REJECT",
       "source_options": [
@@ -9424,9 +9442,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "fc80259d9bd1e5b5abc64ea98e7003e8",
+      "source_md5_change_fingerprint": "468574a85ed55632b709cac737150f6a",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3976623,
+      "projected_bytes": 3973437,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -9446,7 +9464,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
-      "source_bytes": 605458,
+      "source_bytes": 576061,
       "source_rule_line": 1252,
       "source_policy": "REJECT",
       "source_options": [
@@ -9455,15 +9473,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "9d9740e08677808ca03a83eba7f304dc",
+      "source_md5_change_fingerprint": "c4f94e02278e53547c7df805c49d4cf6",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 738458,
+      "projected_bytes": 701928,
       "projection": {
-        "input_lines": 19020,
-        "emitted_lines": 19020,
-        "active_lines": 19020,
+        "input_lines": 18001,
+        "emitted_lines": 18001,
+        "active_lines": 18001,
         "sections": {
-          "Rule": 19020
+          "Rule": 18001
         },
         "diagnostics": [
           {
@@ -9477,7 +9495,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel.list",
-      "source_bytes": 2410509,
+      "source_bytes": 2455291,
       "source_rule_line": 1254,
       "source_policy": "REJECT",
       "source_options": [
@@ -9486,15 +9504,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "ac997dc1354b22cdb8df2f4e8b2d00d9",
+      "source_md5_change_fingerprint": "019a02471a8aa82ca99c7a0edaebcc1c",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 2873197,
+      "projected_bytes": 2923026,
       "projection": {
-        "input_lines": 66120,
-        "emitted_lines": 66120,
-        "active_lines": 66120,
+        "input_lines": 66841,
+        "emitted_lines": 66841,
+        "active_lines": 66841,
         "sections": {
-          "Rule": 66120
+          "Rule": 66841
         },
         "diagnostics": [
           {

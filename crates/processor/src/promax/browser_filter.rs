@@ -1,5 +1,35 @@
 use std::collections::{BTreeMap, HashSet};
 
+const HEIDAI_SUPPLEMENT: &str =
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/myblock.txt";
+const HEIDAI_ADS: &[&str] = &[
+    "adx-data.yfanads.com",
+    "api.yfanads.com",
+    "tracker.yfanads.com",
+];
+pub(super) const ADGUARD_MOBILE_ADSERVERS: &str = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt";
+const REVIEWED_MOBILE_ADSERVERS: &[&str] = &[
+    "ad-creatives-public.commondatastorage.googleapis.com",
+    "adhub.porcino-kinoko.workers.dev",
+    "admarvel.s3.amazonaws.com",
+    "adpublisher.s3.amazonaws.com",
+    "ads-bidder-api.twitter.com",
+    "adstrategy.biz.weibo.com",
+    "appgiftwall.oss-us-west-1.aliyuncs.com",
+    "appnext-a.akamaihd.net",
+    "goshare-fleet-ads.s3.ap-southeast-1.amazonaws.com",
+    "inmobisdk-a.akamaihd.net",
+    "mads.amazon.com",
+    "nativead.s3.amazonaws.com",
+    "p16-ad.byteoversea.com",
+    "p3-ad-sign.byteimg.com",
+    "supersonicads-a.akamaihd.net",
+    "tapdaq-adverts.global.ssl.fastly.net",
+    "v16-ad.byteoversea.com",
+    "yc-ads.s3.amazonaws.com",
+];
+pub(super) const AWAVENUE_ADS_ONLY: &str = "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt";
+
 const BRAVE_FIRST_PARTY: &str =
     "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt";
 const BRAVE_REVIEWED_AD_HOSTS: &[&str] = &[
@@ -70,7 +100,11 @@ fn suffixes(host: &str) -> impl Iterator<Item = &str> {
 
 pub(super) fn category(source: &str) -> Option<&'static str> {
     match source {
-        BRAVE_FIRST_PARTY | GREEK_FILTER => Some("Advertising"),
+        BRAVE_FIRST_PARTY
+        | GREEK_FILTER
+        | HEIDAI_SUPPLEMENT
+        | ADGUARD_MOBILE_ADSERVERS
+        | AWAVENUE_ADS_ONLY => Some("Advertising"),
         UBO_PRIVACY => Some("Privacy"),
         UBO_BADWARE => Some("ThreatIntel"),
         _ => None,
@@ -116,6 +150,15 @@ fn exception_host(rule: &str) -> Result<Option<(String, bool)>, &'static str> {
     } else {
         (authority, false)
     };
+    // For wildcard exceptions preserve the fixed suffix. Candidates inside
+    // that suffix must not become unconditional blocks.
+    if let Some((_, pattern)) = name.rsplit_once('*') {
+        return pattern
+            .split_once('.')
+            .and_then(|(_, suffix)| host(suffix))
+            .map(|suffix| Some((suffix, true)))
+            .ok_or("network exception has no bounded wildcard suffix");
+    }
     host(name.strip_suffix('.').unwrap_or(name))
         .map(|name| Some((name, boundary.is_some() || has_port)))
         .ok_or("network exception has an unsupported request host")
@@ -127,7 +170,9 @@ pub(super) fn project(source: &str, text: &str) -> Result<Vec<(usize, String)>, 
         BRAVE_FIRST_PARTY => Some(BRAVE_REVIEWED_AD_HOSTS),
         UBO_PRIVACY => Some(UBO_REVIEWED_TRACKERS),
         GREEK_FILTER => Some(GREEK_REVIEWED_AD_HOSTS),
-        UBO_BADWARE => None,
+        HEIDAI_SUPPLEMENT => Some(HEIDAI_ADS),
+        ADGUARD_MOBILE_ADSERVERS => Some(REVIEWED_MOBILE_ADSERVERS),
+        UBO_BADWARE | AWAVENUE_ADS_ONLY => None,
         _ => return Err("browser filter source is not reviewed".into()),
     };
     let mut blocks = BTreeMap::new();
@@ -203,6 +248,36 @@ mod tests {
         assert_eq!(
             project(UBO_BADWARE, text).unwrap(),
             [(1, "DOMAIN,ad.valid.com".into())]
+        );
+    }
+
+    #[test]
+    fn supplemental_ads_keep_exceptions_scoped_to_their_feed() {
+        assert_eq!(
+            project(
+                HEIDAI_SUPPLEMENT,
+                "||api.yfanads.com^\n||ordinary.example.com^\n@@||r.*.awstrack.me^\n\
+                 @@||lients2.googleusercontent.com/crx/blobs/Ad_*\n",
+            )
+            .unwrap(),
+            [(1, "DOMAIN,api.yfanads.com".into())],
+        );
+        assert_eq!(
+            project(
+                AWAVENUE_ADS_ONLY,
+                "||ad.example.com^\n||mail.awstrack.me^\n@@||r.*.awstrack.me^\n\
+                 ||thirdparty.example.com^$third-party\n||wild*.example.com^\n",
+            )
+            .unwrap(),
+            [(1, "DOMAIN,ad.example.com".into())],
+        );
+        assert_eq!(
+            project(
+                ADGUARD_MOBILE_ADSERVERS,
+                "||mads.amazon.com^\n||iadsdk.apple.com^\n||another.example.com^",
+            )
+            .unwrap(),
+            [(1, "DOMAIN,mads.amazon.com".into())],
         );
     }
 

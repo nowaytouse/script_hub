@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3740/4612；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3741/4612；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -2203,6 +2203,7 @@ DOMAIN-SUFFIX,upos-app.ximalaya.com,REJECT
 AND,((URL-REGEX,"^http:\/\/.+\/amdc\/mobileDispatch"),(USER-AGENT,"%E9%97%B2%E9%B1%BC*")),REJECT
 DOMAIN-KEYWORD,iyes.youku.com,REJECT
 DOMAIN,mistat.xiaomi.com,REJECT
+DOMAIN,ads-img-qc.xhscdn.com,REJECT
 DOMAIN,t-ads.xiaohongshu.com,REJECT
 AND,((PROTOCOL,QUIC),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
 DOMAIN-KEYWORD,mpos-pic.helipay.com,REJECT

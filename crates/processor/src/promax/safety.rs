@@ -160,12 +160,23 @@ fn mainland_functional_hostname(request: &str) -> Option<String> {
 static HOST_CANDIDATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(?:[a-z0-9*?_-]+\.)+[a-z0-9*?_-]+").unwrap());
 
-/// Authentication, certificate validation, media transport and protected Apple diagnostics.
-/// Keep these outside interception without disabling WeatherKit or TV scripts.
+/// Operational Apple hosts shared by AdBlock routing and MITM exclusions.
+/// https://support.apple.com/101555
 pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "account.apple.com",
+    "albert.apple.com",
+    "appldnld.apple.com",
     "appleid.cdn-apple.com",
+    "apple-relay.apple.com",
+    "captive.apple.com",
+    "configuration.apple.com",
+    "doh.dns.apple.com",
+    "deviceenrollment.apple.com",
+    "deviceservices-external.apple.com",
+    "gdmf.apple.com",
+    "identity.apple.com",
     "idmsa.apple.com",
+    "iprofiles.apple.com",
     "gsa.apple.com",
     "gateway.icloud.com",
     "known-issues.apple.com",
@@ -181,7 +192,18 @@ pub const APPLE_CRITICAL_EXACT: &[&str] = &[
     "crl.apple.com",
     "ocsp.apple.com",
     "ocsp2.apple.com",
+    "ocsp.digicert.cn",
     "valid.apple.com",
+    "mdmenrollment.apple.com",
+    "mesu.apple.com",
+    "oscdn.apple.com",
+    "osrecovery.apple.com",
+    "ppq.apple.com",
+    "swcdn.apple.com",
+    "swdist.apple.com",
+    "swdownload.apple.com",
+    "swscan.apple.com",
+    "xp.apple.com",
     "audio-ssl.itunes.apple.com",
     "audio.itunes.apple.com",
     "aod-ssl.itunes.apple.com",
@@ -195,6 +217,9 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
     "apple-cloudkit.com",
     "apple-livephotoskit.com",
     "apzones.com",
+    "appattest.apple.com",
+    "apps.apple.com",
+    "apps-marketplace.apple.com",
     "cdn-apple.com",
     "gc.apple.com",
     "icloud.com",
@@ -204,6 +229,8 @@ pub const APPLE_CRITICAL_SUFFIXES: &[&str] = &[
     "iwork.apple.com",
     "apple-dns.net",
     "music.apple.com",
+    "mzstatic.com",
+    "push.apple.com",
 ];
 
 /// Exact ad/analytics endpoints present in maintained upstream feeds already
@@ -252,6 +279,46 @@ const REVIEWED_EXACT_PRIVACY_HOSTS: &[(&str, &str)] = &[
     (
         "adstrategy.biz.weibo.com",
         "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    ),
+    (
+        "admarvel.s3.amazonaws.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "adpublisher.s3.amazonaws.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "ads-bidder-api.twitter.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "goshare-fleet-ads.s3.ap-southeast-1.amazonaws.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "mads.amazon.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "nativead.s3.amazonaws.com",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "supersonicads-a.akamaihd.net",
+        super::browser_filter::ADGUARD_MOBILE_ADSERVERS,
+    ),
+    (
+        "ads-img-al.xhscdn.com",
+        super::browser_filter::AWAVENUE_ADS_ONLY,
+    ),
+    (
+        "ads-img-bak.xhscdn.com",
+        super::browser_filter::AWAVENUE_ADS_ONLY,
+    ),
+    (
+        "ads-img-qc.xhscdn.com",
+        super::browser_filter::AWAVENUE_ADS_ONLY,
     ),
 ];
 
@@ -444,6 +511,14 @@ impl SafetyPolicy {
             ip_networks: policy.protected_ips.len(),
             invalid_entries,
         };
+        policy
+            .protected_domains
+            .extend(APPLE_CRITICAL_EXACT.iter().map(|host| (*host).to_owned()));
+        policy.protected_suffixes.extend(
+            APPLE_CRITICAL_SUFFIXES
+                .iter()
+                .map(|host| (*host).to_owned()),
+        );
         policy.reversed_hosts = policy
             .protected_domains
             .iter()
@@ -1613,6 +1688,33 @@ mod tests {
         assert!(apple_host_pattern_is_critical("token.safebrowsing.apple"));
         assert!(!apple_host_pattern_is_critical("apple.example"));
         assert!(!apple_host_pattern_is_critical("weatherkit.apple.com"));
+    }
+
+    #[test]
+    fn documented_apple_services_share_block_and_mitm_protection() {
+        let safety = SafetyPolicy::from_lines(std::iter::empty::<&str>());
+        for host in [
+            "api.push.apple.com",
+            "your-app.apps.apple.com",
+            "updates.apps-marketplace.apple.com",
+            "device.appattest.apple.com",
+            "captive.apple.com",
+            "albert.apple.com",
+            "gdmf.apple.com",
+            "swcdn.apple.com",
+            "apple-relay.apple.com",
+            "doh.dns.apple.com",
+            "ocsp.digicert.cn",
+        ] {
+            let rule = SurgeRule::parse(&format!("DOMAIN,{host},REJECT")).unwrap();
+            assert_ne!(safety.decision(&rule), SafetyDecision::Keep, "{host}");
+            assert!(apple_host_pattern_is_critical(host), "{host}");
+        }
+        for host in ["api-adservices.apple.com", "iadsdk.apple.com"] {
+            let rule = SurgeRule::parse(&format!("DOMAIN,{host},REJECT")).unwrap();
+            assert_eq!(safety.decision(&rule), SafetyDecision::Keep);
+            assert!(!apple_host_pattern_is_critical(host));
+        }
     }
 
     #[test]

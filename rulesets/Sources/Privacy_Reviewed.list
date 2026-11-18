@@ -22,6 +22,22 @@ DOMAIN,mads-eu.amazon.com
 # https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
 DOMAIN,adstrategy.biz.weibo.com
 
+# Dedicated mobile ad delivery and bidding endpoints from AdGuard Mobile Ads.
+# https://github.com/AdguardTeam/AdguardFilters/blob/master/MobileFilter/sections/adservers.txt
+DOMAIN,admarvel.s3.amazonaws.com
+DOMAIN,adpublisher.s3.amazonaws.com
+DOMAIN,ads-bidder-api.twitter.com
+DOMAIN,goshare-fleet-ads.s3.ap-southeast-1.amazonaws.com
+DOMAIN,mads.amazon.com
+DOMAIN,nativead.s3.amazonaws.com
+DOMAIN,supersonicads-a.akamaihd.net
+
+# Dedicated image advertising hosts from AWAvenue Only.Ads.
+# https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt
+DOMAIN,ads-img-al.xhscdn.com
+DOMAIN,ads-img-bak.xhscdn.com
+DOMAIN,ads-img-qc.xhscdn.com
+
 # Apple-specific ad endpoints (not Apple auth, iCloud, media, or service parents).
 # AdGuard HostlistsRegistry's AWAvenue Ads Rule includes both exact hosts:
 # https://github.com/AdguardTeam/HostlistsRegistry/blob/main/assets/filter_53.txt

@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+- Share operational Apple host protection between AdBlock routing and MITM exclusions. Cover push, app downloads, device enrollment, system updates, certificate validation, Apple DNS and Private Relay.
+
+- Feed 217heidai's maintained supplement, reviewed AdGuard Mobile Ads hosts, and the AWAvenue Only.Ads list into the shared advertising compiler. Project unconditional blocks to exact hostname rules with per-source exceptions and shared service protections.
+
 - Expand the single FlClash Preview PROMAX module to about 31 MB at its existing GitHub Raw URL. Include the complete Advertising and HaGeZi TIF Medium domain categories and supplemental phishing domains alongside Local, Anti-AD, Privacy and firewall ports. Expand the reviewed URL Rewrite, inline Map Local and native Body Rewrite entries on exact MITM hosts. Cap publication at 36 MiB and 850,000 active entries.
 
 - Publish an installable FlClash Preview AdBlock Helper for MITM exclusions and share the expanded public IPv4/IPv6 resolver mappings with the FlClash template. Retire the duplicate standalone FlClash Firewall after verifying its supported port rules are already in PROMAX.

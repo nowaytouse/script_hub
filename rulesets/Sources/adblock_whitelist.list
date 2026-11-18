@@ -835,6 +835,10 @@ DOMAIN,www.ip2location.com
 DOMAIN,ipinfodb.com
 DOMAIN,www.ipinfodb.com
 
+# Preserve the existing WePlayer routing at the root. Dedicated ad hosts
+# remain eligible for exact blocking.
+DOMAIN,weplayer.cc
+
 # ============ 天气服务 ============
 DOMAIN-SUFFIX,weather.com
 DOMAIN,weather.apple.com
@@ -887,8 +891,12 @@ IP-CIDR,110.249.200.0/21,no-resolve
 IP-CIDR,111.225.0.0/16,no-resolve
 IP-CIDR,220.181.0.0/16,no-resolve
 
-# ============ Apple iCloud IP 保护 ============
+# ============ Apple 官方网络地址保护 ============
+# https://support.apple.com/101555
 IP-CIDR,17.0.0.0/8,no-resolve
+IP-CIDR6,2403:300::/32,no-resolve
+IP-CIDR6,2620:149::/32,no-resolve
+IP-CIDR6,2a01:b740::/32,no-resolve
 
 # ============ Steam IP 保护 ============
 IP-CIDR,23.50.24.0/22,no-resolve

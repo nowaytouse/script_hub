@@ -72,6 +72,11 @@ https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt|REJECT|auto|A
 # https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE
 # Scoped/URL rules must not be interpreted as unconditional whole-domain blocks.
 https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/ChineseFilter/sections/adservers.txt|REJECT|auto|Advertising
+# 217heidai's authored supplement and separately licensed mobile-ad inputs.
+# The mixed generated aggregate is not redistributed. Scope and licenses are registered below.
+https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/myblock.txt|REJECT|browser-domains|Advertising
+https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt|REJECT|browser-domains|Advertising
+https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt|REJECT|browser-domains|Advertising
 # Browser list sources: only the reviewed network projection is published.
 # Other Brave selections and license terms: ../licenses/README.md.
 https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt|REJECT|browser-domains|Advertising

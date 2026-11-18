@@ -6,6 +6,9 @@
 | --- | --- |
 | [app2smile/rules](https://github.com/app2smile/rules) | [MIT](app2smile-MIT.txt) |
 | [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
+| [217heidai/adblockfilters maintainer supplement](https://github.com/217heidai/adblockfilters/blob/main/rules/myblock.txt) | [GPL-3.0](https://github.com/217heidai/adblockfilters/blob/main/LICENSE) |
+| [AdGuard Mobile Ads ad-server section](https://github.com/AdguardTeam/AdguardFilters/blob/master/MobileFilter/sections/adservers.txt) | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |
+| [AWAvenue Ads Rule Only.Ads](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
 | [Steven Black — own hosts only](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
 | [GeoIP All in One country snapshots](https://github.com/daijro/geoip-all-in-one) | [Upstream license and source attributions](https://github.com/daijro/geoip-all-in-one#licenses) |
@@ -18,6 +21,8 @@
 | [Greek AdBlock Filter — reviewed advertising hosts only](https://github.com/kargig/greek-adblockplus-filter/blob/master/void-gr-filters.txt) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
 The [source manifests](../Links/) define scope. Conversion, deduplication, classification and quarantine preserve upstream licenses; app settings retain normal video posts, and the full CNAME clickthrough / microsites lists remain disabled.
+
+The advertising compiler reads 217heidai's maintained `myblock.txt` supplement and the AdGuard and AWAvenue originals directly. It projects unconditional domain blocks to exact hostname rules and evaluates each source's exceptions before merging. Shared service protections also apply to the projected rules. The published selection and format conversion retain the source attributions and GPL-3.0 terms.
 
 The `compiled/geoip` snapshots select country codes from the AIO MMDB by `country.iso_code` and aggregate adjacent CIDRs with the same country. Each list records its source URL, build epoch and SHA-256. These snapshots include IP2Location LITE data for [IP geolocation](https://lite.ip2location.com/), GeoLite2 Data created by [MaxMind](https://www.maxmind.com/), and [IP Geolocation by DB-IP](https://db-ip.com/). The upstream project documents the additional country sources and merge procedure.
 
