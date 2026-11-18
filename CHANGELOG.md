@@ -4,7 +4,7 @@
 
 ## Unreleased
 
-- Replace the oversized FlClash Preview PROMAX payload with a temporary routing-only module at the existing subscription URL. Keep the local app ad domains and merged firewall ports. Omit large aggregate lists, scripts, rewrites, and MITM, and enforce a 128 KiB and 3,000-rule publication budget.
+- Expand FlClash Preview PROMAX at its existing subscription URL. The single compatibility module combines local app ads, Anti-AD and privacy domains with the merged firewall ports, selected URL rewrites and inline Map Local responses on exact MITM hosts. Cap publication at 640 KiB and 14,000 active entries.
 
 - Publish an installable FlClash Preview AdBlock Helper for MITM exclusions and share the expanded public IPv4/IPv6 resolver mappings with the FlClash template. Retire the duplicate standalone FlClash Firewall after verifying its supported port rules are already in PROMAX.
 

@@ -7,7 +7,7 @@
   "importer_source": "https://github.com/chen08209/FlClash/blob/5e73f3fb673a0012cc7c7312a52da33b76b78295/lib/common/mitm_module.dart",
   "fingerprint_purpose": "MD5 is a non-security source-change fingerprint only; it is not download authentication",
   "validation_scope": "Static importer compatibility and deterministic source/output equality only; no script API, endpoint, certificate or live MITM execution acceptance",
-  "external_rulesets": "Native importer does not support remote RULE-SET. Temporary PROMAX embeds only exact domains and dotted suffixes from the source-declared local app ad list. No extra provider is injected into a template.",
+  "external_rulesets": "Native importer does not support remote RULE-SET. Compatibility PROMAX embeds exact domains and dotted suffixes from the source-declared app ad, Anti-AD, and privacy lists. No extra provider is injected into a template.",
   "modules": [
     {
       "source": "modules/surge/amplify_nexus/Reddit 增强合集 (翻译 + NSFW).sgmodule",
@@ -2247,18 +2247,21 @@
       "install_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/modules/flclash/head%5Fexpanse/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
       "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/github/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
       "projection": {
-        "input_lines": 7478,
-        "emitted_lines": 2446,
-        "active_lines": 2446,
+        "input_lines": 16747,
+        "emitted_lines": 11731,
+        "active_lines": 11730,
         "sections": {
-          "Rule": 2446
+          "MITM": 1,
+          "Map Local": 3,
+          "Rule": 11715,
+          "URL Rewrite": 12
         },
         "diagnostics": [
           {
             "line": 0,
             "section": "IP Rewrite",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 0 of 1193 entries in this source section"
           },
           {
             "line": 1215,
@@ -2282,7 +2285,7 @@
             "line": 1222,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1224,
@@ -2294,79 +2297,79 @@
             "line": 1225,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1226,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1227,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1228,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1229,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1231,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "disposition": "adapted",
+            "reason": "embedded the exact and suffix domains from rulesets/AdBlock/AdBlock_Privacy.list at its source declaration"
           },
           {
             "line": 1232,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1234,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1235,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1236,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1237,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1238,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1240,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1241,
@@ -2378,91 +2381,91 @@
             "line": 1242,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1244,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "disposition": "adapted",
+            "reason": "embedded the exact and suffix domains from rulesets/AdBlock/AdBlock_AntiAD.list at its source declaration"
           },
           {
             "line": 1246,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1247,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1249,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1250,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1251,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1252,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 1254,
             "section": "Rule",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX only embeds the public local app ad list"
+            "reason": "Compatibility PROMAX embeds only the approved app advertising, Anti-AD and privacy domain lists"
           },
           {
             "line": 0,
             "section": "URL Rewrite",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 12 of 546 entries in this source section"
           },
           {
             "line": 0,
             "section": "Map Local",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 3 of 1245 entries in this source section"
           },
           {
             "line": 0,
             "section": "Script",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 0 of 272 entries in this source section"
           },
           {
             "line": 0,
             "section": "Body Rewrite",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 0 of 90 entries in this source section"
           },
           {
             "line": 0,
             "section": "MITM",
             "disposition": "omitted",
-            "reason": "Temporary FlClash PROMAX publishes routing rules only"
+            "reason": "Compatibility PROMAX retained 0 of 1 entries in this source section"
           }
         ]
       }
     }
   ],
-  "promax_routing_note": "Temporary compatibility module contains only local app ad domains and firewall ports. Large aggregate lists, IP blocks, keywords, scripts, MITM and rewrites are omitted. Exact duplicates retain their first occurrence. The entire module is capped at 128 KiB and 3,000 rules.",
+  "promax_routing_note": "Compatibility PROMAX combines app advertising, Anti-AD and privacy domains with firewall ports, reviewed URL rejections and inline Map Local replies scoped to exact MITM hosts. Large aggregate lists, IP blocks, keywords, scripts and body rewrites are omitted. Exact duplicates retain their first occurrence. The module is capped at 640 KiB and 14,000 active entries.",
   "promax_routing": [
     {
       "source": "rulesets/AdBlock/AdBlock_Local.list",
@@ -2983,6 +2986,68 @@
             "section": "Rule",
             "disposition": "omitted",
             "reason": "Only exact domains and dotted domain suffixes are retained for FlClash PROMAX"
+          }
+        ]
+      }
+    },
+    {
+      "source": "rulesets/AdBlock/AdBlock_Privacy.list",
+      "source_bytes": 188586,
+      "source_rule_line": 1231,
+      "source_policy": "REJECT",
+      "source_options": [
+        "extended-matching",
+        "pre-matching",
+        "update-interval=86400",
+        "no-resolve"
+      ],
+      "source_md5_change_fingerprint": "8bd7a6a1f2b5ea1ce60afc177de796a2",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 222876,
+      "projection": {
+        "input_lines": 4919,
+        "emitted_lines": 4919,
+        "active_lines": 4919,
+        "sections": {
+          "Rule": 4919
+        },
+        "diagnostics": [
+          {
+            "line": 0,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
+          }
+        ]
+      }
+    },
+    {
+      "source": "rulesets/AdBlock/AdBlock_AntiAD.list",
+      "source_bytes": 131312,
+      "source_rule_line": 1244,
+      "source_policy": "REJECT",
+      "source_options": [
+        "extended-matching",
+        "pre-matching",
+        "update-interval=86400",
+        "no-resolve"
+      ],
+      "source_md5_change_fingerprint": "90ccf83f711450dbcd177fe82bcffb63",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 161616,
+      "projection": {
+        "input_lines": 4350,
+        "emitted_lines": 4350,
+        "active_lines": 4350,
+        "sections": {
+          "Rule": 4350
+        },
+        "diagnostics": [
+          {
+            "line": 0,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           }
         ]
       }

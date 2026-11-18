@@ -88,6 +88,12 @@ fn temporary() -> PathBuf {
         SEQUENCE.fetch_add(1, Ordering::Relaxed)
     ));
     fs::create_dir_all(path.join("modules/surge/head_expanse")).unwrap();
+    fs::create_dir_all(path.join("rulesets/Sources")).unwrap();
+    fs::write(
+        path.join(super::PROMAX_WHITELIST),
+        "DOMAIN,protected.example.test\n",
+    )
+    .unwrap();
     path
 }
 #[test]
@@ -435,12 +441,24 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
     let main = root.join("modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule");
     let text = &planned[&main];
     let sections = super::parse_sections(text);
-    let [(name, rows)] = sections.as_slice() else {
-        panic!("PROMAX must contain a single routing section");
+    let [
+        (rule_section, rows),
+        (rewrite_section, rewrites),
+        (map_section, maps),
+        (mitm_section, hosts),
+    ] = sections.as_slice()
+    else {
+        panic!("PROMAX must contain routing and the reviewed app handlers");
     };
-    assert_eq!(name, "Rule");
+    assert_eq!(rule_section, "Rule");
+    assert_eq!(rewrite_section, "URL Rewrite");
+    assert_eq!(map_section, "Map Local");
+    assert_eq!(mitm_section, "MITM");
+    assert!(!rewrites.is_empty() && !maps.is_empty());
+    assert_eq!(hosts.len(), 1);
+    assert!(!hosts[0].1.contains('*'));
     assert!(text.len() <= super::MAX_PROMAX_BYTES);
-    assert!(rows.len() <= super::MAX_PROMAX_RULES);
+    assert!(rows.len() + rewrites.len() + maps.len() <= super::MAX_PROMAX_RULES);
     assert!(
         rows.iter()
             .any(|(_, row)| row == "DOMAIN,aaid.umeng.com,REJECT")
@@ -454,6 +472,17 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
             && super::is_block_policy(&parts[2])
     }));
     assert!(!rows.iter().any(|(_, row)| row.contains("ipinfo.io")));
+    let catalog: serde_json::Value =
+        serde_json::from_str(&planned[&root.join("modules/flclash/catalog.json")]).unwrap();
+    assert_eq!(
+        catalog["promax_routing"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|report| report["source"].as_str().unwrap())
+            .collect::<std::collections::BTreeSet<_>>(),
+        super::PROMAX_DOMAIN_LISTS.iter().copied().collect()
+    );
     for (path, text) in &planned {
         if path.extension().is_some_and(|e| e == "sgmodule") {
             for (section, _) in super::parse_sections(text) {
@@ -508,6 +537,7 @@ fn promax_routing_keeps_only_exact_and_suffix_domains() {
         "DOMAIN,ads.example.test\nDOMAIN-SUFFIX,tracking.example.test\nDOMAIN-SUFFIX,single-label\nDOMAIN,ads.example.test-NO-DROP\nDOMAIN-KEYWORD,ads\nIP-CIDR,192.0.2.0/24\nDEST-PORT,1234\nURL-REGEX,^https://example.test/ads\n",
         "REJECT",
         &["no-resolve".into(), "pre-matching".into(), "extended-matching".into()],
+        &super::SafetyPolicy::default(),
     ).unwrap();
     assert_eq!(projection.input_lines, 8);
     assert_eq!(projection.sections["Rule"], 2);
@@ -531,7 +561,50 @@ fn promax_routing_keeps_only_exact_and_suffix_domains() {
             .count(),
         6
     );
-    assert!(super::render_routing("DOMAIN,ads.example.test\n", "DIRECT", &[]).is_err());
+    assert!(
+        super::render_routing(
+            "DOMAIN,ads.example.test\n",
+            "DIRECT",
+            &[],
+            &super::SafetyPolicy::default()
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn promax_compatibility_rewrites_match_only_reviewed_ad_requests() {
+    let (host, line) = super::reviewed_promax_http(
+        "URL Rewrite",
+        r"^https:\/\/music\.y\.qq\.com\/maproxy\/getPbCompressAd - reject",
+    )
+    .unwrap();
+    assert_eq!(host, "music.y.qq.com");
+    let (pattern, action) = line.split_once(' ').unwrap();
+    assert_eq!(action, "reject");
+    let pattern = regex::Regex::new(pattern).unwrap();
+    assert!(pattern.is_match("https://music.y.qq.com/maproxy/getPbCompressAd?x=1"));
+    assert!(!pattern.is_match("https://music.y.qq.com/maproxy/getPbCompressAdOther"));
+    assert!(!pattern.is_match("https://music.y.qq.com.evil.test/maproxy/getPbCompressAd"));
+    assert!(
+        super::reviewed_promax_http(
+            "URL Rewrite",
+            r"^https://music\.y\.qq\.com/maproxy/getPbCompressAd - reject-200"
+        )
+        .is_none()
+    );
+    assert!(super::reviewed_promax_http(
+        "Map Local",
+        r#"^https://pan\.baidu\.com/rest/\d\.\d/pcs/adv data-type=file data="https://example.test/payload""#
+    ).is_none());
+    let routing = super::render_routing(
+        "DOMAIN,ipinfo.io\nDOMAIN-SUFFIX,controld.com\nDOMAIN,ad.example.test\n",
+        "REJECT",
+        &[],
+        &super::SafetyPolicy::from_lines(["DOMAIN,ipinfo.io"]),
+    )
+    .unwrap();
+    assert_eq!(routing.content, "\n[Rule]\nDOMAIN,ad.example.test,REJECT\n");
 }
 
 #[test]
