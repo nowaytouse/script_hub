@@ -9,9 +9,10 @@
 | [Steven Black — own hosts only](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
 | [GeoIP All in One country snapshots](https://github.com/daijro/geoip-all-in-one) | [Upstream license and source attributions](https://github.com/daijro/geoip-all-in-one#licenses) |
+| [laincat GeoIP ASN database](https://github.com/laincat/GeoIP), built from [IPtoASN](https://iptoasn.com/) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) for the release data; the FlClash template links to the upstream file |
 | [fmz200 — X Web Ads endpoint and response schema](https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/XWebAds.srmodule) | [GPL-3.0](https://github.com/fmz200/wool_scripts/blob/main/LICENSE) |
 | [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
-| [V2Fly private devices](https://github.com/v2fly/domain-list-community/blob/master/data/private) | [MIT](V2Fly-MIT.txt) |
+| [V2Fly Domain List Community](https://github.com/v2fly/domain-list-community), private devices and reviewed service domains | [MIT](V2Fly-MIT.txt) |
 | [Brave First-Party filters — reviewed advertising hosts only](https://github.com/brave/adblock-lists/blob/master/brave-lists/brave-firstparty.txt) | [MPL-2.0](https://github.com/brave/adblock-lists/blob/master/LICENSE) |
 | [uBlock Origin uAssets — reviewed Privacy hosts and Badware network projection](https://github.com/uBlockOrigin/uAssets/tree/master/filters) | [GPL-3.0](https://github.com/uBlockOrigin/uAssets/blob/master/LICENSE) |
 | [Greek AdBlock Filter — reviewed advertising hosts only](https://github.com/kargig/greek-adblockplus-filter/blob/master/void-gr-filters.txt) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |

@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+- Use laincat's dedicated IPtoASN database for the existing IP-ASN rules in the bundled FlClash export. Keep the AIO country MMDB and the inherited weekly GEO update setting.
+
+- Add reviewed V2Fly GeoSite service domains to the existing AI, US streaming and social media rulesets, respecting Japan's Hulu routing.
+
 - Extend the existing Google, Apple, gaming and US media rulesets with selected MetaCubeX GeoSite sources. Compile country snapshots from the same AIO MMDB into the existing sing-box ruleset family and retain the Surge country fallback order during export.
 
 - Use GeoIP All in One for the bundled Surge database and inherit its MMDB source and weekly updates in FlClash. Add manual Shadowrocket Country URL guidance; keep sing-box on supported native rule sets.

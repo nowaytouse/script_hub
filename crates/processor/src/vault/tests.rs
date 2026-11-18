@@ -127,6 +127,10 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             let config: serde_json::Value = serde_saphyr::from_str(&rendered).unwrap();
             assert_eq!(config["geodata-mode"], false);
             assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
+            assert_eq!(
+                config["geox-url"]["asn"],
+                "https://github.com/laincat/GeoIP/releases/latest/download/GeoLite2-ASN.mmdb"
+            );
             assert_eq!(config["geo-auto-update"], true);
             assert_eq!(config["geo-update-interval"], 168);
             for tag in ["JP", "TW", "Microsoft_direct", "Microsoft_proxy"] {

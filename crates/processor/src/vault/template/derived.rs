@@ -1,11 +1,13 @@
 //! Client projections of the unlocked bundled Surge profile, not a general profile converter.
 
 use super::{Client, Template, VaultError, inline_comment, links, slot_ranges};
+use crate::pipeline::geo_rulesets::MMDB_URL;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 
 const RAW: &str = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/";
 const CDN: &str = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/";
+const ASN_URL: &str = "https://github.com/laincat/GeoIP/releases/latest/download/GeoLite2-ASN.mmdb";
 const LOCAL_PROXY: &str = "script-hub-proxy";
 const DOWNLOAD_CLIENT: &str = "ruleset-download";
 const LAN: &[&str] = &[
@@ -282,8 +284,11 @@ fn inherit_geoip(general: &BTreeMap<&str, &str>, yaml: &mut Value) -> Result<(),
         .unwrap_or(false);
     yaml["geodata-mode"] = false.into();
     yaml["geox-url"] = json!({"mmdb":source});
-    // Mihomo updates only datasets enabled by actual use. MMDB mode selects
-    // UpdateMMDB instead of GeoIP.dat; do not add unrelated DAT/ASN sources.
+    if source == MMDB_URL {
+        // The bundled rulesets already use IP-ASN. Mihomo expects a dedicated
+        // ASN database alongside the inherited Country MMDB.
+        yaml["geox-url"]["asn"] = ASN_URL.into();
+    }
     yaml["geo-auto-update"] = (!disabled).into();
     yaml["geo-update-interval"] = 168.into();
     Ok(())
@@ -698,7 +703,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut sing_providers = BTreeMap::new();
     let uses_aio = general
         .get("geoip-maxmind-url")
-        .is_some_and(|source| source.trim_matches('"') == crate::pipeline::geo_rulesets::MMDB_URL);
+        .is_some_and(|source| source.trim_matches('"') == MMDB_URL);
     let mut sing_adblock_at = None;
     let mut final_policy = None;
     let mut expanded = Vec::new();
@@ -925,8 +930,9 @@ mod tests {
         );
         let sing: Value = serde_json::from_str(&output[1].content).unwrap();
         let rules = sing["route"]["rules"].as_array().unwrap();
-        assert_eq!(rules.last().unwrap()["outbound"], "direct");
-        let fallback = &rules[rules.len() - 5..];
+        let (adblock, fallback) = rules.split_last().unwrap();
+        assert_eq!(adblock["action"], "reject");
+        assert_eq!(fallback.len(), 5);
         assert_eq!(fallback[0]["domain"], json!(["service.example.test"]));
         let providers = sing["route"]["rule_set"].as_array().unwrap();
         for (rule, (country, policy)) in fallback[1..].iter().zip([

@@ -1,4 +1,4 @@
-//! Parse MetaCubeX classical GeoSite entries without changing their matcher types.
+//! Parse reviewed GeoSite sources without changing their matcher types.
 use std::collections::BTreeSet;
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -57,4 +57,21 @@ pub(in crate::pipeline) fn parse_geosite(text: &str) -> Result<Vec<GeoRule<'_>>,
         return Err("GeoSite source has no active rules".into());
     }
     Ok(rules.into_iter().collect())
+}
+
+pub(in crate::pipeline) fn v2fly_host_rules(text: &str) -> impl Iterator<Item = GeoRule<'_>> {
+    text.lines().filter_map(|raw| {
+        let line = raw.split('#').next()?.trim().trim_start_matches('\u{feff}');
+        // Attributes, includes and other matchers need their own semantics.
+        if line.is_empty() || line.contains(char::is_whitespace) {
+            return None;
+        }
+        let (kind, value) = match line.split_once(':') {
+            Some(("full", value)) => (Kind::Domain, value),
+            Some(("domain", value)) => (Kind::DomainSuffix, value),
+            None => (Kind::DomainSuffix, line),
+            _ => return None,
+        };
+        Some(GeoRule { kind, value })
+    })
 }

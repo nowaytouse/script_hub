@@ -1,5 +1,6 @@
 //! Rust-owned refresh for the non-PROMAX ruleset manifests.
 
+use super::geo_rulesets::model::{Kind, parse_geosite, v2fly_host_rules};
 use crate::promax::safety::IpNetwork;
 use crate::promax::source::{DownloadConfig, Downloader};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -455,15 +456,43 @@ fn downloader() -> Downloader {
 
 const CLASSICAL_GEOSITE: &str =
     "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/classical/";
+const V2FLY_GEOSITE: &str =
+    "https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/";
+
+// DLC services sometimes include parked brand variants, cross-region domains
+// or shared infrastructure. Keep the reviewed matcher as well as the hostname.
+fn reviewed_v2fly_rules(source: &str) -> Option<&'static [(Kind, &'static str)]> {
+    use Kind::DomainSuffix;
+    Some(match source.strip_prefix(V2FLY_GEOSITE)? {
+        "elevenlabs" => &[
+            (DomainSuffix, "elevenlabs.com"),
+            (DomainSuffix, "elevenlabs.io"),
+            (DomainSuffix, "elevenlabsusercontent.com"),
+        ],
+        // The playback endpoint already matches StreamUS's bamgrid.com suffix.
+        "hulu" => &[(DomainSuffix, "hulu.com")],
+        "tubi" => &[(DomainSuffix, "tubi.tv")],
+        "tumblr" => &[(DomainSuffix, "tumblr.com")],
+        _ => return None,
+    })
+}
+
+fn is_geosite_supplement(source: &str) -> bool {
+    source.starts_with(CLASSICAL_GEOSITE) || reviewed_v2fly_rules(source).is_some()
+}
 
 fn portable_geosite(source: &str, content: &str) -> Result<String, String> {
-    use super::geo_rulesets::model::{Kind, parse_geosite};
     use std::fmt::Write as _;
     let mut output = String::new();
     let mut excluded = 0;
-    for rule in
+    let rules = if let Some(approved) = reviewed_v2fly_rules(source) {
+        v2fly_host_rules(content)
+            .filter(|rule| approved.contains(&(rule.kind, rule.value)))
+            .collect()
+    } else {
         parse_geosite(content).map_err(|error| format!("{}: {error}", crate::redact_url(source)))?
-    {
+    };
+    for rule in rules {
         if matches!(rule.kind, Kind::Domain | Kind::DomainSuffix) {
             let row = format!("{},{}", rule.kind.as_str(), rule.value);
             if let Some(rule) = crate::normalize_rule(&row) {
@@ -502,6 +531,17 @@ fn geosite_supplements_keep_exact_and_suffix_semantics() {
         "DOMAIN,one.example.test\nDOMAIN-SUFFIX,example.test\n"
     );
     assert!(portable_geosite("fixture", "DOMAIN,host.test,unexpected-policy").is_err());
+
+    let hulu = format!("{V2FLY_GEOSITE}hulu");
+    let input = "domain:hulu.com # US service\nhulu.jp\nhulu.playback.edge.bamgrid.com\nfull:hulu.playback.edge.bamgrid.com\ninclude:disney\n";
+    assert_eq!(
+        portable_geosite(&hulu, input).unwrap(),
+        "DOMAIN-SUFFIX,hulu.com\n"
+    );
+    assert!(v2fly_host_rules(input).any(|rule| {
+        rule.kind == Kind::Domain && rule.value == "hulu.playback.edge.bamgrid.com"
+    }));
+    assert!(portable_geosite(&hulu, "hulu.com @ads\nregexp:hulu.com\n").is_err());
 }
 
 fn remote_content(
@@ -522,7 +562,7 @@ fn remote_content(
             if !first_source {
                 output.push('\n');
             }
-            if url.starts_with(CLASSICAL_GEOSITE) {
+            if is_geosite_supplement(url) {
                 output.push_str(&portable_geosite(url, content)?);
             } else {
                 output.push_str(content);
@@ -540,7 +580,7 @@ pub(crate) fn refresh_geosite_supplements(root: &Path) -> Result<(), String> {
     let urls: BTreeSet<_> = manifests
         .iter()
         .flat_map(|manifest| &manifest.remote_urls)
-        .filter(|url| url.starts_with(CLASSICAL_GEOSITE))
+        .filter(|url| is_geosite_supplement(url))
         .cloned()
         .collect();
     let batch = downloader().download_many(&urls);
@@ -552,7 +592,7 @@ pub(crate) fn refresh_geosite_supplements(root: &Path) -> Result<(), String> {
         let sources: Vec<_> = manifest
             .remote_urls
             .into_iter()
-            .filter(|url| url.starts_with(CLASSICAL_GEOSITE))
+            .filter(|url| is_geosite_supplement(url))
             .collect();
         if sources.is_empty() {
             continue;
@@ -2313,6 +2353,8 @@ mod tests {
         const PERPLEXITY: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/perplexity.list";
         const BLUESKY: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/bluesky.list";
         const THREADS: &str = "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/threads.list";
+        let elevenlabs = format!("{}elevenlabs", super::V2FLY_GEOSITE);
+        let tumblr = format!("{}tumblr", super::V2FLY_GEOSITE);
         let repo_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let mut ai = None;
         let mut social = None;
@@ -2326,12 +2368,12 @@ mod tests {
         let mut ai = ai.unwrap();
         let mut social = social.unwrap();
         assert!(
-            [CURSOR, PERPLEXITY]
+            [CURSOR, PERPLEXITY, elevenlabs.as_str()]
                 .iter()
                 .all(|url| ai.remote_urls.iter().any(|source| source == *url))
         );
         assert!(
-            [BLUESKY, THREADS]
+            [BLUESKY, THREADS, tumblr.as_str()]
                 .iter()
                 .all(|url| social.remote_urls.iter().any(|source| source == *url))
         );
@@ -2352,6 +2394,8 @@ mod tests {
             ),
             (BLUESKY, "+.bsky.app\n+.bsky.network\n+.bsky.social"),
             (THREADS, "+.threads.com\n+.threads.net"),
+            (elevenlabs.as_str(), "elevenlabsusercontent.com"),
+            (tumblr.as_str(), "tumblr.com"),
         ] {
             downloads.insert(url.to_string(), body.to_string());
         }
@@ -2386,6 +2430,7 @@ mod tests {
             "DOMAIN-SUFFIX,cursor-cdn.com",
             "DOMAIN-SUFFIX,perplexity.com",
             "DOMAIN-SUFFIX,pplx.ai",
+            "DOMAIN-SUFFIX,elevenlabsusercontent.com",
             "DOMAIN,ppl-ai-file-upload.s3.amazonaws.com",
             "DOMAIN,pplx-res.cloudinary.com",
         ] {
@@ -2395,6 +2440,7 @@ mod tests {
             "DOMAIN-SUFFIX,bsky.network",
             "DOMAIN-SUFFIX,threads.com",
             "DOMAIN-SUFFIX,threads.net",
+            "DOMAIN-SUFFIX,tumblr.com",
         ] {
             assert!(
                 social_rules.lines().any(|line| line == rule),
