@@ -2505,20 +2505,20 @@
     },
     {
       "source": "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-      "source_md5_change_fingerprint": "59df2e07b514e969bf5ebd4b5a8d46fc",
+      "source_md5_change_fingerprint": "3fe4ef346466c7df63e66db2da815b34",
       "path": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
       "github_path": "modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule",
       "install_url": null,
       "github_install_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head%5Fexpanse/github/ScriptHub%2EAdBlock%2EPreview%2Esgmodule",
       "projection": {
-        "input_lines": 1379632,
-        "emitted_lines": 1377952,
-        "active_lines": 1377951,
+        "input_lines": 1447109,
+        "emitted_lines": 1445428,
+        "active_lines": 1445427,
         "sections": {
           "Body Rewrite": 21,
           "MITM": 1,
           "Map Local": 1245,
-          "Rule": 1375658,
+          "Rule": 1443134,
           "Script": 272,
           "URL Rewrite": 755
         },
@@ -9724,12 +9724,6 @@
             "reason": "expanded local inline ruleset Script Hub PROMAX IP pre-match 03 (1150 rows)"
           },
           {
-            "line": 3890,
-            "section": "Rule",
-            "disposition": "omitted",
-            "reason": "unsupported matcher IP-ASN (use the main Mihomo providers where applicable)"
-          },
-          {
             "line": 3891,
             "section": "Rule",
             "disposition": "omitted",
@@ -9809,6 +9803,12 @@
           },
           {
             "line": 3904,
+            "section": "Rule",
+            "disposition": "omitted",
+            "reason": "unsupported matcher IP-ASN (use the main Mihomo providers where applicable)"
+          },
+          {
+            "line": 3905,
             "section": "Rule",
             "disposition": "omitted",
             "reason": "unsupported matcher IP-ASN (use the main Mihomo providers where applicable)"
@@ -9946,16 +9946,16 @@
             "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list at its source declaration; per-source compatibility is recorded in the catalog"
           },
           {
-            "line": 1253,
+            "line": 1252,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list at its source declaration; per-source compatibility is recorded in the catalog"
+          },
+          {
+            "line": 1254,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "embedded public PROMAX list rulesets/AdBlock/AdBlock_ThreatIntel.list at its source declaration; per-source compatibility is recorded in the catalog"
-          },
-          {
-            "line": 1264,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "URL-REGEX converted to native URL Rewrite"
           },
           {
             "line": 1265,
@@ -11136,8 +11136,8 @@
           {
             "line": 1461,
             "section": "Rule",
-            "disposition": "omitted",
-            "reason": "unsupported matcher USER-AGENT (use the main Mihomo providers where applicable)"
+            "disposition": "adapted",
+            "reason": "URL-REGEX converted to native URL Rewrite"
           },
           {
             "line": 1462,
@@ -11152,10 +11152,10 @@
             "reason": "unsupported matcher USER-AGENT (use the main Mihomo providers where applicable)"
           },
           {
-            "line": 1558,
+            "line": 1464,
             "section": "Rule",
-            "disposition": "adapted",
-            "reason": "URL-REGEX converted to native URL Rewrite"
+            "disposition": "omitted",
+            "reason": "unsupported matcher USER-AGENT (use the main Mihomo providers where applicable)"
           },
           {
             "line": 1559,
@@ -11224,10 +11224,10 @@
             "reason": "URL-REGEX converted to native URL Rewrite"
           },
           {
-            "line": 1571,
+            "line": 1570,
             "section": "Rule",
             "disposition": "adapted",
-            "reason": "REJECT-NO-DROP becomes REJECT in the importer"
+            "reason": "URL-REGEX converted to native URL Rewrite"
           },
           {
             "line": 1572,
@@ -11464,16 +11464,16 @@
             "reason": "REJECT-NO-DROP becomes REJECT in the importer"
           },
           {
-            "line": 3409,
+            "line": 1611,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "REJECT-NO-DROP becomes REJECT in the importer"
+          },
+          {
+            "line": 3410,
             "section": "Script",
             "disposition": "adapted",
             "reason": "importer does not forward script field script-update-interval"
-          },
-          {
-            "line": 3651,
-            "section": "Script",
-            "disposition": "adapted",
-            "reason": "importer does not forward script field engine"
           },
           {
             "line": 3652,
@@ -11548,10 +11548,10 @@
             "reason": "importer does not forward script field engine"
           },
           {
-            "line": 3682,
-            "section": "Body Rewrite",
-            "disposition": "omitted",
-            "reason": "jq body rewrite is not supported by the preview importer"
+            "line": 3664,
+            "section": "Script",
+            "disposition": "adapted",
+            "reason": "importer does not forward script field engine"
           },
           {
             "line": 3683,
@@ -11584,7 +11584,7 @@
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3696,
+            "line": 3688,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
@@ -11626,25 +11626,25 @@
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3704,
+            "line": 3703,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3709,
+            "line": 3705,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3713,
+            "line": 3710,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3715,
+            "line": 3714,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
@@ -11710,7 +11710,7 @@
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3727,
+            "line": 3726,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
@@ -11776,7 +11776,7 @@
             "reason": "jq body rewrite is not supported by the preview importer"
           },
           {
-            "line": 3741,
+            "line": 3738,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
@@ -11957,6 +11957,12 @@
           },
           {
             "line": 3771,
+            "section": "Body Rewrite",
+            "disposition": "omitted",
+            "reason": "jq body rewrite is not supported by the preview importer"
+          },
+          {
+            "line": 3772,
             "section": "Body Rewrite",
             "disposition": "omitted",
             "reason": "jq body rewrite is not supported by the preview importer"
@@ -13009,7 +13015,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_01.list",
-      "source_bytes": 3165321,
+      "source_bytes": 3152453,
       "source_rule_line": 1226,
       "source_policy": "REJECT",
       "source_options": [
@@ -13018,15 +13024,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "3a1cba4d1a6a6a3a419277f0e3f6c25f",
+      "source_md5_change_fingerprint": "b23cf3b3e9bb1292d8f3afd0ef5cda23",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3859694,
+      "projected_bytes": 3846882,
       "projection": {
         "input_lines": 100000,
-        "emitted_lines": 99973,
-        "active_lines": 99973,
+        "emitted_lines": 99974,
+        "active_lines": 99974,
         "sections": {
-          "Rule": 99973
+          "Rule": 99974
         },
         "diagnostics": [
           {
@@ -14200,343 +14206,337 @@
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 22109,
+            "line": 22138,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 22919,
+            "line": 22960,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 22920,
+            "line": 22961,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 28290,
+            "line": 28417,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 31765,
+            "line": 31932,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 36650,
+            "line": 36886,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 36879,
+            "line": 37115,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 37206,
+            "line": 37444,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 37208,
+            "line": 37446,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38279,
+            "line": 38526,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38363,
+            "line": 38611,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38428,
+            "line": 38677,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38497,
+            "line": 38747,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38499,
+            "line": 38749,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38551,
+            "line": 38801,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38883,
+            "line": 39134,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38884,
+            "line": 39135,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38885,
+            "line": 39136,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38886,
+            "line": 39137,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38919,
+            "line": 39170,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38981,
+            "line": 39233,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40436,
+            "line": 40693,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40650,
+            "line": 40907,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40706,
+            "line": 40963,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40707,
+            "line": 40964,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40708,
+            "line": 40965,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41163,
+            "line": 41422,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41260,
+            "line": 41519,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41263,
+            "line": 41522,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41399,
+            "line": 41660,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41493,
+            "line": 41756,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41590,
+            "line": 41854,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41995,
+            "line": 42268,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 42059,
+            "line": 42335,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 42112,
+            "line": 42388,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 42145,
+            "line": 42421,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 46839,
+            "line": 47279,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 50727,
+            "line": 51223,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 50733,
+            "line": 51229,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 52503,
+            "line": 53002,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54435,
+            "line": 54950,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54437,
+            "line": 54952,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54583,
+            "line": 55102,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54602,
+            "line": 55122,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 55588,
+            "line": 56144,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 62013,
+            "line": 62769,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 62947,
+            "line": 63718,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63432,
+            "line": 64218,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63433,
+            "line": 64219,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63434,
+            "line": 64220,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 65781,
+            "line": 66671,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 69890,
+            "line": 70897,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 72168,
+            "line": 73255,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 72389,
+            "line": 73485,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 84701,
+            "line": 86165,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 90612,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 99547,
+            "line": 92207,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
@@ -14546,7 +14546,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_02.list",
-      "source_bytes": 3358649,
+      "source_bytes": 3364598,
       "source_rule_line": 1227,
       "source_policy": "REJECT",
       "source_options": [
@@ -14555,15 +14555,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "574c448fa220e7addbdbaccc34fee5c0",
+      "source_md5_change_fingerprint": "99a9f1bee83bd03d6439160e62c64790",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 4057474,
+      "projected_bytes": 4063493,
       "projection": {
         "input_lines": 100000,
-        "emitted_lines": 99992,
-        "active_lines": 99992,
+        "emitted_lines": 99991,
+        "active_lines": 99991,
         "sections": {
-          "Rule": 99992
+          "Rule": 99991
         },
         "diagnostics": [
           {
@@ -14573,247 +14573,211 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 3197,
+            "line": 1216,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 8694,
+            "line": 4914,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 9054,
+            "line": 10546,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 9059,
+            "line": 10919,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 9755,
+            "line": 10924,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 11701,
+            "line": 11639,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 21141,
+            "line": 13643,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 21690,
+            "line": 23291,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 25615,
+            "line": 23855,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 25621,
+            "line": 27882,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 25650,
+            "line": 27888,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 29080,
+            "line": 27917,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 34580,
+            "line": 31417,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 37092,
+            "line": 37076,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38208,
+            "line": 39640,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 38209,
+            "line": 40787,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 52103,
+            "line": 40788,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 58811,
+            "line": 54876,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 60476,
+            "line": 61814,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 60485,
+            "line": 63519,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 61677,
+            "line": 63528,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63396,
+            "line": 64741,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 65594,
+            "line": 66497,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 65595,
+            "line": 68746,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 65596,
+            "line": 68747,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 66224,
+            "line": 68748,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 66225,
+            "line": 69394,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 71354,
+            "line": 69395,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 72922,
+            "line": 74682,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 72924,
+            "line": 76294,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 79670,
+            "line": 76296,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 80886,
+            "line": 83246,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 83736,
+            "line": 84486,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 87339,
+            "line": 87437,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 98865,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98866,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98867,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98868,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98869,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98870,
-            "section": "Rule",
-            "disposition": "adapted",
-            "reason": "importer does not preserve rule options: extended-matching"
-          },
-          {
-            "line": 98871,
+            "line": 91089,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
@@ -14823,7 +14787,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_03.list",
-      "source_bytes": 3370491,
+      "source_bytes": 3357498,
       "source_rule_line": 1228,
       "source_policy": "REJECT",
       "source_options": [
@@ -14832,9 +14796,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "f8db151cd6cba19e2dcc2e8d2252241f",
+      "source_md5_change_fingerprint": "4134a986f11947ffc1ea7c23229a725e",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 4069429,
+      "projected_bytes": 4056310,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 99992,
@@ -14850,211 +14814,253 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 1262,
+            "line": 2709,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 6327,
+            "line": 2710,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 6880,
+            "line": 2711,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 11437,
+            "line": 2712,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 13651,
+            "line": 2713,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 13863,
+            "line": 2714,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 13878,
+            "line": 2715,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 14168,
+            "line": 5186,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 15126,
+            "line": 10351,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 21176,
+            "line": 10929,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30517,
+            "line": 15533,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30664,
+            "line": 17845,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30666,
+            "line": 18064,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30667,
+            "line": 18079,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30668,
+            "line": 18388,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30675,
+            "line": 19378,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30826,
+            "line": 25654,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30932,
+            "line": 35245,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 30933,
+            "line": 35401,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 35388,
+            "line": 35403,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 43272,
+            "line": 35404,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 47627,
+            "line": 35405,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 49850,
+            "line": 35412,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54191,
+            "line": 35569,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 54583,
+            "line": 35676,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 55162,
+            "line": 35677,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 59213,
+            "line": 40226,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 59387,
+            "line": 48349,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 59845,
+            "line": 52891,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 75996,
+            "line": 55146,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 79516,
+            "line": 59540,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 80287,
+            "line": 59948,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 81888,
+            "line": 60540,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 83835,
+            "line": 64715,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 83910,
+            "line": 64894,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 65379,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 81839,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 85390,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 86180,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 87845,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 89882,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "importer does not preserve rule options: extended-matching"
+          },
+          {
+            "line": 89958,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
@@ -15064,7 +15070,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_Advertising_04.list",
-      "source_bytes": 2529542,
+      "source_bytes": 2783467,
       "source_rule_line": 1229,
       "source_policy": "REJECT",
       "source_options": [
@@ -15073,15 +15079,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "41d8f3fc7b21c26f06325bfa42ae271a",
+      "source_md5_change_fingerprint": "5ee511f0bf9fdc4a71284a60d514c437",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3058440,
+      "projected_bytes": 3366125,
       "projection": {
-        "input_lines": 75772,
-        "emitted_lines": 75755,
-        "active_lines": 75755,
+        "input_lines": 83452,
+        "emitted_lines": 83435,
+        "active_lines": 83435,
         "sections": {
-          "Rule": 75755
+          "Rule": 83435
         },
         "diagnostics": [
           {
@@ -15091,259 +15097,259 @@
             "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
           },
           {
-            "line": 4099,
+            "line": 10337,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 4100,
+            "line": 10338,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 8178,
+            "line": 14429,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 8179,
+            "line": 14430,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 10994,
+            "line": 17250,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 11023,
+            "line": 17279,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 13937,
+            "line": 20313,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 20376,
+            "line": 26871,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 20425,
+            "line": 26921,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 24918,
+            "line": 31637,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 27911,
+            "line": 34718,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 33902,
+            "line": 40737,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 37354,
+            "line": 44283,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 39077,
+            "line": 46056,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 39758,
+            "line": 46746,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40616,
+            "line": 47625,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40619,
+            "line": 47628,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40718,
+            "line": 47729,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40721,
+            "line": 47732,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40816,
+            "line": 47829,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40825,
+            "line": 47838,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40826,
+            "line": 47839,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40827,
+            "line": 47840,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40828,
+            "line": 47841,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40838,
+            "line": 47851,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 40841,
+            "line": 47854,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41431,
+            "line": 48467,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41432,
+            "line": 48468,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41508,
+            "line": 48552,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 41511,
+            "line": 48555,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 44708,
+            "line": 51812,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 45134,
+            "line": 52240,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 49231,
+            "line": 56495,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 52971,
+            "line": 60319,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 55391,
+            "line": 62802,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 58482,
+            "line": 65983,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 62860,
+            "line": 70337,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 62969,
+            "line": 70446,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63591,
+            "line": 71076,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 63696,
+            "line": 71182,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 68238,
+            "line": 75782,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 68995,
+            "line": 76545,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
           },
           {
-            "line": 72808,
+            "line": 80440,
             "section": "Rule",
             "disposition": "adapted",
             "reason": "importer does not preserve rule options: extended-matching"
@@ -15896,7 +15902,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_AntiAD.list",
-      "source_bytes": 151366,
+      "source_bytes": 131283,
       "source_rule_line": 1244,
       "source_policy": "REJECT",
       "source_options": [
@@ -15905,15 +15911,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "6a8bd43d57d5d2ba9e15c311a2afd512",
+      "source_md5_change_fingerprint": "6e626c0cf4761a653aa02686f6545996",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 185688,
+      "projected_bytes": 161580,
       "projection": {
-        "input_lines": 4924,
-        "emitted_lines": 4924,
-        "active_lines": 4924,
+        "input_lines": 4349,
+        "emitted_lines": 4349,
+        "active_lines": 4349,
         "sections": {
-          "Rule": 4924
+          "Rule": 4349
         },
         "diagnostics": [
           {
@@ -15927,7 +15933,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_01.list",
-      "source_bytes": 3370292,
+      "source_bytes": 3370378,
       "source_rule_line": 1246,
       "source_policy": "REJECT",
       "source_options": [
@@ -15936,9 +15942,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "2b12e2862809b56d3f7a42be08be8a9c",
+      "source_md5_change_fingerprint": "db101fc834fb10d3c411934887dd5f6e",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 4070143,
+      "projected_bytes": 4070229,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -15958,7 +15964,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_Ultimate_02.list",
-      "source_bytes": 2382775,
+      "source_bytes": 2366135,
       "source_rule_line": 1247,
       "source_policy": "REJECT",
       "source_options": [
@@ -15967,15 +15973,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "40972e78a944730c1c12e308f02b2d43",
+      "source_md5_change_fingerprint": "5bf31ccb30b5149f6c485b41bfc0e50b",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 2856478,
+      "projected_bytes": 2836548,
       "projection": {
-        "input_lines": 67693,
-        "emitted_lines": 67693,
-        "active_lines": 67693,
+        "input_lines": 67223,
+        "emitted_lines": 67223,
+        "active_lines": 67223,
         "sections": {
-          "Rule": 67693
+          "Rule": 67223
         },
         "diagnostics": [
           {
@@ -15989,7 +15995,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list",
-      "source_bytes": 3285607,
+      "source_bytes": 3273583,
       "source_rule_line": 1249,
       "source_policy": "REJECT",
       "source_options": [
@@ -15998,9 +16004,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "89ebdd12e62fb87e580f28ae0eb145e8",
+      "source_md5_change_fingerprint": "003cd073e265e286d09de3d806cf219f",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3985466,
+      "projected_bytes": 3973442,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -16020,7 +16026,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list",
-      "source_bytes": 3290996,
+      "source_bytes": 3258008,
       "source_rule_line": 1250,
       "source_policy": "REJECT",
       "source_options": [
@@ -16029,9 +16035,9 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "f755bdbd45f08a110fdcd1d49563bfb1",
+      "source_md5_change_fingerprint": "2e591f57bbe2caeca52479459fee4ede",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 3990855,
+      "projected_bytes": 3957867,
       "projection": {
         "input_lines": 100000,
         "emitted_lines": 100000,
@@ -16051,7 +16057,7 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list",
-      "source_bytes": 1876152,
+      "source_bytes": 3276764,
       "source_rule_line": 1251,
       "source_policy": "REJECT",
       "source_options": [
@@ -16060,15 +16066,46 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "ab21c378315a7e468ebecf03d1c07193",
+      "source_md5_change_fingerprint": "fc80259d9bd1e5b5abc64ea98e7003e8",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 2282593,
+      "projected_bytes": 3976623,
       "projection": {
-        "input_lines": 58083,
-        "emitted_lines": 58083,
-        "active_lines": 58083,
+        "input_lines": 100000,
+        "emitted_lines": 100000,
+        "active_lines": 100000,
         "sections": {
-          "Rule": 58083
+          "Rule": 100000
+        },
+        "diagnostics": [
+          {
+            "line": 0,
+            "section": "Rule",
+            "disposition": "adapted",
+            "reason": "parent RULE-SET options are not preserved: extended-matching,pre-matching,update-interval=86400"
+          }
+        ]
+      }
+    },
+    {
+      "source": "rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list",
+      "source_bytes": 605458,
+      "source_rule_line": 1252,
+      "source_policy": "REJECT",
+      "source_options": [
+        "extended-matching",
+        "pre-matching",
+        "update-interval=86400",
+        "no-resolve"
+      ],
+      "source_md5_change_fingerprint": "9d9740e08677808ca03a83eba7f304dc",
+      "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
+      "projected_bytes": 738458,
+      "projection": {
+        "input_lines": 19020,
+        "emitted_lines": 19020,
+        "active_lines": 19020,
+        "sections": {
+          "Rule": 19020
         },
         "diagnostics": [
           {
@@ -16082,8 +16119,8 @@
     },
     {
       "source": "rulesets/AdBlock/AdBlock_ThreatIntel.list",
-      "source_bytes": 2418031,
-      "source_rule_line": 1253,
+      "source_bytes": 2410509,
+      "source_rule_line": 1254,
       "source_policy": "REJECT",
       "source_options": [
         "extended-matching",
@@ -16091,15 +16128,15 @@
         "update-interval=86400",
         "no-resolve"
       ],
-      "source_md5_change_fingerprint": "b30bc37b0e3a2964a9563ed1a07d4a57",
+      "source_md5_change_fingerprint": "ac997dc1354b22cdb8df2f4e8b2d00d9",
       "embedded_in": "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule",
-      "projected_bytes": 2881391,
+      "projected_bytes": 2873197,
       "projection": {
-        "input_lines": 66216,
-        "emitted_lines": 66216,
-        "active_lines": 66216,
+        "input_lines": 66120,
+        "emitted_lines": 66120,
+        "active_lines": 66120,
         "sections": {
-          "Rule": 66216
+          "Rule": 66120
         },
         "diagnostics": [
           {
