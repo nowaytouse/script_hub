@@ -18,7 +18,19 @@ static VALID_IPV6_CIDR: Lazy<Regex> =
 // Existing service-owned brand zones must not be confused with open registration
 // suffixes such as com/co.uk. Ownership stays with their dedicated categories.
 const SERVICE_BRAND_SUFFIXES: &[&str] = &[
-    "apple", "goog", "gle", "android", "chrome", "bing", "azure", "office", "windows", "skype",
+    "apple",
+    "goog",
+    "gle",
+    "android",
+    "chrome",
+    "bing",
+    "azure",
+    "office",
+    "windows",
+    "skype",
+    "youtube",
+    "playstation",
+    "xbox",
 ];
 
 fn is_invalid_domain_regex(payload: &str) -> bool {

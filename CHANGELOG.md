@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Extend the existing Google, Apple, gaming and US media rulesets with selected MetaCubeX GeoSite sources. Compile country snapshots from the same AIO MMDB into the existing sing-box ruleset family and retain the Surge country fallback order during export.
+
 - Use GeoIP All in One for the bundled Surge database and inherit its MMDB source and weekly updates in FlClash. Add manual Shadowrocket Country URL guidance; keep sing-box on supported native rule sets.
 
 - Share lossless Body, Header, URL Rewrite and Map Local field handling across native module generation, cleanup and publication. Preserve literal JSON quotes and multiple replacement pairs, reject malformed published fields, and regenerate Surge, Shadowrocket and FlClash Preview modules through the same checks.

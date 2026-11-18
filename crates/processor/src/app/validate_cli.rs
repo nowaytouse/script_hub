@@ -135,11 +135,28 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         modules_root.join("surge"),
         modules_root.join("shadowrocket"),
     ];
-    let ruleset_dirs = [
+    let mut ruleset_dirs = vec![
         root.join("rulesets/AdBlock"),
         root.join("rulesets/RULE-SET"),
         root.join("rulesets/Sources/dns/mapping"),
     ];
+    let country_inputs = root.join(rust_processor::pipeline::geo_rulesets::COUNTRY_INPUTS);
+    if country_inputs
+        .try_exists()
+        .map_err(|error| error.to_string())?
+        || root.join("rulesets/SingBox/GeoIP_CN_Singbox.srs").is_file()
+        || root.join("rulesets/SingBox/GeoIP_TW_Singbox.srs").is_file()
+    {
+        require_publication_directory(root, &country_inputs)?;
+        for country in rust_processor::pipeline::geo_rulesets::COUNTRIES {
+            let source = country_inputs.join(format!("GeoIP_{country}.list"));
+            let compiled = root.join(format!("rulesets/SingBox/GeoIP_{country}_Singbox.srs"));
+            if !source.is_file() || !compiled.is_file() {
+                return Err(format!("Incomplete AIO country ruleset for {country}"));
+            }
+        }
+        ruleset_dirs.push(country_inputs);
+    }
     for directory in module_dirs.iter().chain(&ruleset_dirs) {
         require_publication_directory(root, directory)?;
     }

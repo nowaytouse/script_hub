@@ -254,6 +254,9 @@ fn run(
                 failures.join(", ")
             );
         }
+        if singbox.is_some_and(Path::is_file) {
+            rust_processor::pipeline::geo_rulesets::refresh_or_keep_countries(root)?;
+        }
     }
 
     // PROMAX owns both source downloads and local compilation.  Keep the rest
@@ -377,6 +380,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut classify_only = false;
     let mut flclash_only = false;
     let mut rewrites_only = false;
+    let mut geo_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
@@ -389,9 +393,10 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--classify-only" => classify_only = true,
             "--flclash-only" => flclash_only = true,
             "--rewrites-only" => rewrites_only = true,
+            "--geo-only" => geo_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--flclash-only|--rewrites-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--flclash-only|--rewrites-only|--geo-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -410,6 +415,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         classify_only,
         flclash_only,
         rewrites_only,
+        geo_only,
     ]
     .into_iter()
     .filter(|enabled| *enabled)
@@ -440,7 +446,28 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         None => None,
     };
 
-    let result = if rewrites_only && !execute {
+    let result = if geo_only && !execute {
+        println!("[INFO] dry run: AIO country refresh skipped");
+        Ok(())
+    } else if geo_only {
+        (|| {
+            let singbox = singbox
+                .as_ref()
+                .filter(|path| path.is_file())
+                .ok_or("--geo-only requires --singbox <executable>")?;
+            rust_processor::pipeline::geo_rulesets::refresh_or_keep_countries(&root)?;
+            rust_processor::general_update::refresh_geosite_supplements(&root)?;
+            rust_processor::url_rewriter::copy_github_variants(&root.to_string_lossy())?;
+            rust_processor::mihomo_generator::run_generator(&root)?;
+            if !rust_processor::srs_generator::run_srs_generator(
+                &root.to_string_lossy(),
+                &singbox.to_string_lossy(),
+            ) {
+                return Err("SRS generation failed".to_owned());
+            }
+            discard_semantic_noop_changes(&root)
+        })()
+    } else if rewrites_only && !execute {
         println!("[INFO] dry run: rewrite normalization skipped");
         Ok(())
     } else if rewrites_only {
@@ -543,6 +570,7 @@ mod tests {
             "--classify-only",
             "--flclash-only",
             "--rewrites-only",
+            "--geo-only",
         ] {
             assert_eq!(
                 run_cli(
@@ -713,6 +741,7 @@ mod tests {
             "--classify-only",
             "--flclash-only",
             "--rewrites-only",
+            "--geo-only",
         ];
         for (index, first) in modes.iter().enumerate() {
             for second in &modes[index + 1..] {

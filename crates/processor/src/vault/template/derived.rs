@@ -363,13 +363,36 @@ fn inline_rule(
     no_resolve: bool,
     yaml: &mut Vec<String>,
     sing: &mut Vec<Value>,
-) {
+    aio_providers: Option<&mut BTreeMap<&str, Value>>,
+) -> Result<(), VaultError> {
+    if kind == "GEOIP" && value.len() == 2 && value.bytes().all(|byte| byte.is_ascii_uppercase()) {
+        let options = if no_resolve { ",no-resolve" } else { "" };
+        yaml.push(format!("{kind},{value},{policy}{options}"));
+        let Some(sing_providers) = aio_providers else {
+            return Ok(());
+        };
+        let (tag, path) = native_sing_geoip_artifact(value)?;
+        let url = format!("{RAW}{path}");
+        links::validate_url(&url)?;
+        let provider = json!({"type":"remote", "tag":tag, "format":"binary", "url":url});
+        if let Some(existing) = sing_providers.get(tag) {
+            if existing != &provider {
+                return Err(VaultError::Format);
+            }
+        } else {
+            sing_providers.insert(tag, provider);
+        }
+        // Keep the source's country fallback in place, rather than merging its
+        // addresses into an earlier domain/service provider with another policy.
+        sing.push(sing_action(json!({"rule_set":[tag]}), policy));
+        return Ok(());
+    }
     if value.is_empty()
         || value.contains([',', '\\'])
         || (value.contains('/') && !matches!(kind, "IP-CIDR" | "IP-CIDR6"))
         || value.chars().any(char::is_control)
     {
-        return;
+        return Ok(());
     }
     let (kind, field, match_value) = match kind {
         "DOMAIN" => (kind, "domain", json!([value])),
@@ -379,20 +402,14 @@ fn inline_rule(
         "PROCESS-NAME" => (kind, "process_name", json!([value])),
         "SRC-PORT" => {
             let Ok(port) = value.parse::<u16>() else {
-                return;
+                return Ok(());
             };
             (kind, "source_port", json!([port]))
         }
         "PROTOCOL" if matches!(value, "TCP" | "UDP" | "tcp" | "udp") => {
             ("NETWORK", "network", json!([value.to_ascii_lowercase()]))
         }
-        // sing-box removed native GEOIP; do not broaden these into a different set.
-        "GEOIP" if value.len() == 2 && value.bytes().all(|byte| byte.is_ascii_uppercase()) => {
-            let options = if no_resolve { ",no-resolve" } else { "" };
-            yaml.push(format!("{kind},{value},{policy}{options}"));
-            return;
-        }
-        _ => return,
+        _ => return Ok(()),
     };
     let yaml_value = if kind == "NETWORK" {
         match_value[0].as_str().unwrap_or(value)
@@ -406,6 +423,24 @@ fn inline_rule(
     };
     yaml.push(format!("{kind},{yaml_value},{policy}{options}"));
     sing.push(sing_action(json!({(field):match_value}), policy));
+    Ok(())
+}
+
+fn native_sing_geoip_artifact(country: &str) -> Result<(&'static str, &'static str), VaultError> {
+    if country.len() != 2 || !country.bytes().all(|byte| byte.is_ascii_alphabetic()) {
+        return Err(VaultError::Format);
+    }
+    links::artifact_paths()
+        .find_map(|path| {
+            let relative = path.strip_prefix("rulesets/")?;
+            let tag = relative
+                .strip_prefix("SingBox/")?
+                .strip_suffix("_Singbox.srs")?;
+            tag.strip_prefix("GeoIP_")?
+                .eq_ignore_ascii_case(country)
+                .then_some((tag, relative))
+        })
+        .ok_or(VaultError::MissingArtifact)
 }
 
 fn provider_url(stem: &str, sing: bool) -> Result<Option<String>, VaultError> {
@@ -661,6 +696,9 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut yaml_providers = Map::new();
     let mut sing_rules = Vec::new();
     let mut sing_providers = BTreeMap::new();
+    let uses_aio = general
+        .get("geoip-maxmind-url")
+        .is_some_and(|source| source.trim_matches('"') == crate::pipeline::geo_rulesets::MMDB_URL);
     let mut sing_adblock_at = None;
     let mut final_policy = None;
     let mut expanded = Vec::new();
@@ -711,7 +749,8 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                                 no_resolve,
                                 &mut yaml_rules,
                                 &mut sing_rules,
-                            );
+                                None,
+                            )?;
                         }
                     }
                     continue;
@@ -762,7 +801,8 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                         no_resolve,
                         &mut yaml_rules,
                         &mut sing_rules,
-                    );
+                        uses_aio.then_some(&mut sing_providers),
+                    )?;
                 }
             }
             None => {}
@@ -860,6 +900,53 @@ fn validate_group_graph(graph: &BTreeMap<&str, Vec<&str>>) -> Result<(), VaultEr
 mod tests {
     use super::*;
 
+    #[test]
+    fn aio_country_fallbacks_keep_source_order_and_policy_in_both_projections() {
+        let source = Template {
+            name: "Synthetic AIO routing".into(),
+            client: Client::Surge,
+            content: format!(
+                "[General]\ngeoip-maxmind-url = {}\n[Proxy Group]\nProxy = select, policy-path={{{{SUBSCRIPTION_1}}}}\n[Rule]\nDOMAIN,service.example.test,Proxy\nGEOIP,US,Proxy\nGEOIP,JP,Proxy\nGEOIP,TW,Proxy\nGEOIP,CN,DIRECT,no-resolve\nFINAL,Proxy\n",
+                crate::pipeline::geo_rulesets::MMDB_URL
+            ),
+        };
+        let output = derive(&source).unwrap();
+        let flclash: Value = serde_saphyr::from_str(&output[0].content).unwrap();
+        assert_eq!(
+            flclash["rules"],
+            json!([
+                "DOMAIN,service.example.test,Proxy",
+                "GEOIP,US,Proxy",
+                "GEOIP,JP,Proxy",
+                "GEOIP,TW,Proxy",
+                "GEOIP,CN,DIRECT,no-resolve",
+                "MATCH,Proxy"
+            ])
+        );
+        let sing: Value = serde_json::from_str(&output[1].content).unwrap();
+        let rules = sing["route"]["rules"].as_array().unwrap();
+        assert_eq!(rules.last().unwrap()["outbound"], "direct");
+        let fallback = &rules[rules.len() - 5..];
+        assert_eq!(fallback[0]["domain"], json!(["service.example.test"]));
+        let providers = sing["route"]["rule_set"].as_array().unwrap();
+        for (rule, (country, policy)) in fallback[1..].iter().zip([
+            ("US", "Proxy"),
+            ("JP", "Proxy"),
+            ("TW", "Proxy"),
+            ("CN", "direct"),
+        ]) {
+            let tag = format!("GeoIP_{country}");
+            assert_eq!(rule["rule_set"], json!([tag]));
+            assert_eq!(rule["outbound"], policy);
+            let provider = providers.iter().find(|item| item["tag"] == tag).unwrap();
+            assert_eq!(provider["url"], format!("{RAW}SingBox/{tag}_Singbox.srs"));
+        }
+        assert_eq!(
+            native_sing_geoip_artifact("ZZ"),
+            Err(VaultError::MissingArtifact)
+        );
+    }
+
     fn geoip_fixture(general: &str) -> Template {
         Template {
             name: "Synthetic GeoIP profile".into(),
@@ -890,6 +977,7 @@ mod tests {
             assert!(sing["route"].get("geoip").is_none());
             assert!(sing.get("geox-url").is_none());
             assert!(!projections[1].content.contains(url));
+            assert!(!projections[1].content.contains("GeoIP_CN"));
         }
     }
 

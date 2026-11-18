@@ -453,7 +453,61 @@ fn downloader() -> Downloader {
     })
 }
 
-fn remote_content(remote_urls: &[String], downloads: &HashMap<String, String>) -> String {
+const CLASSICAL_GEOSITE: &str =
+    "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/classical/";
+
+fn portable_geosite(source: &str, content: &str) -> Result<String, String> {
+    use super::geo_rulesets::model::{Kind, parse_geosite};
+    use std::fmt::Write as _;
+    let mut output = String::new();
+    let mut excluded = 0;
+    for rule in
+        parse_geosite(content).map_err(|error| format!("{}: {error}", crate::redact_url(source)))?
+    {
+        if matches!(rule.kind, Kind::Domain | Kind::DomainSuffix) {
+            let row = format!("{},{}", rule.kind.as_str(), rule.value);
+            if let Some(rule) = crate::normalize_rule(&row) {
+                writeln!(output, "{rule}").expect("writing to a string");
+            } else {
+                excluded += 1;
+            }
+        } else {
+            // Existing ownership guards reason about exact and suffix hosts.
+            // Do not broaden a regex/keyword into one of those host matchers.
+            excluded += 1;
+        }
+    }
+    if output.is_empty() {
+        return Err(format!(
+            "no portable GeoSite rules in {}",
+            crate::redact_url(source)
+        ));
+    }
+    if excluded > 0 {
+        println!(
+            "[INFO] GeoSite {}: {excluded} rules outside the portable host subset",
+            crate::redact_url(source)
+        );
+    }
+    Ok(output)
+}
+
+#[cfg(test)]
+#[test]
+fn geosite_supplements_keep_exact_and_suffix_semantics() {
+    let input = "DOMAIN,one.example.test\nDOMAIN-SUFFIX,example.test\nDOMAIN-SUFFIX,com\nDOMAIN-KEYWORD,example\nDOMAIN-REGEX,^host[0-9]{1,3}\\.example\\.test$\n";
+    let output = portable_geosite("fixture", input).unwrap();
+    assert_eq!(
+        output,
+        "DOMAIN,one.example.test\nDOMAIN-SUFFIX,example.test\n"
+    );
+    assert!(portable_geosite("fixture", "DOMAIN,host.test,unexpected-policy").is_err());
+}
+
+fn remote_content(
+    remote_urls: &[String],
+    downloads: &HashMap<String, String>,
+) -> Result<String, String> {
     let (source_count, content_bytes) = remote_urls
         .iter()
         .filter_map(|url| downloads.get(url))
@@ -468,11 +522,62 @@ fn remote_content(remote_urls: &[String], downloads: &HashMap<String, String>) -
             if !first_source {
                 output.push('\n');
             }
-            output.push_str(content);
+            if url.starts_with(CLASSICAL_GEOSITE) {
+                output.push_str(&portable_geosite(url, content)?);
+            } else {
+                output.push_str(content);
+            }
             first_source = false;
         }
     }
-    output
+    Ok(output)
+}
+
+/// Refresh the reviewed GeoSite supplements on top of the last good categories
+/// without refreshing unrelated remote sources.
+pub(crate) fn refresh_geosite_supplements(root: &Path) -> Result<(), String> {
+    let manifests = discover_manifests(root)?;
+    let urls: BTreeSet<_> = manifests
+        .iter()
+        .flat_map(|manifest| &manifest.remote_urls)
+        .filter(|url| url.starts_with(CLASSICAL_GEOSITE))
+        .cloned()
+        .collect();
+    let batch = downloader().download_many(&urls);
+    if batch.contents.len() != urls.len() {
+        return Err("one or more reviewed GeoSite sources could not be refreshed".into());
+    }
+    let mut changes = Vec::new();
+    for manifest in manifests {
+        let sources: Vec<_> = manifest
+            .remote_urls
+            .into_iter()
+            .filter(|url| url.starts_with(CLASSICAL_GEOSITE))
+            .collect();
+        if sources.is_empty() {
+            continue;
+        }
+        let path = input_path(root, &manifest.name, "");
+        let mut rules = read_rules(&path)?;
+        let before = rules.len();
+        rules.extend(parse_rules(&remote_content(&sources, &batch.contents)?));
+        println!(
+            "[INFO] {}: {} new unique rows from reviewed GeoSite sources",
+            manifest.name,
+            rules.len() - before
+        );
+        if rules.len() != before {
+            changes.push((path, manifest.name, rules));
+        }
+    }
+    for (path, name, rules) in changes {
+        write_rules(&path, &name, &rules)?;
+    }
+    consolidate_rulesets(root)?;
+    split_gaming_rules(root)?;
+    enforce_category_boundaries(root)?;
+    enforce_jp_ownership(root)?;
+    Ok(())
 }
 
 fn process_manifest(
@@ -515,7 +620,7 @@ fn process_manifest(
         "rulesets/RULE-SET"
     });
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    let mut remote_content = remote_content(&manifest.remote_urls, downloads);
+    let mut remote_content = remote_content(&manifest.remote_urls, downloads)?;
     if manifest.name == "Apple" {
         let aliases = read_apple_alias_rules(root)?;
         if !aliases.is_empty() {
@@ -2375,7 +2480,7 @@ mod tests {
             ("last".to_string(), "omega".to_string()),
         ]);
 
-        assert_eq!(remote_content(&urls, &downloads), "alpha\n\nomega");
+        assert_eq!(remote_content(&urls, &downloads).unwrap(), "alpha\n\nomega");
     }
 
     #[test]

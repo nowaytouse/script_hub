@@ -41,6 +41,8 @@ psl = "2.1.254"
 percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
+maxminddb = { version = "0.33", default-features = false }
+sha2 = "0.11"
 ureq = { version = "3.5.2", features = ["socks-proxy"] }
 rusqlite = { version = "0.42", features = ["bundled"] }
 argon2 = { version = "0.6", optional = true, default-features = false, features = ["alloc", "zeroize"] }

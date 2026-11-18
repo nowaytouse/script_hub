@@ -5,6 +5,7 @@ pub mod firewall_sync;
 pub mod flclash;
 pub mod functional_update;
 pub mod general_update;
+pub(crate) mod geo_rulesets;
 mod helper_hosts;
 pub mod merge_bundles;
 pub mod mihomo_generator;

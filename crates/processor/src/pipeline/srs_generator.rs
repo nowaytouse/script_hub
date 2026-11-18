@@ -369,6 +369,7 @@ pub fn run_srs_generator(root_path: &str, singbox_path: &str) -> bool {
     let source_dirs = [
         (root_dir.join("rulesets/RULE-SET"), true),
         (root_dir.join("rulesets/Sources/dns/mapping"), false),
+        (root_dir.join(super::geo_rulesets::COUNTRY_INPUTS), false),
         (root_dir.join("rulesets/AdBlock"), true),
     ];
 
