@@ -434,11 +434,26 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
     let planned = super::plan(&root).unwrap();
     let main = root.join("modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule");
     let text = &planned[&main];
-    assert!(text.contains("[Script]"));
-    assert!(text.contains("[Map Local]"));
-    assert!(text.contains("[URL Rewrite]"));
-    assert!(!text.contains("[IP Rewrite]"));
-    assert!(!text.contains("RULE-SET,"));
+    let sections = super::parse_sections(text);
+    let [(name, rows)] = sections.as_slice() else {
+        panic!("PROMAX must contain a single routing section");
+    };
+    assert_eq!(name, "Rule");
+    assert!(text.len() <= super::MAX_PROMAX_BYTES);
+    assert!(rows.len() <= super::MAX_PROMAX_RULES);
+    assert!(
+        rows.iter()
+            .any(|(_, row)| row == "DOMAIN,aaid.umeng.com,REJECT")
+    );
+    assert!(rows.iter().any(|(_, row)| row.starts_with("DEST-PORT,")));
+    assert!(rows.iter().all(|(_, row)| {
+        let parts = super::fields(row).unwrap();
+        parts.len() == 3
+            && (matches!(parts[0].as_str(), "DOMAIN" | "DOMAIN-SUFFIX")
+                || super::is_port_rule(&parts[0]))
+            && super::is_block_policy(&parts[2])
+    }));
+    assert!(!rows.iter().any(|(_, row)| row.contains("ipinfo.io")));
     for (path, text) in &planned {
         if path.extension().is_some_and(|e| e == "sgmodule") {
             for (section, _) in super::parse_sections(text) {
@@ -488,34 +503,18 @@ fn promax_routing_sources_allow_only_safe_public_repository_lists() {
 }
 
 #[test]
-fn promax_routing_preserves_supported_rules_and_reports_source_options_once() {
+fn promax_routing_keeps_only_exact_and_suffix_domains() {
     let projection = super::render_routing(
-        "DOMAIN,ads.example.test\nIP-CIDR,192.0.2.0/24\nDEST-PORT,1234\nURL-REGEX,\"^https://example\\.test/a{1,3}\"\nUSER-AGENT,SyntheticAgent\n",
-        "AdBlock_Synthetic",
+        "DOMAIN,ads.example.test\nDOMAIN-SUFFIX,tracking.example.test\nDOMAIN-SUFFIX,single-label\nDOMAIN,ads.example.test-NO-DROP\nDOMAIN-KEYWORD,ads\nIP-CIDR,192.0.2.0/24\nDEST-PORT,1234\nURL-REGEX,^https://example.test/ads\n",
         "REJECT",
         &["no-resolve".into(), "pre-matching".into(), "extended-matching".into()],
     ).unwrap();
-    assert_eq!(projection.input_lines, 5);
-    assert_eq!(projection.sections["Rule"], 3);
-    assert_eq!(projection.sections["URL Rewrite"], 1);
-    assert!(
-        projection
-            .content
-            .contains("DOMAIN,ads.example.test,REJECT\n")
+    assert_eq!(projection.input_lines, 8);
+    assert_eq!(projection.sections["Rule"], 2);
+    assert_eq!(
+        projection.content,
+        "\n[Rule]\nDOMAIN,ads.example.test,REJECT\nDOMAIN-SUFFIX,tracking.example.test,REJECT\n"
     );
-    assert!(
-        projection
-            .content
-            .contains("IP-CIDR,192.0.2.0/24,REJECT,no-resolve\n")
-    );
-    assert!(projection.content.contains("DEST-PORT,1234,REJECT\n"));
-    assert!(
-        projection
-            .content
-            .contains("^https://example\\.test/a{1,3} reject\n")
-    );
-    assert!(!projection.content.contains("[MITM]"));
-    assert!(!projection.content.contains("[Script]"));
     assert_eq!(
         projection
             .diagnostics
@@ -524,28 +523,15 @@ fn promax_routing_preserves_supported_rules_and_reports_source_options_once() {
             .count(),
         1
     );
-    assert!(
+    assert_eq!(
         projection
             .diagnostics
             .iter()
-            .any(|d| d.reason.contains("USER-AGENT"))
+            .filter(|d| d.disposition == "omitted")
+            .count(),
+        6
     );
-    let direct =
-        super::render_routing("DOMAIN,allowed.example.test\n", "Synthetic", "DIRECT", &[]).unwrap();
-    assert!(
-        direct
-            .content
-            .contains("DOMAIN,allowed.example.test,DIRECT")
-    );
-    assert!(
-        super::render_routing(
-            "DOMAIN,ads.example.test\n",
-            "Synthetic",
-            "PrivateGroup",
-            &[]
-        )
-        .is_err()
-    );
+    assert!(super::render_routing("DOMAIN,ads.example.test\n", "DIRECT", &[]).is_err());
 }
 
 #[test]
@@ -553,15 +539,15 @@ fn promax_routing_retains_registered_notices_without_private_profile_material() 
     let root = temporary();
     fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
     fs::write(
-        root.join("rulesets/AdBlock/AdBlock_Synthetic.list"),
+        root.join("rulesets/AdBlock/AdBlock_Local.list"),
         "DOMAIN,ads.example.test\n",
     )
     .unwrap();
     let source = fixture(
-        "[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Synthetic.list,REJECT\n",
+        "[Rule]\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\n",
     );
     let routing = super::plan_promax_routing(&root, &source).unwrap();
-    let projection = super::render_embedded(&source, &routing).unwrap();
+    let projection = super::render_embedded(&source, Some(&routing)).unwrap();
     for (owner, notice) in super::REGISTERED_MIT_NOTICES {
         assert!(
             projection
@@ -612,51 +598,30 @@ fn promax_routing_retains_registered_notices_without_private_profile_material() 
 }
 
 #[test]
-fn promax_routing_plan_keeps_declaration_order_and_reports_empty_shards() {
+fn promax_routing_plan_uses_only_the_approved_local_ad_list() {
     let root = temporary();
-    fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
-    fs::write(
-        root.join("rulesets/AdBlock/AdBlock_Z.list"),
-        "DOMAIN,z.example.test\n",
-    )
-    .unwrap();
-    fs::write(
-        root.join("rulesets/AdBlock/AdBlock_Empty.list"),
-        "USER-AGENT,Synthetic\n",
-    )
-    .unwrap();
-    fs::write(
-        root.join("rulesets/AdBlock/AdBlock_A.list"),
-        "DOMAIN,a.example.test\n",
-    )
-    .unwrap();
+    let local = root.join(super::PROMAX_AD_LIST);
+    fs::create_dir_all(local.parent().unwrap()).unwrap();
+    let rules = "DOMAIN,local.example.test\n";
+    fs::write(&local, rules).unwrap();
     let source = fixture(
-        "[Rule]\nRULE-SET,Local inline,REJECT\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Z.list,REJECT,pre-matching\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Empty.list,REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_A.list,DIRECT\n[Ruleset Local inline]\nDOMAIN,inline.example.test\n",
+        "[Rule]\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Advertising_01.list,REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\n",
     );
     let reports = super::plan_promax_routing(&root, &source).unwrap();
-    assert_eq!(reports.len(), 3);
-    assert!(reports[0].source.ends_with("AdBlock_Z.list"));
-    assert!(reports[1].source.ends_with("AdBlock_Empty.list"));
-    assert!(reports[2].source.ends_with("AdBlock_A.list"));
-    assert!(reports[1].embedded_in.is_none());
-    assert_eq!(reports[1].projection.active_lines, 0);
-    assert!(reports[1].source_bytes > 0);
-    assert_eq!(reports[1].projected_bytes, 0);
-    assert_eq!(reports[0].source_bytes, "DOMAIN,z.example.test\n".len());
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0].source, super::PROMAX_AD_LIST);
+    assert_eq!(reports[0].source_bytes, rules.len());
     assert_eq!(
         reports[0].projected_bytes,
         reports[0].projection.content.len()
     );
     assert_eq!(reports[0].embedded_in.as_deref(), Some(super::MAIN_MODULE));
-    assert_eq!(reports[2].embedded_in.as_deref(), Some(super::MAIN_MODULE));
-    let before = reports[0].projection.content.clone();
-    fs::write(
-        root.join("rulesets/AdBlock/AdBlock_Z.list"),
-        "DOMAIN,changed.example.test\n",
-    )
-    .unwrap();
+    fs::write(&local, "DOMAIN,changed.example.test\n").unwrap();
     let refreshed = super::plan_promax_routing(&root, &source).unwrap();
-    assert_ne!(refreshed[0].projection.content, before);
+    assert_ne!(
+        refreshed[0].projection.content,
+        reports[0].projection.content
+    );
     assert!(
         super::plan_promax_routing(
             &root,
@@ -664,10 +629,8 @@ fn promax_routing_plan_keeps_declaration_order_and_reports_empty_shards() {
         )
         .is_err()
     );
-    assert!(
-        super::read_public_bounded(&root, &root.join("rulesets/AdBlock/AdBlock_Z.list"), 8)
-            .is_err()
-    );
+    fs::write(&local, "DOMAIN-KEYWORD,ads\n").unwrap();
+    assert!(super::plan_promax_routing(&root, &source).is_err());
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -675,10 +638,10 @@ fn promax_routing_plan_keeps_declaration_order_and_reports_empty_shards() {
 fn full_public_plan_is_identical_for_lf_and_crlf_worktrees() {
     let root = temporary();
     let source_path = root.join("modules/surge/head_expanse").join(super::PROMAX);
-    let ruleset_path = root.join("rulesets/AdBlock/AdBlock_Synthetic.list");
+    let ruleset_path = root.join("rulesets/AdBlock/AdBlock_Local.list");
     fs::create_dir_all(ruleset_path.parent().unwrap()).unwrap();
     let source = fixture(
-        "[Rule]\nDOMAIN,inline.example.test,REJECT\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Synthetic.list,REJECT,no-resolve\n",
+        "[Rule]\nDOMAIN,inline.example.test,REJECT\nRULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_Local.list,REJECT,no-resolve\n",
     );
     let ruleset = "# Synthetic public list\nDOMAIN,ads.example.test\nIP-CIDR,192.0.2.0/24\n";
     fs::write(&source_path, &source).unwrap();
@@ -704,48 +667,39 @@ fn full_public_plan_is_identical_for_lf_and_crlf_worktrees() {
 }
 
 #[test]
-fn merged_promax_keeps_source_positions_and_deduplicates_only_exact_rows() {
+fn lightweight_promax_keeps_shared_ports_and_local_ads_in_order() {
     let root = temporary();
-    fs::create_dir_all(root.join("rulesets/AdBlock")).unwrap();
+    let local = root.join(super::PROMAX_AD_LIST);
+    fs::create_dir_all(local.parent().unwrap()).unwrap();
     fs::write(
-        root.join("rulesets/AdBlock/AdBlock_One.list"),
-        "DOMAIN,first.example.test\nDOMAIN,shared.example.test\nIP-CIDR,192.0.2.0/24\n",
-    )
-    .unwrap();
-    fs::write(
-        root.join("rulesets/AdBlock/AdBlock_Two.list"),
-        "DOMAIN,shared.example.test\nDOMAIN,last.example.test\nIP-CIDR,192.0.2.0/24\n",
-    )
-    .unwrap();
+        local,
+        "DOMAIN,first.example.test\nDOMAIN,first.example.test\nDOMAIN-SUFFIX,last.example.test\nIP-CIDR,192.0.2.0/24\n",
+    ).unwrap();
     let source = fixture(
-        "[Rule]\nDOMAIN,before.example.test,DIRECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_One.list,REJECT,no-resolve\nDOMAIN,middle.example.test,DIRECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Two.list,REJECT\nDOMAIN,shared.example.test,DIRECT\nDOMAIN,after.example.test,DIRECT\n",
+        "#!requirement=CORE_VERSION>=6010000\n[Rule]\nRULE-SET,Script Hub PROMAX Firewall ports 01,REJECT-DROP,no-resolve\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\nRULE-SET,Script Hub PROMAX IP pre-match 02,REJECT,no-resolve,pre-matching\nDEST-PORT,5678,REJECT\nDOMAIN,allowed.example.test,DIRECT\n[Ruleset Script Hub PROMAX Firewall ports 01]\nDEST-PORT,1234\n[Ruleset Script Hub PROMAX IP pre-match 02]\nIP-CIDR,192.0.2.0/24,no-resolve\n[MITM]\nhostname = %APPEND% ads.example.test\n[URL Rewrite]\n^https://ads.example.test/ reject\n",
     );
     let routing = super::plan_promax_routing(&root, &source).unwrap();
-    let merged = super::render_embedded(&source, &routing).unwrap();
-    let rows = super::parse_sections(&merged.content)
-        .into_iter()
-        .find(|(s, _)| s == "Rule")
-        .unwrap()
-        .1
-        .into_iter()
-        .map(|(_, s)| s)
-        .collect::<Vec<_>>();
+    let merged = super::render_embedded(&source, Some(&routing)).unwrap();
+    let sections = super::parse_sections(&merged.content);
+    let [(name, rows)] = sections.as_slice() else {
+        panic!("PROMAX must contain only routing rules");
+    };
+    assert_eq!(name, "Rule");
     assert_eq!(
-        rows,
+        rows.iter().map(|(_, row)| row.as_str()).collect::<Vec<_>>(),
         [
-            "DOMAIN,before.example.test,DIRECT",
+            "DEST-PORT,1234,REJECT-DROP",
             "DOMAIN,first.example.test,REJECT",
-            "DOMAIN,shared.example.test,REJECT",
-            "IP-CIDR,192.0.2.0/24,REJECT,no-resolve",
-            "DOMAIN,middle.example.test,DIRECT",
-            "DOMAIN,last.example.test,REJECT",
-            "IP-CIDR,192.0.2.0/24,REJECT",
-            "DOMAIN,shared.example.test,DIRECT",
-            "DOMAIN,after.example.test,DIRECT"
+            "DOMAIN-SUFFIX,last.example.test,REJECT",
+            "DEST-PORT,5678,REJECT",
         ]
     );
-    assert!(super::validate_merged_size(super::MAX_ROUTING_TOTAL_BYTES).is_ok());
-    assert!(super::validate_merged_size(super::MAX_ROUTING_TOTAL_BYTES + 1).is_err());
+    assert!(
+        super::validate_promax_load_budget(super::MAX_PROMAX_BYTES, super::MAX_PROMAX_RULES)
+            .is_ok()
+    );
+    assert!(super::validate_promax_load_budget(super::MAX_PROMAX_BYTES + 1, 0).is_err());
+    assert!(super::validate_promax_load_budget(0, super::MAX_PROMAX_RULES + 1).is_err());
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -785,7 +739,15 @@ fn retiring_firewall_requires_promax_coverage_and_owned_outputs() {
     let firewall = surge.join(super::FIREWALL_SURGE_FILE);
     let promax = surge.join(super::PROMAX);
     fs::write(&firewall, fixture("[Rule]\nDEST-PORT,1234,REJECT\n")).unwrap();
-    fs::write(&promax, fixture("[Rule]\nDEST-PORT,4321,REJECT\n")).unwrap();
+    let local = root.join(super::PROMAX_AD_LIST);
+    fs::create_dir_all(local.parent().unwrap()).unwrap();
+    fs::write(local, "DOMAIN,ads.example.test\n").unwrap();
+    let promax_source = |port| {
+        fixture(&format!(
+            "[Rule]\nDEST-PORT,{port},REJECT\nRULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_Local.list,REJECT\n"
+        ))
+    };
+    fs::write(&promax, promax_source(4321)).unwrap();
     let head = root.join("modules/flclash/head_expanse");
     let mirror = head.join("github");
     fs::create_dir_all(&mirror).unwrap();
@@ -798,7 +760,7 @@ fn retiring_firewall_requires_promax_coverage_and_owned_outputs() {
     }
     assert!(run_generator(&root).is_err());
     assert!(retired.iter().all(|path| path.exists()));
-    fs::write(&promax, fixture("[Rule]\nDEST-PORT,1234,REJECT\n")).unwrap();
+    fs::write(&promax, promax_source(1234)).unwrap();
     fs::write(&retired[1], "#!name=Locally managed\n").unwrap();
     assert!(run_generator(&root).is_err());
     assert!(retired.iter().all(|path| path.exists()));

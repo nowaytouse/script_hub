@@ -6,10 +6,10 @@
 
 ## 安装入口
 
-- **PROMAX 唯一安装入口**：[ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。支持的路由、重写和脚本均合并在此模块内；首次导入和即时更新优先用此 GitHub 直连地址。
+- [PROMAX 唯一安装入口](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。临时兼容版保留本地应用广告域名和防火墙端口规则。
 - **其他预览版模块与兼容报告**：[modules/flclash](../modules/flclash/)。应用增强合集按需单独选择，不要把全部模块一键全开。
 
-请使用上面的 GitHub 直连链接：合并文件超过 [jsDelivr 的 GitHub 单文件 20 MB 限制](https://www.jsdelivr.com/documentation)，GUI 因此禁用此模块的 CDN 复制。其他 PROMAX 仓库路径只是同一模块的兼容镜像，只需安装一份。
+已安装 PROMAX 的话，用上面的 GitHub 直连地址更新原条目，可避开 CDN 缓存。新版名称为 **FlClash Preview · AdBlock PROMAX (Compatibility)**，有效内容只有规则。加载此版本无需授予脚本权限或信任 CA。
 
 在当前配置的**进阶配置 → MITM → 模块 → 添加**中选择 URL 导入；也可先下载，再从模块页按文件导入。使用原生模块页，不要导入到订阅／配置页。保留原配置供回滚；`FlClash-Surge.yaml` 继承 Surge 分流，不额外添加广告规则提供方。
 
@@ -25,9 +25,9 @@ HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流
 
 Rust 生成器读取包括 PROMAX 在内的当前公开 Surge 模块，生成独立的 FlClash Preview 产物。保留受支持的 URL／Header／Body Rewrite、Map Local、脚本和 MITM 主机范围；支持的内联路由规范化后保留。不兼容的节、参数或策略会进入兼容报告。
 
-原生解析器不能加载远程 `RULE-SET`。生成器将源 PROMAX 显式声明的 23 份本仓库公开列表展开到同一个主模块，按源顺序保留支持的规则并去除完全重复项。不支持的条目（包括 `USER-AGENT`）及丢失的 Surge 选项（包括 `pre`／`extended-matching`）仍记录在[兼容目录](../modules/flclash/catalog.json)中，来源与许可通知继续保留。模板不会增加广告规则提供方。
+原生解析器不能加载远程 `RULE-SET`。临时 PROMAX 仅复用源模块引用的本地应用广告表中的精确域名、带点的域名后缀和原有端口规则。产物上限为 128 KiB 和 3,000 条规则，[兼容目录](../modules/flclash/catalog.json)记录来源和省略项。当前配置模板可直接配合使用。
 
-合并文件较大，生成器的体积限制不代表私有预览内核的导入速度或内存保证。`[IP Rewrite]`、`[General]`、任意代理分组策略、其他远程规则集，以及无法表示的 jq／结构化 body／条件操作继续报告为遗漏。域名／IP 分流无需解密；HTTPS URL 重写仍需应用自身的 MITM／CA 流程。
+其他预览模块仍可使用受支持的 HTTPS 处理条目。`[IP Rewrite]`、`[General]`、任意代理分组策略、其他远程规则集，以及无法表示的 jq／结构化 body／条件操作继续报告为遗漏。
 
 模块不会替换订阅、整个配置、系统 DNS、TUN 或全局 TLS／安全选项。原生模块路由只支持解析器接受的 DIRECT／REJECT 系列；这些已支持的规则仍会影响匹配流量。兼容报告列出来源和适配／遗漏数量，遗漏不代表语义等价。
 

@@ -6,12 +6,12 @@ These modules target **FlClash testing/preview builds with the native MITM modul
 
 ## Install from the repository
 
-PROMAX has one installation entry, containing its supported routing, rewrites and scripts:
+PROMAX has one installation entry. The temporary compatibility module contains only local app ad domains and firewall port rules.
 
 - [ScriptHub.AdBlock.Preview.sgmodule](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule) — direct GitHub URL for first installation and timely refresh.
 - [Other Preview modules and compatibility report](../modules/flclash/) — select additional application bundles separately.
 
-Use the direct GitHub link above: the merged file exceeds [jsDelivr's 20 MB GitHub file limit](https://www.jsdelivr.com/documentation), so the GUI disables CDN copying for it. Other PROMAX repository paths are compatibility mirrors of the same module; install only one.
+If PROMAX is already installed, update that entry using the direct GitHub link above to avoid CDN cache delays. It should show **FlClash Preview · AdBlock PROMAX (Compatibility)** and a single Rule section. This edition uses no scripts or HTTPS interception, so it needs neither script permission nor CA trust.
 
 In the active profile's advanced configuration, open **MITM → Modules → Add**, then import the module URL (or download the file and use file import). Use the native module page, not the subscription/profile importer. Keep the existing profile for rollback. `FlClash-Surge.yaml` inherits Surge routing without adding extra advertising providers.
 
@@ -27,9 +27,9 @@ Source parameter definitions, descriptions and declared placeholders are retaine
 
 The generator reads the current public Surge module outputs, including PROMAX, and produces a separate, reproducible Preview namespace. It retains supported URL/header/body rewrites, Map Local responses, script declarations and MITM host scopes. Supported inline routing is normalized; incompatible sections, options and policy targets are counted in the compatibility report.
 
-The native importer cannot load remote `RULE-SET` entries. The generator expands the 23 public repository lists explicitly declared by source PROMAX into the same main module, retaining supported rules in source order and removing exact duplicates. Unsupported entries, including `USER-AGENT`, and lost Surge options such as `pre`/`extended-matching` remain in the [compatibility catalog](../modules/flclash/catalog.json). Sources and license notices are retained; no advertising providers are added to the template.
+The native importer cannot load remote `RULE-SET` entries. The temporary PROMAX projection reuses only the source-declared local app ad list's exact domains and dotted suffixes, plus the existing port rules. It has a 128 KiB and 3,000-rule publication limit. The [compatibility catalog](../modules/flclash/catalog.json) records omissions and source information. The template needs no extra provider.
 
-The combined module is large; generation limits are not guarantees of import speed or memory use on the private preview core. `[IP Rewrite]`, `[General]`, arbitrary proxy-group policies, other remote rulesets, and unsupported jq/structured-body or conditional operations remain reported omissions. Domain/IP routing needs no decryption; HTTPS URL rewrites still require the application's MITM/CA workflow.
+Other Preview modules continue to project supported HTTPS handlers. `[IP Rewrite]`, `[General]`, arbitrary proxy-group policies, other remote rulesets, and unsupported jq/structured-body or conditional operations remain reported omissions.
 
 The module does not replace the profile, its subscription, system DNS, TUN settings or global TLS/security settings. Routing policies in native modules are limited to the parser's DIRECT/REJECT family. A module's supported routing rules still affect matching traffic.
 

@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Replace the oversized FlClash Preview PROMAX payload with a temporary routing-only module at the existing subscription URL. Keep the local app ad domains and merged firewall ports. Omit large aggregate lists, scripts, rewrites, and MITM, and enforce a 128 KiB and 3,000-rule publication budget.
+
 - Publish an installable FlClash Preview AdBlock Helper for MITM exclusions and share the expanded public IPv4/IPv6 resolver mappings with the FlClash template. Retire the duplicate standalone FlClash Firewall after verifying its supported port rules are already in PROMAX.
 
 - Add certificate-verified IPv6 AliDNS bootstrap and a synthetic AAAA range to IPv6-enabled FlClash exports. Generate dual-stack AliDNS host mappings for the bundled native templates and public resolver mappings for the Surge and Shadowrocket AdBlock Helper without changing resolver selection.

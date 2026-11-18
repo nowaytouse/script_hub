@@ -260,7 +260,7 @@ mod bundled_tests {
                     .filter(|m| m.filename == "ScriptHub.AdBlock.Preview.sgmodule")
                     .collect::<Vec<_>>();
                 assert_eq!(promax.len(), 1);
-                assert!(promax[0].install_url.is_empty());
+                assert!(safe_https_single_field_url(&promax[0].install_url));
                 assert!(safe_https_single_field_url(&promax[0].github_install_url));
             }
         }
