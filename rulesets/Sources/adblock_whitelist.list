@@ -27,6 +27,8 @@ DOMAIN-SUFFIX,youtube.com
 DOMAIN-SUFFIX,ytimg.com
 DOMAIN-SUFFIX,yt3.ggpht.com
 DOMAIN-SUFFIX,yt4.ggpht.com
+# YouTube asset family selected by the existing Google GeoSite source.
+DOMAIN-SUFFIX,ggpht.cn
 # YouTube channel/avatar image delivery, separate from advertising endpoints.
 DOMAIN,yt3.googleusercontent.com
 # Pinterest's public Pin API uses i.pinimg.com for images; the public web app
@@ -791,6 +793,47 @@ DOMAIN-SUFFIX,larksuite.com
 # ============ 测速工具 ============
 DOMAIN-SUFFIX,speedtest.net
 DOMAIN-SUFFIX,fast.com
+
+# IP lookup pages, documented APIs and public site assets use exact host exceptions.
+# https://ipinfo.io/developers/ipinfo-api
+DOMAIN,ipinfo.io
+DOMAIN,www.ipinfo.io
+DOMAIN,api.ipinfo.io
+DOMAIN,cdn.ipinfo.io
+DOMAIN,assets.ipinfo.io
+DOMAIN,website-cdn.ipinfo.io
+DOMAIN,website-cdn.assets.ipinfo.io
+# https://www.ipify.org/
+DOMAIN,ipify.org
+DOMAIN,www.ipify.org
+DOMAIN,api.ipify.org
+DOMAIN,api6.ipify.org
+DOMAIN,api64.ipify.org
+DOMAIN,geo.ipify.org
+# https://ip.sb/api/
+DOMAIN,ip.sb
+DOMAIN,api.ip.sb
+DOMAIN,api-ipv4.ip.sb
+DOMAIN,api-ipv6.ip.sb
+# https://ip-api.com/docs
+DOMAIN,ip-api.com
+DOMAIN,pro.ip-api.com
+DOMAIN,cache.ip-api.com
+# https://ipapi.co/api/
+DOMAIN,ipapi.co
+# https://ipapi.is/developers.html
+DOMAIN,api.ipapi.is
+# https://www.myip.com/api-docs/
+DOMAIN,api.myip.com
+# https://ipwhois.io/documentation
+DOMAIN,ipwho.is
+DOMAIN,icanhazip.com
+# https://www.ip2location.com/
+DOMAIN,ip2location.com
+DOMAIN,www.ip2location.com
+# https://www.ipinfodb.com/api
+DOMAIN,ipinfodb.com
+DOMAIN,www.ipinfodb.com
 
 # ============ 天气服务 ============
 DOMAIN-SUFFIX,weather.com

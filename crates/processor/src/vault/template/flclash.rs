@@ -20,6 +20,11 @@ const DNS_RESOLVERS: &[&str] = &[
     "direct-nameserver",
 ];
 const CN_DOH: &str = "https://dns.alidns.com/dns-query#DIRECT";
+// AliDNS IPv6 certificates use the provider name, not the IPv6 address.
+pub(super) const DNS6_BOOTSTRAP: [&str; 2] = [
+    "https://[2400:3200::1]/dns-query#DIRECT&name-cert-verify=dns.alidns.com",
+    "https://[2400:3200:baba::1]/dns-query#DIRECT&name-cert-verify=dns.alidns.com",
+];
 
 #[derive(Clone, Copy)]
 enum UrlMode {
@@ -408,6 +413,7 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
                         "nameserver-policy",
                         "fake-ip-filter",
                         "fake-ip-range",
+                        "fake-ip-range6",
                     ],
                 )?;
                 for (key, value) in map {
@@ -417,6 +423,11 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
                         }
                         "enhanced-mode" | "fake-ip-range" => {
                             public_text(value)?;
+                        }
+                        "fake-ip-range6" => {
+                            public_text(value)?
+                                .parse::<ipnet::Ipv6Net>()
+                                .map_err(|_| VaultError::Format)?;
                         }
                         "nameserver-policy" => {
                             for (selector, upstreams) in object(value)? {
@@ -599,11 +610,13 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
 }
 
 fn encrypted_resolver(value: &Value, bootstrap: bool) -> Result<(), VaultError> {
-    let url = Url::parse(public_text(value)?).map_err(|_| VaultError::Format)?;
+    let address = public_text(value)?;
+    let url = Url::parse(address).map_err(|_| VaultError::Format)?;
     if url.scheme() != "https"
         || url.host().is_none()
         || (bootstrap && !matches!(url.host(), Some(url::Host::Ipv4(_) | url::Host::Ipv6(_))))
-        || !matches!(url.fragment(), None | Some("DIRECT"))
+        || !(matches!(url.fragment(), None | Some("DIRECT"))
+            || bootstrap && DNS6_BOOTSTRAP.contains(&address))
     {
         return Err(VaultError::Format);
     }

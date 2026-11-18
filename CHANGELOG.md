@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+- Add certificate-verified IPv6 AliDNS bootstrap and a synthetic AAAA range to IPv6-enabled FlClash exports. Generate dual-stack AliDNS host mappings for the bundled native templates and public resolver mappings for the Surge and Shadowrocket AdBlock Helper without changing resolver selection.
+
+- Protect reviewed IP lookup websites, APIs and assets from broad advertising and HaGeZi Multi ULTIMATE blocks. Match exact host and suffix boundaries consistently so dedicated tracking subdomains remain eligible for blocking and normal routing still selects the egress.
+
 - Use unified latency measurement, concurrent TCP connections, a memory-conservative GEO loader, and two encrypted DNS bootstrap resolvers in the bundled FlClash export. FlClash Preview applies its app-wide GEO settings and selected overrides at runtime.
 
 - Use laincat's dedicated IPtoASN database for the existing IP-ASN rules in the bundled FlClash export. Keep the AIO country MMDB and the inherited weekly GEO update setting.

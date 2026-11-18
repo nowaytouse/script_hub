@@ -272,14 +272,39 @@ const LOCAL_SYSTEM_DNS_HOSTS: &[&str] = &[
     "tendawifi.com",
 ];
 
-const ALIDNS_DOH_HOST: &str = "dns.alidns.com";
-// Bootstrap addresses only, not additional DNS servers. https://alidns.com/
-const ALIDNS_DOH_BOOTSTRAP: &str = "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1";
+pub(crate) const ALIDNS_DOH_HOST: &str = "dns.alidns.com";
+pub(crate) const ALIDNS_DOH_BOOTSTRAP: &str =
+    "223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1";
+
+// Exact public resolver bootstrap addresses. These never select a DNS provider.
+// https://www.alidns.com/
+// https://developers.cloudflare.com/1.1.1.1/ip-addresses/
+// https://developers.google.com/speed/public-dns/docs/using
+// https://quad9.net/service/service-addresses-and-features/
+// https://adguard-dns.io/en/public-dns.html
+const PUBLIC_DOH_BOOTSTRAPS: &[(&str, &str)] = &[
+    (ALIDNS_DOH_HOST, ALIDNS_DOH_BOOTSTRAP),
+    (
+        "cloudflare-dns.com",
+        "1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001",
+    ),
+    (
+        "dns.google",
+        "8.8.8.8, 8.8.4.4, 2001:4860:4860::8888, 2001:4860:4860::8844",
+    ),
+    (
+        "dns.quad9.net",
+        "9.9.9.9, 149.112.112.112, 2620:fe::fe, 2620:fe::9",
+    ),
+    (
+        "dns.adguard-dns.com",
+        "94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff",
+    ),
+];
 const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
-    ALIDNS_DOH_HOST,
-    "cloudflare-dns.com",
-    "dns.google",
-    "dns.quad9.net",
+    // DNSPod's provider hostnames are resolved dynamically as recommended by its operator.
+    "doh.pub",
+    "dot.pub",
     // Old Helper profiles may still select these endpoints; exempt them without adding resolvers.
     "adblock.dns.mullvad.net",
     "dns.digitale-gesellschaft.ch",
@@ -319,11 +344,18 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
         .collect();
     hosts.sort_unstable();
     hosts.dedup();
+    hosts.extend(
+        PUBLIC_DOH_BOOTSTRAPS
+            .iter()
+            .map(|(host, addresses)| format!("{host} = {addresses}")),
+    );
 
     let mut exclusions = crate::promax::safety::apple_mitm_exclusions();
     exclusions.extend(
         ENCRYPTED_DNS_MITM_EXCLUSIONS
             .iter()
+            .copied()
+            .chain(PUBLIC_DOH_BOOTSTRAPS.iter().map(|&(host, _)| host))
             .map(|host| format!("-{host}")),
     );
     exclusions.sort_unstable();
@@ -337,7 +369,7 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
     let mut output = vec![
         "#!name=🌟 AdBlock Helper".to_string(),
         format!(
-            "#!desc={prefix}保留已有 DNS 与 DoH 设置。将指定局域网名称、设备入口和本地反查区交给当前系统 DNS，并排除 Apple 关键服务和加密 DNS 的 MITM。不改分流；需要 AliDNS 时另启用 AliDNS DoH 模块。"
+            "#!desc={prefix}保留已选 DNS 与分流。局域网名称及本地反查区交给系统 DNS，为常用 DoH 提供 IPv4 和 IPv6 引导地址，并排除相关 MITM。"
         ),
         "#!author=ScriptHub".to_string(),
         "#!category=『 🔝 Head Expanse › 首端扩域 』".to_string(),
@@ -627,6 +659,19 @@ mod tests {
                 .map(|line| line.split_once(" = ").unwrap())
             {
                 assert!(names.insert(host), "duplicate Host mapping: {host}");
+                if let Some((_, expected)) = super::PUBLIC_DOH_BOOTSTRAPS
+                    .iter()
+                    .find(|&&(resolver, _)| resolver == host)
+                {
+                    assert_eq!(mapping, *expected);
+                    let addresses: Vec<IpAddr> = mapping
+                        .split(',')
+                        .map(|ip| ip.trim().parse().unwrap())
+                        .collect();
+                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv4()).count(), 2);
+                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
+                    continue;
+                }
                 assert_eq!(mapping, "server:system");
                 assert!(
                     !host.contains(['*', '?'])
@@ -664,8 +709,8 @@ mod tests {
                 "*.icloud.com",
                 "a1.mzstatic.com",
                 "*.akamaized.net",
-                "cloudflare-dns.com",
-                ALIDNS_DOH_HOST,
+                "doh.pub",
+                "dot.pub",
                 "*.expertwifi.net",
                 "*.keenetic.net",
                 "*.tplinkwifi.net",
@@ -688,7 +733,13 @@ mod tests {
             assert!(excluded.contains("-account.apple.com"));
             assert!(excluded.contains("-dns.alidns.com"));
             assert!(excluded.contains("-cloudflare-dns.com"));
+            for &(host, _) in super::PUBLIC_DOH_BOOTSTRAPS {
+                assert!(names.contains(host));
+                assert!(excluded.contains(format!("-{host}").as_str()));
+            }
             for host in [
+                "doh.pub",
+                "dot.pub",
                 "adblock.dns.mullvad.net",
                 "dns.digitale-gesellschaft.ch",
                 "doh.applied-privacy.net",

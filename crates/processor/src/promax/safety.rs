@@ -570,7 +570,7 @@ impl SafetyPolicy {
             .next()
             .unwrap_or("")
             .to_ascii_lowercase();
-        self.domain_is_protected(&hostname) || self.suffix_intersects(&hostname)
+        self.domain_is_protected(&hostname) || self.hierarchy_intersects(&hostname)
     }
 
     pub(crate) fn hostname_can_have_mainland_handler(&self, hostname: &str) -> bool {
@@ -761,11 +761,10 @@ impl SafetyPolicy {
     }
 
     fn suffix_intersects(&self, blocked: &str) -> bool {
-        self.hierarchy_intersects(blocked)
-            || self
-                .protected_keywords
-                .iter()
-                .any(|keyword| blocked.contains(keyword))
+        // An exact exception protects that host, while a suffix rule also
+        // matches its own apex and descendants. A child suffix cannot hit an
+        // exact exception on its parent.
+        self.domain_is_protected(blocked) || self.has_descendant(blocked)
     }
 
     fn hierarchy_intersects(&self, host: &str) -> bool {

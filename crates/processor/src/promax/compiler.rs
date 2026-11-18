@@ -141,8 +141,8 @@ static CATEGORY_META: Lazy<HashMap<&'static str, CategoryMeta>> = Lazy::new(|| {
     m.insert(
         "ThreatIntel_Ultimate",
         CategoryMeta {
-            label_zh: "威胁情报·终极",
-            desc: "HaGeZi DNS-Blocklists ultimate",
+            label_zh: "综合拦截·Ultimate",
+            desc: "HaGeZi Multi ULTIMATE（广告、跟踪与安全混合源）",
         },
     );
     m.insert(

@@ -106,6 +106,10 @@ fn windows_dns_opt_in_rejects_plaintext_unsafe_fragments_and_unpinned_bootstrap(
             "https://bootstrap.example/dns-query",
         ),
         (
+            "https://192.0.2.53/dns-query",
+            "https://[2400:3200::1]/dns-query#DIRECT&name-cert-verify=wrong.example",
+        ),
+        (
             "https://regional.example/dns-query#DIRECT",
             "udp://192.0.2.54",
         ),
@@ -328,6 +332,7 @@ fn rejects_inline_nodes_credentials_and_unsupported_structures() {
         format!("{valid}\nunified-delay: 'true'\n"),
         format!("{valid}\ntcp-concurrent: 1\n"),
         format!("{valid}\ngeodata-loader: fixture-private-loader\n"),
+        format!("{valid}\ndns:\n  fake-ip-range6: 192.0.2.0/24\n"),
         valid.replace(
             PUBLIC_RULE_URL,
             "https://rules.example/list?%74oken=fixture-secret",

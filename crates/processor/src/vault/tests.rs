@@ -132,9 +132,12 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                 config["dns"]["default-nameserver"],
                 serde_json::json!([
                     "https://223.5.5.5/dns-query#DIRECT",
-                    "https://223.6.6.6/dns-query#DIRECT"
+                    "https://223.6.6.6/dns-query#DIRECT",
+                    "https://[2400:3200::1]/dns-query#DIRECT&name-cert-verify=dns.alidns.com",
+                    "https://[2400:3200:baba::1]/dns-query#DIRECT&name-cert-verify=dns.alidns.com"
                 ])
             );
+            assert_eq!(config["dns"]["fake-ip-range6"], "fdfe:dcba:9876::1/64");
             assert_eq!(config["geodata-mode"], false);
             assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
             assert_eq!(
@@ -151,6 +154,7 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             let mut section = "";
             let mut settings = std::collections::BTreeMap::new();
             let mut group_count = 0;
+            let mut bootstrap_count = 0;
             for line in rendered.lines().map(str::trim) {
                 if let Some(header) = line
                     .strip_prefix('[')
@@ -161,6 +165,11 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                     && let Some((key, value)) = line.split_once('=')
                 {
                     settings.insert(key.trim(), value.trim().trim_matches('"'));
+                } else if section.eq_ignore_ascii_case("Host")
+                    && line
+                        == "dns.alidns.com = 223.5.5.5, 223.6.6.6, 2400:3200::1, 2400:3200:baba::1"
+                {
+                    bootstrap_count += 1;
                 } else if section.eq_ignore_ascii_case("Proxy Group")
                     && !line.starts_with(['#', ';', '/'])
                 {
@@ -173,6 +182,7 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                     }
                 }
             }
+            assert_eq!(bootstrap_count, 1);
             for (key, expected) in [
                 ("internet-test-url", DIRECT_PROBE),
                 ("proxy-test-url", PROXY_PROBE),

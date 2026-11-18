@@ -1096,7 +1096,9 @@ impl RuleBoundary {
             }
             (Some(kind), Some(value)) if kind.eq_ignore_ascii_case("DOMAIN-SUFFIX") => {
                 let value = value.to_ascii_lowercase();
-                self.suffix_ancestor(&value) || self.has_descendant(&value)
+                self.domains.contains(&value)
+                    || self.suffix_ancestor(&value)
+                    || self.has_descendant(&value)
             }
             (Some(kind), Some(_))
                 if kind.eq_ignore_ascii_case("IP-CIDR")
@@ -2772,6 +2774,15 @@ mod tests {
                 .any(|error| error == "GlobalProxy is missing consolidated CDN rules")
         );
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn exact_domain_overlaps_its_suffix_apex_without_covering_the_subtree() {
+        let rules = std::collections::BTreeSet::from(["DOMAIN,lookup.example".to_string()]);
+        let boundary = super::RuleBoundary::from_rules(&rules);
+        assert!(boundary.intersects("DOMAIN-SUFFIX,lookup.example"));
+        assert!(!boundary.intersects("DOMAIN-SUFFIX,tracker.lookup.example"));
+        assert!(!boundary.covers("DOMAIN-SUFFIX,lookup.example"));
     }
 
     #[test]

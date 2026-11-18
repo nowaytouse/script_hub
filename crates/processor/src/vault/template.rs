@@ -5,6 +5,7 @@ mod flclash;
 mod links;
 
 use super::{Client, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, UnlockedVault, VaultError};
+use crate::pipeline::firewall_sync::{ALIDNS_DOH_BOOTSTRAP, ALIDNS_DOH_HOST};
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -29,10 +30,71 @@ pub(crate) fn unlock_for_display(
             .find(|template| template.client == Client::Surge)
             .ok_or(VaultError::Format)?;
         let derived = project_surge_profiles(surge)?;
+        for template in &mut vault.library_mut().templates {
+            if matches!(template.client, Client::Surge | Client::Shadowrocket) {
+                add_native_dns_bootstrap(&mut template.content)?;
+            }
+        }
         vault.library_mut().templates.extend(derived);
         vault.validate_for_storage()?;
     }
     Ok(vault)
+}
+
+fn add_native_dns_bootstrap(content: &mut String) -> Result<(), VaultError> {
+    let mut section = "";
+    let mut host_header = None;
+    let mut offset = 0;
+    let mut uses_alidns = false;
+    for raw in content.split_inclusive('\n') {
+        offset += raw.len();
+        let line = inline_comment(raw.trim()).0;
+        if let Some(header) = line.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            section = header;
+            if section.eq_ignore_ascii_case("Host") {
+                host_header = Some(offset);
+            }
+        } else if let Some((key, value)) = line.split_once('=') {
+            let key = key.trim();
+            if section.eq_ignore_ascii_case("Host") && key.eq_ignore_ascii_case(ALIDNS_DOH_HOST) {
+                return Ok(());
+            }
+            if section.eq_ignore_ascii_case("General")
+                && matches!(
+                    key,
+                    "encrypted-dns-server" | "dns-server" | "direct-dns-server"
+                )
+            {
+                uses_alidns |= value.split(',').any(|address| {
+                    Url::parse(address.trim()).is_ok_and(|url| {
+                        url.scheme() == "https" && url.host_str() == Some(ALIDNS_DOH_HOST)
+                    })
+                });
+            }
+        }
+    }
+    if uses_alidns {
+        let ending = if content.contains("\r\n") {
+            "\r\n"
+        } else {
+            "\n"
+        };
+        let mapping = format!("{ALIDNS_DOH_HOST} = {ALIDNS_DOH_BOOTSTRAP}{ending}");
+        if let Some(position) = host_header {
+            let separator = if content[..position].ends_with('\n') {
+                ""
+            } else {
+                ending
+            };
+            if content.len() + separator.len() + mapping.len() > MAX_TEMPLATE_BYTES {
+                return Err(VaultError::TooLarge);
+            }
+            content.insert_str(position, &format!("{separator}{mapping}"));
+        } else {
+            checked_push(content, &format!("{ending}[Host]{ending}{mapping}"))?;
+        }
+    }
+    Ok(())
 }
 
 /// Derives client profiles from a sanitized Surge template with explicit subscription slots.

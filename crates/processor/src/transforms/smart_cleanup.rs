@@ -476,7 +476,7 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
 
     let mut file_content = HashMap::new();
     let mut file_paths = HashMap::new();
-    let mut adblock_payloads = HashSet::new();
+    let mut adblock_matchers = HashSet::new();
     let adblock_dir = root.join("rulesets").join("AdBlock");
     let mut reject_lists = Vec::new();
     let entries = fs::read_dir(&adblock_dir)
@@ -504,7 +504,11 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
                 .iter()
                 .any(|prefix| filename.starts_with(prefix))
         {
-            adblock_payloads.extend(load_list(&path)?.into_keys());
+            adblock_matchers.extend(
+                load_list(&path)?
+                    .into_iter()
+                    .map(|(payload, rule)| (extract_type(&rule), payload)),
+            );
         }
     }
     let mut stats = HashMap::new();
@@ -696,12 +700,17 @@ pub fn run_cleanup(root_dir: &str) -> Result<HashMap<String, i32>, String> {
                     let is_adblock_prefix = ADBLOCK_ONLY_PREFIXES
                         .iter()
                         .any(|pfx| filename.starts_with(pfx));
-                    if !is_adblock_prefix && adblock_payloads.contains(&payload) {
+                    let rule_type = extract_type(rule);
+                    if !is_adblock_prefix
+                        && (adblock_matchers.contains(&(rule_type.clone(), payload.clone()))
+                            || rule_type == "DOMAIN"
+                                && adblock_matchers
+                                    .contains(&("DOMAIN-SUFFIX".to_string(), payload.clone())))
+                    {
                         semantic_cover_removed += 1;
                         continue;
                     }
 
-                    let rule_type = extract_type(rule);
                     if seen_payloads.contains(&(rule_type.clone(), payload.clone())) {
                         cross_file_removed += 1;
                         continue;
@@ -2111,7 +2120,7 @@ mod ruleset_cleanup_tests {
         let general_dir = root.join("rulesets/RULE-SET");
         fs::create_dir_all(&adblock_dir).unwrap();
         fs::create_dir_all(&general_dir).unwrap();
-        let generated = "# compiler-owned\nDOMAIN-SUFFIX,ads.example\n";
+        let generated = "# compiler-owned\nDOMAIN-SUFFIX,ads.example\nDOMAIN,lookup.example\n";
         fs::write(adblock_dir.join("AdBlock_Local.list"), generated).unwrap();
         fs::write(
             adblock_dir.join("reject-drop.list"),
@@ -2120,7 +2129,7 @@ mod ruleset_cleanup_tests {
         .unwrap();
         fs::write(
             general_dir.join("Example.list"),
-            "DOMAIN-SUFFIX,ads.example\nDOMAIN-SUFFIX,keep.example\n",
+            "DOMAIN-SUFFIX,ads.example\nDOMAIN,host.ads.example\nDOMAIN-SUFFIX,keep.example\nDOMAIN-SUFFIX,lookup.example\n",
         )
         .unwrap();
 
@@ -2131,8 +2140,9 @@ mod ruleset_cleanup_tests {
             generated
         );
         let output = fs::read_to_string(general_dir.join("Example.list")).unwrap();
-        assert!(!output.contains("ads.example"));
+        assert!(!output.contains("DOMAIN-SUFFIX,ads.example"));
         assert!(output.contains("keep.example"));
+        assert!(output.contains("DOMAIN-SUFFIX,lookup.example"));
         let reject = fs::read_to_string(adblock_dir.join("reject-drop.list")).unwrap();
         assert!(!reject.contains("ru1353t"));
         assert!(reject.contains("DOMAIN,ads.example"));

@@ -1,5 +1,6 @@
 //! Client projections of the unlocked bundled Surge profile, not a general profile converter.
 
+use super::flclash::DNS6_BOOTSTRAP;
 use super::{Client, Template, VaultError, inline_comment, links, slot_ranges};
 use crate::pipeline::geo_rulesets::MMDB_URL;
 use serde_json::{Map, Value, json};
@@ -253,14 +254,23 @@ fn derived_dns(general: &BTreeMap<&str, &str>) -> Result<Value, VaultError> {
             }
         })
         .collect::<Vec<_>>();
-    Ok(json!({
+    let mut bootstrap = DNS_BOOTSTRAP.to_vec();
+    if ipv6 {
+        bootstrap.extend(DNS6_BOOTSTRAP);
+    }
+    let mut dns = json!({
         "enable":true, "ipv6":ipv6,
         "enhanced-mode":"fake-ip", "fake-ip-range":"198.18.0.1/16",
         "use-hosts":true, "use-system-hosts":false, "respect-rules":true,
-        "default-nameserver":DNS_BOOTSTRAP,
+        "default-nameserver":bootstrap,
         "proxy-server-nameserver":proxy_resolvers, "nameserver":nameservers,
         "fake-ip-filter":["+.lan", "+.local"],
-    }))
+    });
+    if ipv6 {
+        // Reserved for synthetic AAAA answers in the profile; these are never DNS servers.
+        dns["fake-ip-range6"] = "fdfe:dcba:9876::1/64".into();
+    }
+    Ok(dns)
 }
 
 fn inherit_geoip(general: &BTreeMap<&str, &str>, yaml: &mut Value) -> Result<(), VaultError> {
@@ -1354,8 +1364,14 @@ mod tests {
             assert_eq!(yaml["dns"]["respect-rules"], true);
             assert_eq!(yaml["dns"]["nameserver"], expected);
             assert_eq!(yaml["dns"]["proxy-server-nameserver"], expected);
-            assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
+            assert_eq!(
+                yaml["dns"]["default-nameserver"],
+                json!([DNS_BOOTSTRAP, DNS6_BOOTSTRAP].concat())
+            );
         }
+        let ipv4_only = derived_dns(&BTreeMap::from([("ipv6", "false")])).unwrap();
+        assert_eq!(ipv4_only["default-nameserver"], json!(DNS_BOOTSTRAP));
+        assert!(ipv4_only.get("fake-ip-range6").is_none());
     }
 
     #[test]
@@ -1377,7 +1393,10 @@ mod tests {
             yaml["dns"]["proxy-server-nameserver"],
             json!(["https://dns.example.invalid/query#DIRECT"])
         );
-        assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
+        assert_eq!(
+            yaml["dns"]["default-nameserver"],
+            json!([DNS_BOOTSTRAP, DNS6_BOOTSTRAP].concat())
+        );
     }
 
     #[test]
@@ -1404,7 +1423,11 @@ mod tests {
         let yaml: Value = serde_saphyr::from_str(&rendered).unwrap();
         assert_eq!(yaml["dns"]["enable"], true);
         assert_eq!(yaml["dns"]["respect-rules"], true);
-        assert_eq!(yaml["dns"]["default-nameserver"], json!(DNS_BOOTSTRAP));
+        assert_eq!(
+            yaml["dns"]["default-nameserver"],
+            json!([DNS_BOOTSTRAP, DNS6_BOOTSTRAP].concat())
+        );
+        assert_eq!(yaml["dns"]["fake-ip-range6"], "fdfe:dcba:9876::1/64");
         assert_eq!(
             yaml["proxy-providers"]["subscription_1"]["url"],
             "https://example.invalid/subscription"
