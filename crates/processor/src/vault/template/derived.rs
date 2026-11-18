@@ -2,6 +2,7 @@
 
 use super::flclash::DNS6_BOOTSTRAP;
 use super::{Client, Template, VaultError, inline_comment, links, slot_ranges};
+use crate::pipeline::firewall_sync::PUBLIC_DOH_BOOTSTRAPS;
 use crate::pipeline::geo_rulesets::MMDB_URL;
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
@@ -835,8 +836,18 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     }
     let dns = derived_dns(&general)?;
     let ipv6 = dns["ipv6"].as_bool().ok_or(VaultError::Format)?;
+    let hosts = PUBLIC_DOH_BOOTSTRAPS
+        .iter()
+        .map(|&(host, addresses)| {
+            let addresses = addresses
+                .split(", ")
+                .filter(|address| ipv6 || !address.contains(':'))
+                .collect::<Vec<_>>();
+            (host.to_owned(), json!(addresses))
+        })
+        .collect::<Map<_, _>>();
     let mut yaml = json!({
-        "mode":"rule", "allow-lan":false, "ipv6":ipv6, "dns":dns,
+        "mode":"rule", "allow-lan":false, "ipv6":ipv6, "dns":dns, "hosts":hosts,
         "unified-delay":true, "tcp-concurrent":true, "geodata-loader":"memconservative",
         "proxy-providers":slots, "proxy-groups":yaml_groups,
         "rule-providers":yaml_providers, "rules":yaml_rules

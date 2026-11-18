@@ -333,6 +333,10 @@ fn rejects_inline_nodes_credentials_and_unsupported_structures() {
         format!("{valid}\ntcp-concurrent: 1\n"),
         format!("{valid}\ngeodata-loader: fixture-private-loader\n"),
         format!("{valid}\ndns:\n  fake-ip-range6: 192.0.2.0/24\n"),
+        format!("{valid}\nhosts: {{lan.example: ['192.0.2.2']}}\n"),
+        format!("{valid}\nhosts: {{dns.alidns.com: ['192.0.2.2']}}\n"),
+        format!("{valid}\nhosts: {{dns.alidns.com: ['private.example']}}\n"),
+        format!("{valid}\nhosts: {{dns.alidns.com: []}}\n"),
         valid.replace(
             PUBLIC_RULE_URL,
             "https://rules.example/list?%74oken=fixture-secret",

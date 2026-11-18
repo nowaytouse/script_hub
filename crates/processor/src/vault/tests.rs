@@ -138,6 +138,17 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                 ])
             );
             assert_eq!(config["dns"]["fake-ip-range6"], "fdfe:dcba:9876::1/64");
+            let hosts = config["hosts"].as_object().unwrap();
+            for &(name, addresses) in crate::pipeline::firewall_sync::PUBLIC_DOH_BOOTSTRAPS {
+                assert_eq!(
+                    hosts[name],
+                    serde_json::json!(addresses.split(", ").collect::<Vec<_>>())
+                );
+            }
+            assert_eq!(
+                hosts.len(),
+                crate::pipeline::firewall_sync::PUBLIC_DOH_BOOTSTRAPS.len()
+            );
             assert_eq!(config["geodata-mode"], false);
             assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
             assert_eq!(

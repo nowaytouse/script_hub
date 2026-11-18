@@ -4,6 +4,7 @@
 use super::{
     Client, MAX_SUBSCRIPTION_BYTES, MAX_TEMPLATE_BYTES, MAX_TEMPLATES, Template, VaultError,
 };
+use crate::pipeline::firewall_sync::PUBLIC_DOH_BOOTSTRAPS;
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use serde_json::{Map, Value};
@@ -327,6 +328,7 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
             "geo-update-interval",
             "geox-url",
             "dns",
+            "hosts",
             "tun",
             "proxies",
             "proxy-providers",
@@ -358,6 +360,26 @@ fn validate(value: &Value, mode: UrlMode) -> Result<(), VaultError> {
             }
             "proxies" if value.as_array().is_some_and(Vec::is_empty) => {}
             "proxies" => return Err(VaultError::Format),
+            "hosts" => {
+                // Only publish the documented public resolver addresses. Hosts
+                // from the user's network belong to the client, not the template.
+                for (host, addresses) in object(value)? {
+                    let (_, known) = PUBLIC_DOH_BOOTSTRAPS
+                        .iter()
+                        .find(|&&(name, _)| name == host)
+                        .ok_or(VaultError::Format)?;
+                    let known = known.split(", ").collect::<Vec<_>>();
+                    let addresses = addresses.as_array().ok_or(VaultError::Format)?;
+                    if addresses.is_empty()
+                        || addresses.len() > known.len()
+                        || !addresses
+                            .iter()
+                            .all(|addr| addr.as_str().is_some_and(|addr| known.contains(&addr)))
+                    {
+                        return Err(VaultError::Format);
+                    }
+                }
+            }
             "geox-url" => {
                 let map = object(value)?;
                 fields(map, &["mmdb", "asn", "geoip", "geosite"])?;

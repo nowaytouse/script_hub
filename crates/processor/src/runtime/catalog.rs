@@ -244,6 +244,16 @@ mod bundled_tests {
             if platform == ModulePlatform::FlClash {
                 assert!(urls.contains("modules/flclash/"));
                 assert!(!urls.contains("ScriptHub%2EPROMAX"));
+                assert!(bundled.modules.iter().any(|module| {
+                    module.filename == "ScriptHub.AdBlock.Helper.Preview.sgmodule"
+                        && safe_https_single_field_url(&module.github_install_url)
+                }));
+                assert!(
+                    !bundled
+                        .modules
+                        .iter()
+                        .any(|module| { module.filename.contains("Firewall Port Blocker") })
+                );
                 let promax = bundled
                     .modules
                     .iter()

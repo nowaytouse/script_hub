@@ -1,5 +1,6 @@
 //! Deterministic native modules for the pinned FlClash preview importer.
 //! This is static importer compatibility, not execution of third-party scripts.
+use super::firewall_sync::{FIREWALL_SURGE_FILE, HELPER_SURGE_FILE};
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -14,6 +15,7 @@ const ROOT: &str = "modules/flclash";
 const MAX_ROUTING_SHARD_BYTES: usize = 8 * 1024 * 1024;
 const MAX_ROUTING_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const MAIN_MODULE: &str = "modules/flclash/head_expanse/ScriptHub.AdBlock.Preview.sgmodule";
+const HELPER_MODULE_NAME: &str = "ScriptHub.AdBlock.Helper.Preview.sgmodule";
 const REGISTERED_MIT_NOTICES: &[(&str, &str)] = &[
     (
         "app2smile/rules",
@@ -528,6 +530,40 @@ pub fn render(source: &str) -> Result<Projection, String> {
     render_embedded(source, &[])
 }
 
+fn render_helper(source: &str) -> Result<Projection, String> {
+    let mut projection = render(source)?;
+    let sections = parse_sections(&projection.content);
+    let [(section, rows)] = sections.as_slice() else {
+        return Err("FlClash Helper must contain only MITM exclusions".into());
+    };
+    let [(_, line)] = rows.as_slice() else {
+        return Err("FlClash Helper requires one hostname exclusion list".into());
+    };
+    if section != "MITM"
+        || !line
+            .strip_prefix("hostname = %INSERT% ")
+            .is_some_and(|hosts| {
+                hosts.split(',').all(|host| {
+                    host.trim()
+                        .strip_prefix('-')
+                        .is_some_and(|host| !host.is_empty())
+                })
+            })
+    {
+        return Err("FlClash Helper can only exclude hosts from MITM".into());
+    }
+    // Exclusion-only content is useful for this particular module. Do not
+    // publish other source projections that have no supported active payload.
+    projection.active_lines = 1;
+    projection.note(
+        0,
+        "Host",
+        "adapted",
+        "Public IPv4/IPv6 resolver mappings are supplied by the FlClash profile's hosts section.",
+    );
+    Ok(projection)
+}
+
 fn render_embedded(source: &str, routing: &[RoutingReport]) -> Result<Projection, String> {
     let normalized =
         crate::rewrite_syntax::normalize_module(source).map_err(|error| error.to_string())?;
@@ -982,6 +1018,9 @@ fn plan(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
     let mut outputs = BTreeMap::new();
     let mut modules = Vec::new();
     let mut promax_routing = Vec::new();
+    let firewall_path = Path::new("head_expanse").join(FIREWALL_SURGE_FILE);
+    let helper_path = Path::new("head_expanse").join(HELPER_SURGE_FILE);
+    let mut retired_firewall = BTreeSet::new();
     for path in paths {
         let rel = path.strip_prefix(&source).map_err(|e| e.to_string())?;
         if !rel
@@ -992,6 +1031,24 @@ fn plan(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
             return Err("unexpected Surge category".into());
         }
         let text = read_public(root, &path)?;
+        if rel == firewall_path {
+            let projection = render(&text)?;
+            let sections = parse_sections(&projection.content);
+            let [(section, rows)] = sections.as_slice() else {
+                return Err("Retired FlClash firewall source is not a port-only module".into());
+            };
+            if section != "Rule"
+                || rows.iter().any(|(_, row)| {
+                    !row.split_once(',').is_some_and(|(kind, _)| {
+                        matches!(kind, "DEST-PORT" | "DST-PORT" | "SRC-PORT" | "IN-PORT")
+                    })
+                })
+            {
+                return Err("Retired FlClash firewall source is not a port-only module".into());
+            }
+            retired_firewall.extend(rows.iter().map(|(_, row)| row.clone()));
+            continue;
+        }
         if path.file_name().is_some_and(|name| name == PROMAX) {
             if !promax_routing.is_empty() {
                 return Err("multiple PROMAX routing sources require explicit review".into());
@@ -1000,6 +1057,8 @@ fn plan(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
         }
         let projection = if path.file_name().is_some_and(|name| name == PROMAX) {
             render_embedded(&text, &promax_routing)?
+        } else if rel == helper_path {
+            render_helper(&text)?
         } else {
             render(&text)?
         };
@@ -1007,6 +1066,8 @@ fn plan(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
             let mut rel = rel.to_path_buf();
             if path.file_name().is_some_and(|n| n == PROMAX) {
                 rel.set_file_name("ScriptHub.AdBlock.Preview.sgmodule");
+            } else if rel == helper_path {
+                rel.set_file_name(HELPER_MODULE_NAME);
             }
             let target = root.join(ROOT).join(&rel);
             let parent = rel.parent().ok_or("module has no category")?;
@@ -1047,6 +1108,18 @@ fn plan(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
             github_path: mirror,
             projection,
         });
+    }
+    if !retired_firewall.is_empty() {
+        let promax = outputs
+            .get(&root.join(MAIN_MODULE))
+            .ok_or("Cannot retire the standalone FlClash firewall without PROMAX")?;
+        let retained = promax
+            .lines()
+            .filter(|row| retired_firewall.contains(*row))
+            .collect::<BTreeSet<_>>();
+        if retained.len() != retired_firewall.len() {
+            return Err("PROMAX is missing a supported standalone FlClash firewall rule".into());
+        }
     }
     let catalog = Catalog {
         schema_version: 3,
@@ -1091,10 +1164,17 @@ fn existing(root: &Path) -> Result<BTreeMap<PathBuf, String>, String> {
     }
     Ok(out)
 }
-fn retired_owned_routing(root: &Path, path: &Path, text: &str) -> bool {
-    if path.parent() != Some(root.join(ROOT).join("head_expanse").as_path())
-        || !text.lines().any(|line| line == OWNER)
+fn retired_owned_output(root: &Path, path: &Path, text: &str) -> bool {
+    if !text.lines().any(|line| line == OWNER) {
+        return false;
+    }
+    let head = root.join(ROOT).join("head_expanse");
+    if path == head.join(FIREWALL_SURGE_FILE)
+        || path == head.join("github").join(FIREWALL_SURGE_FILE)
     {
+        return true;
+    }
+    if path.parent() != Some(head.as_path()) {
         return false;
     }
     path.file_name()
@@ -1123,7 +1203,7 @@ pub fn run_generator(root: &Path) -> Result<usize, String> {
         if !text.contains(OWNER) && !path.ends_with("catalog.json") {
             return Err(format!("unowned FlClash output {}", path.display()));
         }
-        if !planned.contains_key(path) && !retired_owned_routing(root, path, text) {
+        if !planned.contains_key(path) && !retired_owned_output(root, path, text) {
             return Err(format!(
                 "stale output requires explicit review (preserved): {}",
                 path.display()
@@ -1138,10 +1218,10 @@ pub fn run_generator(root: &Path) -> Result<usize, String> {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         crate::filesystem::replace_file(path, text.as_bytes()).map_err(|e| e.to_string())?;
     }
-    // Remove only the former generator-owned routing namespace after every new
+    // Remove only the retired generator-owned outputs after every new
     // artifact has been successfully written. Unknown/unowned files fail above.
     for (path, text) in &old {
-        if !planned.contains_key(path) && retired_owned_routing(root, path, text) {
+        if !planned.contains_key(path) && retired_owned_output(root, path, text) {
             fs::remove_file(path).map_err(|e| e.to_string())?;
         }
     }

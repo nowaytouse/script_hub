@@ -282,7 +282,7 @@ pub(crate) const ALIDNS_DOH_BOOTSTRAP: &str =
 // https://developers.google.com/speed/public-dns/docs/using
 // https://quad9.net/service/service-addresses-and-features/
 // https://adguard-dns.io/en/public-dns.html
-const PUBLIC_DOH_BOOTSTRAPS: &[(&str, &str)] = &[
+pub(crate) const PUBLIC_DOH_BOOTSTRAPS: &[(&str, &str)] = &[
     (ALIDNS_DOH_HOST, ALIDNS_DOH_BOOTSTRAP),
     (
         "cloudflare-dns.com",
@@ -300,6 +300,46 @@ const PUBLIC_DOH_BOOTSTRAPS: &[(&str, &str)] = &[
         "dns.adguard-dns.com",
         "94.140.14.14, 94.140.15.15, 2a10:50c0::ad1:ff, 2a10:50c0::ad2:ff",
     ),
+    // https://docs.controld.com/docs/control-d-ip-ranges
+    (
+        "freedns.controld.com",
+        "76.76.2.11, 76.76.10.11, 2606:1a40::11, 2606:1a40:1::11",
+    ),
+    // The short alias is the direct service, separate from the CDN-backed doh.dns.sb.
+    // https://dns.sb/doh/
+    ("doh.sb", "185.222.222.222, 45.11.45.11, 2a09::, 2a11::"),
+    // https://joindns4.eu/for-public
+    (
+        "unfiltered.joindns4.eu",
+        "86.54.11.100, 86.54.11.200, 2a13:1001::86:54:11:100, 2a13:1001::86:54:11:200",
+    ),
+    (
+        "protective.joindns4.eu",
+        "86.54.11.1, 86.54.11.201, 2a13:1001::86:54:11:1, 2a13:1001::86:54:11:201",
+    ),
+    // https://www.cira.ca/en/canadian-shield/configure/summary-cira-canadian-shield-dns-resolver-addresses/
+    (
+        "private.canadianshield.cira.ca",
+        "149.112.121.10, 149.112.122.10, 2620:10a:80bb::10, 2620:10a:80bc::10",
+    ),
+    // https://www.nic.cz/en/domains/tools/odvr/
+    (
+        "odvr.nic.cz",
+        "193.17.47.1, 185.43.135.1, 2001:148f:ffff::1, 2001:148f:fffe::1",
+    ),
+    // https://blog.uncensoreddns.org/dns-servers/
+    (
+        "anycast.uncensoreddns.org",
+        "91.239.100.100, 2001:67c:28a4::",
+    ),
+    (
+        "unicast.uncensoreddns.org",
+        "89.233.43.71, 2a01:3a0:53:53::",
+    ),
+    // https://forums.he.net/index.php?topic=3996.0
+    ("ordns.he.net", "74.82.42.42, 2001:470:20::2"),
+    // https://blogs.cisco.com/security/cisco-interop-discovery-of-designated-resolvers-protocol-implemented
+    ("doh.opendns.com", "146.112.41.2, 2620:119:fc::2"),
 ];
 const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     // DNSPod's provider hostnames are resolved dynamically as recommended by its operator.
@@ -309,13 +349,15 @@ const ENCRYPTED_DNS_MITM_EXCLUSIONS: &[&str] = &[
     "adblock.dns.mullvad.net",
     "dns.digitale-gesellschaft.ch",
     "doh.applied-privacy.net",
+    "doh.dns.sb",
     "doh.ffmuc.net",
     "doh.libredns.gr",
-    "freedns.controld.com",
 ];
 
+pub(super) const HELPER_SURGE_FILE: &str = "🌟 AdBlock Helper .sgmodule";
+pub(super) const FIREWALL_SURGE_FILE: &str = "🔥 Firewall Port Blocker 🛡️🚫.sgmodule";
 const HELPER_OUTPUTS: &[(&str, &str, bool)] = &[
-    ("surge/head_expanse", "🌟 AdBlock Helper .sgmodule", false),
+    ("surge/head_expanse", HELPER_SURGE_FILE, false),
     (
         "shadowrocket/head_expanse",
         "🌟 AdBlock Helper .module",
@@ -448,7 +490,7 @@ pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, Str
         .map(|(dir, file, content)| (modules.join(dir).join(file), content));
     let firewalls = [
         (
-            modules.join("surge/head_expanse/🔥 Firewall Port Blocker 🛡️🚫.sgmodule"),
+            modules.join("surge/head_expanse").join(FIREWALL_SURGE_FILE),
             render_firewall(false, version),
         ),
         (
@@ -668,8 +710,12 @@ mod tests {
                         .split(',')
                         .map(|ip| ip.trim().parse().unwrap())
                         .collect();
-                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv4()).count(), 2);
-                    assert_eq!(addresses.iter().filter(|ip| ip.is_ipv6()).count(), 2);
+                    assert!(addresses.iter().any(IpAddr::is_ipv4));
+                    assert!(addresses.iter().any(IpAddr::is_ipv6));
+                    assert_eq!(
+                        addresses.iter().collect::<HashSet<_>>().len(),
+                        addresses.len()
+                    );
                     continue;
                 }
                 assert_eq!(mapping, "server:system");
@@ -743,9 +789,9 @@ mod tests {
                 "adblock.dns.mullvad.net",
                 "dns.digitale-gesellschaft.ch",
                 "doh.applied-privacy.net",
+                "doh.dns.sb",
                 "doh.ffmuc.net",
                 "doh.libredns.gr",
-                "freedns.controld.com",
             ] {
                 assert!(excluded.contains(format!("-{host}").as_str()));
                 assert!(!names.contains(host));

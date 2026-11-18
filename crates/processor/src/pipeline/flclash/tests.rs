@@ -296,6 +296,34 @@ fn host_only_sources_are_reported_without_misleading_empty_modules() {
 }
 
 #[test]
+fn reviewed_helper_publishes_exclusions_for_the_native_importer() {
+    let root = temporary();
+    let source = root
+        .join("modules/surge/head_expanse")
+        .join(super::HELPER_SURGE_FILE);
+    let body = "[Host]\nresolver.example = 192.0.2.53, 2001:db8::53\n[MITM]\nhostname = %INSERT% -resolver.example\n";
+    fs::write(&source, fixture(body)).unwrap();
+    assert_eq!(run_generator(&root).unwrap(), 2);
+    let helper = root
+        .join("modules/flclash/head_expanse")
+        .join(super::HELPER_MODULE_NAME);
+    let text = fs::read_to_string(helper).unwrap();
+    assert!(text.contains("[MITM]\nhostname = %INSERT% -resolver.example\n"));
+    assert!(!text.contains("[Host]"));
+    assert!(!text.contains("2001:db8::53"));
+    assert_eq!(validate_generated(&root).unwrap(), 3);
+    fs::write(
+        &source,
+        fixture(&format!(
+            "{body}\n[Rule]\nDOMAIN,unrelated.example,REJECT\n"
+        )),
+    )
+    .unwrap();
+    assert!(run_generator(&root).is_err());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn native_argument_definitions_and_quoted_commas_are_preserved() {
     let source = "#!name=Defaults fixture\n#!arguments=Types:\"Official,Translate\",Job:\"# Disabled job\",cron:0 0 * * *,Switch:false\n#!arguments-desc=Native parameters\n[Script]\nBody = type=http-response, pattern=^https://example\\.test, script-path=https://example.test/a.js, argument=\"Types={{{Types}}}\", enable={{{Switch}}}\n{{{Job}}} = type=cron, cronexp=\"{{{cron}}}\", script-path=https://example.test/b.js\nUnknown = type=http-request, pattern=^https://example\\.test/c, script-path=https://example.test/c.js, argument={{{Missing}}}\n";
     let result = render(source).unwrap();
@@ -747,5 +775,41 @@ fn generator_retires_only_owned_routing_after_preflight() {
     fs::write(&old, "#!name=Manually authored matching filename\n").unwrap();
     assert!(run_generator(&root).is_err());
     assert!(old.exists());
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn retiring_firewall_requires_promax_coverage_and_owned_outputs() {
+    let root = temporary();
+    let surge = root.join("modules/surge/head_expanse");
+    let firewall = surge.join(super::FIREWALL_SURGE_FILE);
+    let promax = surge.join(super::PROMAX);
+    fs::write(&firewall, fixture("[Rule]\nDEST-PORT,1234,REJECT\n")).unwrap();
+    fs::write(&promax, fixture("[Rule]\nDEST-PORT,4321,REJECT\n")).unwrap();
+    let head = root.join("modules/flclash/head_expanse");
+    let mirror = head.join("github");
+    fs::create_dir_all(&mirror).unwrap();
+    let retired = [
+        head.join(super::FIREWALL_SURGE_FILE),
+        mirror.join(super::FIREWALL_SURGE_FILE),
+    ];
+    for path in &retired {
+        fs::write(path, format!("{}\n", super::OWNER)).unwrap();
+    }
+    assert!(run_generator(&root).is_err());
+    assert!(retired.iter().all(|path| path.exists()));
+    fs::write(&promax, fixture("[Rule]\nDEST-PORT,1234,REJECT\n")).unwrap();
+    fs::write(&retired[1], "#!name=Locally managed\n").unwrap();
+    assert!(run_generator(&root).is_err());
+    assert!(retired.iter().all(|path| path.exists()));
+    fs::write(&retired[1], format!("{}\n", super::OWNER)).unwrap();
+    assert_eq!(run_generator(&root).unwrap(), 2);
+    assert!(retired.iter().all(|path| !path.exists()));
+    assert!(firewall.exists());
+    assert!(
+        fs::read_to_string(root.join(super::MAIN_MODULE))
+            .unwrap()
+            .contains("DEST-PORT,1234,REJECT")
+    );
     fs::remove_dir_all(root).unwrap();
 }

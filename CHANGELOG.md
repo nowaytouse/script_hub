@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Publish an installable FlClash Preview AdBlock Helper for MITM exclusions and share the expanded public IPv4/IPv6 resolver mappings with the FlClash template. Retire the duplicate standalone FlClash Firewall after verifying its supported port rules are already in PROMAX.
+
 - Add certificate-verified IPv6 AliDNS bootstrap and a synthetic AAAA range to IPv6-enabled FlClash exports. Generate dual-stack AliDNS host mappings for the bundled native templates and public resolver mappings for the Surge and Shadowrocket AdBlock Helper without changing resolver selection.
 
 - Protect reviewed IP lookup websites, APIs and assets from broad advertising and HaGeZi Multi ULTIMATE blocks. Match exact host and suffix boundaries consistently so dedicated tracking subdomains remain eligible for blocking and normal routing still selects the egress.
