@@ -205,12 +205,6 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn finalize_flclash_exports(root: &Path) -> Result<usize, String> {
-    // Restore volatile source-only changes before fingerprinting the final public inputs.
-    discard_semantic_noop_changes(root)?;
-    rust_processor::flclash::run_generator(root)
-}
-
 fn arg_value(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<PathBuf, String> {
     args.next()
         .map(PathBuf::from)
@@ -354,8 +348,7 @@ fn run(
         emit_stage(Stage::Finalize);
         let providers = rust_processor::mihomo_generator::run_generator(root)?;
         println!("[INFO] synchronized {providers} policy-neutral Mihomo providers");
-        let projected = finalize_flclash_exports(root)?;
-        println!("[INFO] synchronized {projected} native FlClash preview module variant(s)");
+        discard_semantic_noop_changes(root)?;
         let status = Command::new("git")
             .args(["diff", "--check"])
             .current_dir(root)
@@ -378,7 +371,6 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut adblock_only = false;
     let mut exports_only = false;
     let mut classify_only = false;
-    let mut flclash_only = false;
     let mut rewrites_only = false;
     let mut geo_only = false;
     while let Some(arg) = args.next() {
@@ -391,12 +383,11 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--adblock-only" => adblock_only = true,
             "--exports-only" => exports_only = true,
             "--classify-only" => classify_only = true,
-            "--flclash-only" => flclash_only = true,
             "--rewrites-only" => rewrites_only = true,
             "--geo-only" => geo_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--flclash-only|--rewrites-only|--geo-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--rewrites-only|--geo-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -413,7 +404,6 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         adblock_only,
         exports_only,
         classify_only,
-        flclash_only,
         rewrites_only,
         geo_only,
     ]
@@ -472,18 +462,9 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         Ok(())
     } else if rewrites_only {
         rust_processor::pipeline::rewrite_normalize::run(&root).and_then(|count| {
-            let projected = finalize_flclash_exports(&root)?;
-            println!(
-                "[INFO] normalized {count} native modules; regenerated {projected} FlClash variants"
-            );
+            discard_semantic_noop_changes(&root)?;
+            println!("[INFO] normalized {count} native modules");
             Ok(())
-        })
-    } else if flclash_only && !execute {
-        println!("[INFO] dry run: native FlClash generation skipped");
-        Ok(())
-    } else if flclash_only {
-        rust_processor::flclash::run_generator(&root).map(|count| {
-            println!("[INFO] synchronized {count} native FlClash preview module variant(s)");
         })
     } else if (exports_only || classify_only) && !execute {
         println!("[INFO] dry run: client exports skipped");
@@ -553,9 +534,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        discard_semantic_noop_changes, finalize_flclash_exports, read_batch_blob, run_cli,
-    };
+    use super::{discard_semantic_noop_changes, read_batch_blob, run_cli};
     use std::io::Cursor;
     use std::process::{Command, ExitCode};
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -568,7 +547,6 @@ mod tests {
         for mode in [
             "--exports-only",
             "--classify-only",
-            "--flclash-only",
             "--rewrites-only",
             "--geo-only",
         ] {
@@ -588,16 +566,24 @@ mod tests {
     }
 
     #[test]
-    fn flclash_finalization_fingerprints_restored_date_only_sources() {
+    fn rewrites_only_normalizes_published_modules_and_shared_sources() {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let root = std::env::temp_dir().join(format!("flclash-finalize-{unique}"));
-        let source = root.join("modules/surge/head_expanse/Test.sgmodule");
-        std::fs::create_dir_all(source.parent().unwrap()).unwrap();
-        let baseline = "#!name=Synthetic date fixture\n#!date=2026-01-01\n[URL Rewrite]\n^https://example\\.test reject\n";
-        std::fs::write(&source, baseline).unwrap();
+        let root = std::env::temp_dir().join(format!("script-hub-rewrite-only-{unique}"));
+        let paths = [
+            root.join("modules/surge/head_expanse/Test.sgmodule"),
+            root.join("modules/shadowrocket/head_expanse/Test.module"),
+            root.join("modules/source/build/promax_splits/Test.sgmodule"),
+        ];
+        let input = "#!name=Synthetic\n[Body Rewrite]\nhttp-response ^https://example.test offset_ms\":\\d+ offset_ms\":99\n";
+        let expected = crate::rewrite_syntax::normalize_module(input).unwrap();
+        assert_ne!(expected, input);
+        for path in &paths {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, input).unwrap();
+        }
         assert!(
             Command::new("git")
                 .args(["init", "--quiet"])
@@ -606,42 +592,26 @@ mod tests {
                 .unwrap()
                 .success()
         );
-        crate::flclash::run_generator(&root).unwrap();
-        assert!(
-            Command::new("git")
-                .args(["add", "modules"])
-                .current_dir(&root)
-                .status()
-                .unwrap()
-                .success()
+        assert_eq!(
+            run_cli(
+                [
+                    "--root".into(),
+                    root.to_string_lossy().into_owned(),
+                    "--execute".into(),
+                    "--rewrites-only".into(),
+                ]
+                .into_iter()
+            ),
+            ExitCode::SUCCESS
         );
-        assert!(
-            Command::new("git")
-                .args([
-                    "-c",
-                    "user.name=Synthetic Fixture",
-                    "-c",
-                    "user.email=fixture@example.test",
-                    "-c",
-                    "commit.gpgsign=false",
-                    "commit",
-                    "--quiet",
-                    "--no-verify",
-                    "-m",
-                    "synthetic baseline"
-                ])
-                .current_dir(&root)
-                .status()
-                .unwrap()
-                .success()
-        );
-        let catalog = root.join("modules/flclash/catalog.json");
-        let before = std::fs::read(&catalog).unwrap();
-        std::fs::write(&source, baseline.replace("2026-01-01", "2026-01-02")).unwrap();
-        finalize_flclash_exports(&root).unwrap();
-        assert_eq!(std::fs::read_to_string(&source).unwrap(), baseline);
-        assert_eq!(std::fs::read(&catalog).unwrap(), before);
-        crate::flclash::validate_generated(&root).unwrap();
+        for path in paths {
+            assert_eq!(
+                std::fs::read_to_string(&path).unwrap(),
+                expected,
+                "{}",
+                path.display()
+            );
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -739,7 +709,6 @@ mod tests {
             "--adblock-only",
             "--exports-only",
             "--classify-only",
-            "--flclash-only",
             "--rewrites-only",
             "--geo-only",
         ];

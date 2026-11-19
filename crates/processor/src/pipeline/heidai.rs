@@ -1,19 +1,18 @@
 //! Local cross-client packaging for one verified full-source snapshot.
 
 use super::firewall_sync::PUBLIC_DOH_BOOTSTRAPS;
-use super::flclash::PROMAX_PROTECTED_SERVICE_HOSTS;
-use super::flclash::full_feed::{LOCAL_MARKER, append_full_feed, load_base, positive_mitm_hosts};
+use super::merge_bundles::hostname_tokens;
+use crate::dns_name::is_dotted_ascii_host;
 use crate::filesystem::read_public;
+use crate::promax::SURGE_PROMAX_PATH;
 use crate::promax::heidai_feed::{self, Feed, HEIDAI_FULL, select_domains};
 use crate::promax::safety::{SafetyPolicy, WHITELIST_PATH};
-use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
 mod platforms;
 
-const PREVIEW_FILE: &str = "ScriptHub.AdBlock.Heidai.Full.FlClash.sgmodule";
 const SINGBOX_BINARY: &str = "ScriptHub.AdBlock.Heidai.Full.SingBox.srs";
 const LOCAL_GUARDS: &[&str] = &[
     "DOMAIN-SUFFIX,apple.com",
@@ -23,75 +22,53 @@ const LOCAL_GUARDS: &[&str] = &[
     "DOMAIN,126.cn",
     "DOMAIN,123cha.com",
     "DOMAIN,0575bbs.com",
+    "DOMAIN,17u.cn",
+    "DOMAIN,www.17u.cn",
+    "DOMAIN,wx.17u.cn",
+    "DOMAIN,mada-travel.17u.cn",
+    "DOMAIN,mo.baidu.com",
 ];
 
-fn protected_hosts(base: &str) -> impl Iterator<Item = &str> {
-    positive_mitm_hosts(base).chain(PUBLIC_DOH_BOOTSTRAPS.iter().map(|&(host, _)| host))
+fn mitm_guard_lines(module: &str) -> impl Iterator<Item = String> + '_ {
+    module
+        .split_once("\n[MITM]\n")
+        .into_iter()
+        .flat_map(|(_, section)| section.lines())
+        .take_while(|line| !line.trim_start().starts_with('['))
+        .map(str::trim)
+        .filter(|line| {
+            line.split_once('=')
+                .is_some_and(|(key, _)| key.trim().eq_ignore_ascii_case("hostname"))
+        })
+        .flat_map(hostname_tokens)
+        .filter_map(|token| {
+            let host = token.split(':').next()?;
+            let (kind, host) = host
+                .strip_prefix("*.")
+                .map_or(("DOMAIN", host), |suffix| ("DOMAIN-SUFFIX", suffix));
+            (!host.starts_with('-') && is_dotted_ascii_host(host)).then(|| format!("{kind},{host}"))
+        })
 }
 
-pub fn export_heidai_full(root: &Path, output: &Path) -> Result<String, String> {
-    let root = root.canonicalize().map_err(|error| error.to_string())?;
-    let parent = output
-        .parent()
-        .filter(|path| !path.as_os_str().is_empty())
-        .unwrap_or(Path::new("."))
-        .canonicalize()
-        .map_err(|error| error.to_string())?;
-    let name = output.file_name().ok_or("Specify an output file")?;
-    let output = parent.join(name);
-    if parent.starts_with(&root) || output.extension() != Some(OsStr::new("sgmodule")) {
-        return Err("Choose a local .sgmodule file outside the repository".into());
-    }
-    match fs::symlink_metadata(&output) {
-        Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => {
-            let mut header = Vec::new();
-            fs::File::open(&output)
-                .and_then(|file| file.take(512).read_to_end(&mut header))
-                .map_err(|error| error.to_string())?;
-            if !String::from_utf8_lossy(&header)
-                .lines()
-                .any(|line| line == LOCAL_MARKER)
-            {
-                return Err("Output exists and is not a Script Hub complete-source export".into());
-            }
-        }
-        Ok(_) => return Err("Output must be a regular file".into()),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.to_string()),
-    }
-    let (base, feed, safety, digest) = load_inputs(&root)?;
-    let domains = select_domains(&feed, &safety, protected_hosts(&base))?;
-    let (result, added) = append_full_feed(&base, &feed.version, &domains)?;
-    crate::filesystem::replace_file(&output, result.as_bytes())
-        .map_err(|error| error.to_string())?;
-    Ok(format!(
-        "{} · {added} additional domains · {} bytes\n{}",
-        source_report(&feed, &digest),
-        result.len(),
-        output.display()
-    ))
-}
-
-fn load_inputs(root: &Path) -> Result<(String, Feed, SafetyPolicy, String), String> {
-    let base = load_base(root)?;
-    let whitelist = read_public(root, &root.join(WHITELIST_PATH))?;
-    let direct = read_public(root, &root.join("rulesets/RULE-SET/Direct.list"))?;
-    let safety =
-        SafetyPolicy::from_lines(
-            whitelist
-                .lines()
-                .chain(direct.lines().filter(|line| {
+fn feed_safety(module: &str, whitelist: &str, direct: &str) -> SafetyPolicy {
+    let shared_hosts: Vec<_> = mitm_guard_lines(module)
+        .chain(
+            PUBLIC_DOH_BOOTSTRAPS
+                .iter()
+                .map(|&(host, _)| format!("DOMAIN,{host}")),
+        )
+        .collect();
+    SafetyPolicy::from_lines(
+        whitelist
+            .lines()
+            .chain(
+                direct.lines().filter(|line| {
                     line.starts_with("DOMAIN,") || line.starts_with("DOMAIN-SUFFIX,")
-                }))
-                .chain(
-                    PROMAX_PROTECTED_SERVICE_HOSTS
-                        .iter()
-                        .chain(LOCAL_GUARDS)
-                        .copied(),
-                ),
-        );
-    let (feed, digest) = heidai_feed::download()?;
-    Ok((base, feed, safety, digest))
+                }),
+            )
+            .chain(LOCAL_GUARDS.iter().copied())
+            .chain(shared_hosts.iter().map(String::as_str)),
+    )
 }
 
 fn source_report(feed: &Feed, digest: &str) -> String {
@@ -128,11 +105,13 @@ pub fn export_heidai_bundle(
             return Err("Choose a new output directory; the destination already exists".into());
         }
     }
-    let (base, feed, safety, digest) = load_inputs(&root)?;
-    let domains = select_domains(&feed, &safety, protected_hosts(&base))?;
-    let (flclash, added) = append_full_feed(&base, &feed.version, &domains)?;
-    let mut files = platforms::render(&domains)?;
-    files.push((PREVIEW_FILE, flclash));
+    let module = read_public(&root, &root.join(SURGE_PROMAX_PATH))?;
+    let whitelist = read_public(&root, &root.join(WHITELIST_PATH))?;
+    let direct = read_public(&root, &root.join("rulesets/RULE-SET/Direct.list"))?;
+    let safety = feed_safety(&module, &whitelist, &direct);
+    let (feed, digest) = heidai_feed::download()?;
+    let domains = select_domains(&feed, &safety)?;
+    let files = platforms::render(&domains)?;
     let names: Vec<_> = files
         .iter()
         .map(|(name, _)| *name)
@@ -146,13 +125,12 @@ pub fn export_heidai_bundle(
         "source_exception_rows": feed.exception_rows,
         "unsupported_block_rows": feed.unsupported_blocks,
         "protected_full_source_matchers": domains.len(),
-        "additional_flclash_matchers": added,
         "files": names,
     }))
     .map_err(|error| error.to_string())?;
 
     let report = format!(
-        "{}\n{} protected full-source matchers · {added} additional FlClash matchers\n{}",
+        "{}\n{} protected full-source matchers\n{}",
         source_report(&feed, &digest),
         domains.len(),
         directory.display()
@@ -214,28 +192,17 @@ mod tests {
     use crate::promax::heidai_feed::parse_feed;
 
     #[test]
-    fn keeps_source_exceptions_apple_and_base_routing() {
-        let text = "! Version: 20261118144847\n! Blocked domains: 9\n! unBlocked domains: 1\n\
-                    ||ad.test^\n||copy.base.test^\n||safe.test^\n||private.child.safe.test^\n\
-                    ||doh.dns.apple.com^\n||dup.ad.test^\n||media.test^\n\
-                    ||dns.google^\n||co.uk^\n@@||child.safe.test^\n";
-        let base = "#!name=PROMAX\n# Generated by Script Hub FlClash preview generator\n[Rule]\nDOMAIN-SUFFIX,base.test,REJECT\n\n[MITM]\nhostname = %APPEND% playback.media.test\n";
+    fn keeps_source_exceptions_and_shared_surge_mitm_scopes() {
+        let text = "! Version: 20261118144847\n! Blocked domains: 11\n! unBlocked domains: 1\n\
+                    ||ad.test^\n||safe.test^\n||private.child.safe.test^\n||doh.dns.apple.com^\n\
+                    ||dup.ad.test^\n||media.test^\n||leaf.rewrite.test^\n||dns.google^\n||co.uk^\n\
+                    ||excluded.test^\n||direct.test^\n@@||child.safe.test^\n";
+        let module = "#!name=PROMAX\n\n[MITM]\nhostname = %APPEND% playback.media.test:443, *.rewrite.test, -excluded.test\n";
         let feed = parse_feed(text).unwrap();
-        let domains = select_domains(
-            &feed,
-            &SafetyPolicy::from_lines(LOCAL_GUARDS.iter().copied()),
-            protected_hosts(base),
-        )
-        .unwrap();
-        assert_eq!(domains, ["ad.test", "copy.base.test"]);
-        let (output, count) = append_full_feed(base, &feed.version, &domains).unwrap();
-        assert_eq!(count, 1);
-        assert!(output.contains("DOMAIN-SUFFIX,ad.test,REJECT\n"));
-        assert!(output.contains("DOMAIN-SUFFIX,base.test,REJECT\n"));
-        assert!(output.ends_with("hostname = %APPEND% playback.media.test\n"));
-        assert!(!output.contains("DOMAIN-SUFFIX,media.test,REJECT\n"));
-        assert!(!output.contains("DOMAIN-SUFFIX,dns.google,REJECT\n"));
-        assert!(!output.contains("DOMAIN-SUFFIX,co.uk,REJECT\n"));
-        assert!(!output.contains("safe.test") && !output.contains("doh.dns.apple.com"));
+        let safety = feed_safety(module, "", "DOMAIN,api.direct.test");
+        assert_eq!(
+            select_domains(&feed, &safety).unwrap(),
+            ["ad.test", "excluded.test"]
+        );
     }
 }

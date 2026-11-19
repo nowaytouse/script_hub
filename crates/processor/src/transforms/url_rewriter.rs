@@ -448,16 +448,6 @@ pub fn copy_github_variants(root_dir: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Rewrite already-public CDN resource URLs to their GitHub raw equivalents.
-pub(crate) fn github_urls(content: &str) -> String {
-    REVERSE_CDN_REGEX
-        .replace_all(
-            content,
-            "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
-        )
-        .into_owned()
-}
-
 pub(crate) fn normalize_cdn_urls(mut content: String) -> String {
     for (pattern, replacement) in MOCK_REPLACEMENTS.iter() {
         if let std::borrow::Cow::Owned(rewritten) = pattern.replace_all(&content, *replacement) {

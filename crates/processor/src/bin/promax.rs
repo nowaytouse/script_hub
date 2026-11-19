@@ -7,7 +7,6 @@ fn main() {
     let mut root = None;
     let mut execute = false;
     let mut refresh_index = false;
-    let mut heidai_output = None;
     let mut heidai_bundle = None;
     let mut singbox = None;
     let mut arguments = std::env::args().skip(1);
@@ -24,15 +23,6 @@ fn main() {
             },
             "--execute" => execute = true,
             "--refresh-index" => refresh_index = true,
-            "--export-heidai-full" => match arguments.next() {
-                Some(value) if !value.is_empty() && !value.starts_with('-') => {
-                    heidai_output = Some(PathBuf::from(value));
-                }
-                _ => {
-                    eprintln!("Missing file for --export-heidai-full <file.sgmodule>");
-                    std::process::exit(2);
-                }
-            },
             "--export-heidai-bundle" => match arguments.next() {
                 Some(value) if !value.is_empty() && !value.starts_with('-') => {
                     heidai_bundle = Some(PathBuf::from(value));
@@ -53,7 +43,7 @@ fn main() {
             },
             "--help" | "-h" => {
                 println!(
-                    "Usage: promax --root <repository> [--execute | --refresh-index | --export-heidai-full <file.sgmodule> | --export-heidai-bundle <new-directory> [--singbox <executable>]]"
+                    "Usage: promax --root <repository> [--execute | --refresh-index | --export-heidai-bundle <new-directory> [--singbox <executable>]]"
                 );
                 return;
             }
@@ -69,7 +59,7 @@ fn main() {
         std::process::exit(2);
     };
     if let Some(directory) = heidai_bundle {
-        if execute || refresh_index || heidai_output.is_some() {
+        if execute || refresh_index {
             eprintln!("--export-heidai-bundle is a separate local export mode");
             std::process::exit(2);
         }
@@ -89,20 +79,6 @@ fn main() {
     if singbox.is_some() {
         eprintln!("--singbox requires --export-heidai-bundle");
         std::process::exit(2);
-    }
-    if let Some(output) = heidai_output {
-        if execute || refresh_index {
-            eprintln!("--export-heidai-full is a separate local export mode");
-            std::process::exit(2);
-        }
-        match rust_processor::pipeline::heidai::export_heidai_full(&root, &output) {
-            Ok(report) => println!("{report}"),
-            Err(error) => {
-                eprintln!("Unable to export complete 217heidai source: {error}");
-                std::process::exit(1);
-            }
-        }
-        return;
     }
     if refresh_index {
         if execute {

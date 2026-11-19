@@ -107,6 +107,7 @@ fn report_walkdir_error(error: walkdir::Error, errors: &mut usize) {
 
 fn validate_retired_outputs(root: &Path) -> Result<(), String> {
     for retired in [
+        "modules/flclash",
         "modules/loon",
         "modules/helper",
         "modules/shadowrocket/head_expanse/🛡️ PROMAX AdBlock Helper (DNS & Firewall).module",
@@ -162,15 +163,12 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     }
     let port_source = root.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");
     require_publication_directory(root, &root.join("rulesets/Sources/conf"))?;
-    let legacy_promax = modules_root.join(
-        "surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
-    );
-    if !legacy_promax.is_file() {
-        eprintln!(
-            "[ERROR] missing legacy PROMAX publication: {}",
-            legacy_promax.display()
-        );
-        errors += 1;
+    for product in rust_processor::promax::published_products() {
+        let path = root.join(product.path);
+        if !path.is_file() {
+            eprintln!("[ERROR] missing PROMAX publication: {}", path.display());
+            errors += 1;
+        }
     }
     for directory in module_dirs {
         for entry in walkdir::WalkDir::new(directory) {
@@ -261,7 +259,6 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
     }
     errors += boundary_errors.len();
     artifacts += rust_processor::mihomo_generator::validate_generated(root)?;
-    artifacts += rust_processor::flclash::validate_generated(root)?;
     Ok((artifacts, errors))
 }
 
@@ -372,7 +369,7 @@ mod tests {
             std::env::temp_dir().join(format!("script-hub-retired-output-{}", std::process::id()));
         std::fs::create_dir_all(&root).unwrap();
         assert!(validate_retired_outputs(&root).is_ok());
-        for retired in ["modules/loon", "modules/helper"] {
+        for retired in ["modules/flclash", "modules/loon", "modules/helper"] {
             let directory = root.join(retired);
             std::fs::create_dir_all(&directory).unwrap();
             let sentinel = directory.join("user-data");

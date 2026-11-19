@@ -2408,7 +2408,7 @@ impl AdBlockManager {
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
 
-        let surge_promax_cdn = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
+        let surge_promax_cdn = super::SURGE_PROMAX_PATH;
         let surge_promax_github = "modules/surge/head_expanse/github/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
 
         let sr_promax_cdn = "modules/shadowrocket/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).module";

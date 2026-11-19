@@ -88,25 +88,19 @@ pub(crate) fn parse_feed(text: &str) -> Result<Feed, String> {
     })
 }
 
-pub(crate) fn select_domains<'a, 'host>(
+pub(crate) fn select_domains<'a>(
     feed: &'a Feed,
     safety: &SafetyPolicy,
-    protected_hosts: impl IntoIterator<Item = &'host str>,
 ) -> Result<Vec<&'a str>, String> {
     let exception_parents = feed
         .exceptions
         .iter()
         .flat_map(|host| ancestors(host))
         .collect::<HashSet<_>>();
-    let infrastructure_parents = protected_hosts
-        .into_iter()
-        .flat_map(ancestors)
-        .collect::<HashSet<_>>();
     let mut selected = BTreeSet::new();
     for host in &feed.blocks {
         if ancestors(host).any(|name| feed.exceptions.contains(name))
             || exception_parents.contains(host.as_str())
-            || infrastructure_parents.contains(host.as_str())
             || psl::suffix(host.as_bytes())
                 .is_some_and(|suffix| suffix.is_known() && suffix.as_bytes() == host.as_bytes())
         {

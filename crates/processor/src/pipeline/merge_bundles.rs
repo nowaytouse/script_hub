@@ -18,7 +18,7 @@ static HOSTNAME_PREFIX_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^hostname
 static HOSTNAME_APPEND_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^(%APPEND%|%INSERT%)\s*").unwrap());
 
-fn hostname_tokens(line: &str) -> Vec<String> {
+pub(crate) fn hostname_tokens(line: &str) -> Vec<String> {
     let value = HOSTNAME_PREFIX_RE.replace(line.trim(), "");
     let value = HOSTNAME_APPEND_RE.replace(&value, "");
     value

@@ -25,10 +25,12 @@ pub struct Product {
     pub path: &'static str,
 }
 
+pub(crate) const SURGE_PROMAX_PATH: &str = "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule";
+
 const PRODUCTS: &[Product] = &[
     Product {
         kind: ProductKind::Surge,
-        path: "modules/surge/head_expanse/🚫 Universal Ad-Blocking Rules Dependency Component PROMAX (Kali-style).sgmodule",
+        path: SURGE_PROMAX_PATH,
     },
     Product {
         kind: ProductKind::Surge,

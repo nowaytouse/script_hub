@@ -4,7 +4,7 @@
 
 规则 · 模块 · Rust
 
-[规则](rulesets/RULE-SET/) · [PROMAX](modules/surge/head_expanse/) · [模块](modules/) · [桌面](crates/processor/README.zh-CN.md) · [FlClash 预览版模块](docs/FLCLASH_PREVIEW.zh-CN.md)
+[规则](rulesets/RULE-SET/) · [PROMAX](modules/surge/head_expanse/) · [模块](modules/) · [桌面](crates/processor/README.zh-CN.md) · [FlClash RS 模块](docs/FLCLASH_RS.zh-CN.md)
 
 [更新](CHANGELOG.zh-CN.md) · [维护](docs/UPDATE_GUIDE.zh-CN.md) · [来源](rulesets/Sources/Links/)
 

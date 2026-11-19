@@ -2,7 +2,6 @@ mod apple_shadowrocket;
 mod apple_surge;
 pub mod custom_sources;
 pub mod firewall_sync;
-pub mod flclash;
 pub mod functional_update;
 pub mod general_update;
 pub(crate) mod geo_rulesets;

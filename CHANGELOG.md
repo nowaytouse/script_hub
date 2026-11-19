@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Remove the separate FlClash Preview module publications, generator, and standalone local PROMAX export. FlClash RS installs the shared Surge modules, and the 217heidai bundle supplies a Mihomo provider for local profile routing.
+
 - Share the Surge module catalog and canonical install links with FlClash RS. The shared PROMAX uses external rulesets to keep its module small. Refresh the Cargo lockfile.
 
 - Export the protected complete 217heidai DNS source for Surge, Shadowrocket, Mihomo, FlClash Preview, sing-box and AdGuard Home. Compact redundant DNS matches within each shared AdBlock category after evaluating source exceptions and service protections.

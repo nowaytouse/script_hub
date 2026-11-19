@@ -104,8 +104,7 @@ fn source_tokens(line: &str, limit: usize) -> Result<Vec<(String, usize)>, Rewri
 
 /// Target token contract: double quotes open a run anywhere, single quotes at
 /// the start of a field or after `=`, and only `\"` is decoded inside doubles.
-/// This models the pinned FlClash preview importer's token helper and detects
-/// lossy encoding; it is not a claim that the native Core accepted a line.
+/// Use this to verify that published rewrite fields round-trip without loss.
 pub fn parse_strict(line: &str) -> Result<Vec<String>, RewriteError> {
     single_line(line)?;
     let chars = line.chars().collect::<Vec<_>>();
