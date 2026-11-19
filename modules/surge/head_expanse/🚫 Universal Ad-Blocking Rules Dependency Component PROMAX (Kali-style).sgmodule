@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-18]
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-19]
 #!desc=按用途分片(24片) + 应用内去广告(Port Reject=77, IP Rewrite=1193, URL Rewrite=546, Map Local=1245, Script=272, Body Rewrite=90, MITM=765); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-18 23:11:22
+#!date=2026-11-19 11:09:27
 #!requirement=CORE_VERSION>=6010000
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
@@ -1462,7 +1462,7 @@ URL-REGEX,^https?:\/\/update\.pan\.baidu\.com\/statistics,REJECT
 USER-AGENT,AVOS*,REJECT
 USER-AGENT,SogouInput,REJECT
 USER-AGENT,com.sogou.sogouinput.BaseKeyboard,REJECT
-# Merged REJECT-DROP complex rules (105)
+# Merged REJECT-DROP complex rules (104)
 DOMAIN,api.segment.io,REJECT-DROP
 DOMAIN,nom.telemetrydeck.com,REJECT-DROP
 DOMAIN,stat.youpin.mi.com,REJECT-DROP
@@ -1488,7 +1488,6 @@ DOMAIN-SUFFIX,f-log-assistant.grammarly.io,REJECT-DROP
 DOMAIN-SUFFIX,f-log-extension.grammarly.io,REJECT-DROP
 DOMAIN-SUFFIX,femetrics.grammarly.io,REJECT-DROP
 DOMAIN-SUFFIX,femetrics.qagr.io,REJECT-DROP
-DOMAIN-SUFFIX,geo2.adobe.com,REJECT-DROP
 DOMAIN-SUFFIX,gepush.com,REJECT-DROP
 DOMAIN-SUFFIX,getui.com,REJECT-DROP
 DOMAIN-SUFFIX,getui.net,REJECT-DROP

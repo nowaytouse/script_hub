@@ -51,7 +51,6 @@ const PROMAX_PROTECTED_SERVICE_HOSTS: &[&str] = &[
     "DOMAIN,wx.17u.cn",
     "DOMAIN,mada-travel.17u.cn",
     "DOMAIN,mo.baidu.com",
-    "DOMAIN,lm.licenses.adobe.com",
 ];
 const REGISTERED_MIT_NOTICES: &[(&str, &str)] = &[
     (

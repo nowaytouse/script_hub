@@ -1,5 +1,5 @@
 #!name=PROMAX split · Wool.ADBlock.sgmodule
-#!desc=从混合模块拆出的去广告行 3741/4612；解锁/增强仍留在原模块
+#!desc=从混合模块拆出的去广告行 3730/4612；解锁/增强仍留在原模块
 #!author=ScriptHub-Automated
 #!split-source=modules/source/local/Wool.ADBlock.sgmodule
 
@@ -526,30 +526,19 @@ IP-CIDR,101.227.200.28/32,REJECT,no-resolve
 IP-CIDR,124.192.153.42/32,REJECT,no-resolve
 DOMAIN-SUFFIX,3dns-2.adobe.com,REJECT
 DOMAIN-SUFFIX,3dns-3.adobe.com,REJECT
-DOMAIN-SUFFIX,activate.adobe.com,REJECT
-DOMAIN-SUFFIX,activate-sea.adobe.com,REJECT
-DOMAIN-SUFFIX,activate-sjc0.adobe.com,REJECT
 DOMAIN-SUFFIX,adobe-dns.adobe.com,REJECT
 DOMAIN-SUFFIX,adobe-dns-2.adobe.com,REJECT
 DOMAIN-SUFFIX,adobe-dns-3.adobe.com,REJECT
 DOMAIN-SUFFIX,ereg.adobe.com,REJECT
 DOMAIN-SUFFIX,get3.adobe.com,REJECT
 DOMAIN-SUFFIX,hl2rcv.adobe.com,REJECT
-DOMAIN-SUFFIX,practivate.adobe.com,REJECT
-DOMAIN-SUFFIX,wip3.adobe.com,REJECT
-DOMAIN-SUFFIX,lm.licenses.adobe.com,REJECT
-DOMAIN-SUFFIX,na2m-pr.licenses.adobe.com,REJECT
-DOMAIN-SUFFIX,na1r.services.adobe.com,REJECT
 DOMAIN-SUFFIX,hlrcv.stage.adobe.com,REJECT
-DOMAIN-SUFFIX,activate.wip3.adobe.com,REJECT
 DOMAIN-SUFFIX,ereg.wip3.adobe.com,REJECT
-DOMAIN-SUFFIX,lmlicenses.wip4.adobe.com,REJECT
 DOMAIN-SUFFIX,marketo.com,REJECT
 DOMAIN-SUFFIX,asia.marketo.com,REJECT
 DOMAIN-SUFFIX,pages2.marketo.com,REJECT
 DOMAIN-SUFFIX,marketo.net,REJECT
 DOMAIN-SUFFIX,munchkin.marketo.net,REJECT
-DOMAIN,geo2.adobe.com,REJECT
 DOMAIN-SUFFIX,amazon-adsystem.com,REJECT
 DOMAIN-SUFFIX,adinfo.aol.com,REJECT
 DOMAIN-SUFFIX,dynamic.aol.com,REJECT

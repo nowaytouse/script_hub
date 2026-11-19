@@ -17,6 +17,32 @@ DOMAIN,registry.api.cnn.io
 # Shared CDN ownership is explicit in v2fly/domain-list-community/data/vk.
 DOMAIN,vkcache.com
 
+# Adobe app startup, sign-in, activation and deployment.
+# https://helpx.adobe.com/business/enterprise/manage-services/configure-services/network-endpoints.html
+# https://www.adobe.com/devnet-docs/acrobatetk/tools/AdminGuide/endpoints.html
+DOMAIN-SUFFIX,adobe.io
+DOMAIN-SUFFIX,adobe-identity.com
+DOMAIN-SUFFIX,adobelogin.com
+DOMAIN-SUFFIX,adobeoobe.com
+DOMAIN-SUFFIX,licenses.adobe.com
+DOMAIN-SUFFIX,oobesaas.adobe.com
+DOMAIN,account.adobe.com
+DOMAIN,accounts.adobe.com
+DOMAIN,activate-sea.adobe.com
+DOMAIN,activate-sjc0.adobe.com
+DOMAIN,activate.adobe.com
+DOMAIN,activate.wip3.adobe.com
+DOMAIN,adobeid-na1.services.adobe.com
+DOMAIN,auth.services.adobe.com
+DOMAIN,crs.cr.adobe.com
+DOMAIN,federatedid-na1.services.adobe.com
+DOMAIN,geo.adobe.com
+DOMAIN,geo2.adobe.com
+DOMAIN,lmlicenses.wip4.adobe.com
+DOMAIN,na1r.services.adobe.com
+DOMAIN,oobe.adobe.com
+DOMAIN,practivate.adobe.com
+
 # ============ 🔥 YouTube 核心域名 (CRITICAL) ============
 # 这些域名被拦截会导致 YouTube 完全无法使用！
 DOMAIN,youtubei.googleapis.com

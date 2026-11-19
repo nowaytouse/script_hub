@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Protect Adobe.io and the Adobe sign-in, licensing, and deployment endpoints from shared AdBlock rules. Mark compiled sing-box rulesets as binary so update CI can still reject whitespace errors in text files.
+
 - Export a single local FlClash PROMAX from the complete 217heidai DNS release with source exceptions, protected-service checks, deduplication and the existing load budget. Register the original full releases, add reviewed AdGuard tracking hosts to shared Privacy rules, and synchronize the Apple service bundle with shared MITM exclusions.
 
 - Share operational Apple host protection between AdBlock routing and MITM exclusions. Cover push, app downloads, device enrollment, system updates, certificate validation, Apple DNS and Private Relay.

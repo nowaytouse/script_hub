@@ -1167,6 +1167,37 @@ mod tests {
     }
 
     #[test]
+    fn adobe_startup_endpoints_are_protected_by_real_whitelist() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../rulesets/Sources/adblock_whitelist.list");
+        let content = fs::read_to_string(path).unwrap();
+        let safety = SafetyPolicy::from_lines(content.lines());
+        for candidate in [
+            "DOMAIN-SUFFIX,adobe.io",
+            "DOMAIN,cc-api-data.adobe.io",
+            "DOMAIN,ims-na1.adobelogin.com",
+            "DOMAIN-SUFFIX,adobeoobe.com",
+            "DOMAIN-SUFFIX,cr.adobe.com",
+            "DOMAIN,na1r.services.adobe.com",
+            "DOMAIN,na2m-pr.licenses.adobe.com",
+            "DOMAIN,activate.adobe.com",
+        ] {
+            let rule = SurgeRule::parse(candidate).unwrap();
+            assert_eq!(
+                safety.decision(&rule),
+                SafetyDecision::Quarantine("protected-domain-intersection"),
+                "{candidate}"
+            );
+        }
+        let tracking = SurgeRule::parse("DOMAIN,sstats.adobe.com").unwrap();
+        assert_eq!(safety.decision(&tracking), SafetyDecision::Keep);
+        assert_eq!(
+            safety.functional_decision(r"^https://cc-api-data\.adobe\.io/ _ reject"),
+            SafetyDecision::Quarantine("protected-functional-intersection")
+        );
+    }
+
+    #[test]
     fn broad_eleme_trigger_handler_is_quarantined_without_blocking_other_handlers() {
         let safety = SafetyPolicy::default();
         for pattern in [

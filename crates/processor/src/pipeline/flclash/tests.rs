@@ -479,7 +479,12 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
         "api.ipinfo.io",
         "17u.cn",
         "wx.17u.cn",
+        "adobe.io",
+        "cc-api-data.adobe.io",
+        "ims-na1.adobelogin.com",
+        "acc.adobeoobe.com",
         "lm.licenses.adobe.com",
+        "na1r.services.adobe.com",
     ] {
         assert!(
             !rows.iter().any(|(_, row)| {
