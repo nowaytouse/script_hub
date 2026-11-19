@@ -745,6 +745,7 @@ impl Hub {
                     .child(button("revert-preferences", self.local("Revert changes", "撤销更改", "変更を取り消す"), palette, false)
                         .on_click(cx.listener(|hub, _, _, cx| {
                             hub.preferences = hub.saved_preferences.clone();
+                            hub.message = None;
                             hub.singbox.update(cx, |field, cx| field.set_value(hub.preferences.singbox.clone(), cx));
                             hub.reset_language(cx);
                             cx.set_global(UiStyle::from(&hub.preferences));

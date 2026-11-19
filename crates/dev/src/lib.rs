@@ -253,9 +253,11 @@ fn build_native_with(
     ] {
         no_links(root, &path)?;
     }
+    // Use an ordinary path for Windows SDK tools that concatenate paths with slashes.
+    let cargo_root = dunce::simplified(root);
     invoke(
         Command::new("cargo")
-            .current_dir(root)
+            .current_dir(cargo_root)
             .args([
                 "build",
                 "--locked",
@@ -272,7 +274,7 @@ fn build_native_with(
                 host,
             ])
             .env("CARGO_BUILD_JOBS", "1")
-            .env("CARGO_TARGET_DIR", root.join("target"))
+            .env("CARGO_TARGET_DIR", cargo_root.join("target"))
             .env_remove("CARGO_BUILD_TARGET"),
     )?;
     regular(root, &executable)?;

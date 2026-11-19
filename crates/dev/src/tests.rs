@@ -566,6 +566,28 @@ fn native_build_selects_explicit_host_and_not_stale_flat_output() {
     );
 }
 
+#[cfg(windows)]
+#[test]
+fn windows_native_build_passes_conventional_paths_to_cargo() {
+    let fixture = Fixture::new();
+    let root = fixture.0.canonicalize().unwrap();
+    let ordinary_root = dunce::simplified(&root);
+    assert_ne!(ordinary_root.as_os_str(), root.as_os_str());
+    let target = ordinary_root.join("target");
+    build_native_with(&root, Platform::Windows, WINDOWS_HOST, |command| {
+        assert_eq!(command.get_current_dir(), Some(ordinary_root));
+        assert!(command.get_envs().any(|(key, value)| {
+            key == "CARGO_TARGET_DIR" && value == Some(target.as_os_str())
+        }));
+        fixture.write(
+            &format!("target/{WINDOWS_HOST}/release/script-hub-gui.exe"),
+            b"synthetic native executable",
+        );
+        Ok(())
+    })
+    .unwrap();
+}
+
 #[cfg(unix)]
 #[test]
 fn symlinked_target_is_rejected_before_build_invocation() {

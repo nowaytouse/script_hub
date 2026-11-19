@@ -148,6 +148,8 @@ impl Hub {
                     "モジュールを選択してリンクを表示します。",
                 ))
         };
+        let compact_copy =
+            inspection.filter(|&index| !wide && catalog.modules[index].merged_into.is_empty());
         let list_and_detail = div()
             .flex()
             .gap_4()
@@ -219,6 +221,26 @@ impl Hub {
                             cx.notify();
                         })),
                     )
+                    .when_some(compact_copy, |node, index| {
+                        node.child(
+                            button(
+                                "copy-visible-module",
+                                self.tr(Text::CopyGithub),
+                                palette,
+                                true,
+                            )
+                            .on_click(cx.listener(
+                                move |hub, _, _, cx| {
+                                    let links = selected_module_urls(
+                                        &hub.module_catalog().modules,
+                                        &BTreeSet::from([index]),
+                                        true,
+                                    );
+                                    hub.copy(links, cx);
+                                },
+                            )),
+                        )
+                    })
                     .when(count != 0, |node| {
                         node.child(
                             button(

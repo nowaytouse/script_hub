@@ -18,6 +18,7 @@ required-features = ["icon-tools"]
 icon-tools = ["dep:resvg"]
 
 [dependencies]
+dunce = "1.0.5"
 resvg = { version = "0.50.0", optional = true, default-features = false }
 editpe = { version = "0.2.4", default-features = false, features = ["std"] }
 
