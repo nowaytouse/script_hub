@@ -1,7 +1,7 @@
 # Ruleset: Google
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 904
+# Rules: 909
 
 DOMAIN-SUFFIX,gle
 DOMAIN-SUFFIX,goog
@@ -837,6 +837,7 @@ DOMAIN-SUFFIX,blogspot.com.uy
 DOMAIN-SUFFIX,docs.google.com
 DOMAIN-SUFFIX,youtubego.co.id
 DOMAIN-SUFFIX,youtubego.co.in
+DOMAIN-SUFFIX,beacons.gvt2.com
 DOMAIN-SUFFIX,drive.google.com
 DOMAIN-SUFFIX,howtogetmo.co.uk
 DOMAIN-SUFFIX,womenwill.com.br
@@ -844,6 +845,7 @@ DOMAIN-SUFFIX,youtubego.com.br
 DOMAIN,fonts.gstatic.com
 DOMAIN-SUFFIX,beacons2.gvt2.com
 DOMAIN-SUFFIX,beacons3.gvt2.com
+DOMAIN,service.urchin.com
 DOMAIN-SUFFIX,fcmatch.google.com
 DOMAIN,checkin.gstatic.com
 DOMAIN,clients1.google.com
@@ -852,6 +854,7 @@ DOMAIN,analytics.google.com
 DOMAIN,fonts.googleapis.com
 DOMAIN,voice.telephony.goog
 DOMAIN-SUFFIX,adservice.google.com
+DOMAIN-SUFFIX,clickserve.cc-dt.com
 DOMAIN-SUFFIX,thinkquarterly.co.uk
 DOMAIN,alt1-mtalk.google.com
 DOMAIN,alt2-mtalk.google.com
@@ -862,6 +865,7 @@ DOMAIN,alt6-mtalk.google.com
 DOMAIN,alt7-mtalk.google.com
 DOMAIN,alt8-mtalk.google.com
 DOMAIN-SUFFIX,qpx.googleflights.net
+DOMAIN-SUFFIX,www.destinationurl.com
 DOMAIN,firebase.googleapis.com
 DOMAIN-SUFFIX,avail.googleflights.net
 DOMAIN,android.googlesource.com
@@ -891,6 +895,7 @@ DOMAIN,firebasedynamiclinks-ipv4.googleapis.com
 DOMAIN,firebasedynamiclinks-ipv6.googleapis.com
 DOMAIN,google-ohttp-relay-safebrowsing.fastly-edge.com
 DOMAIN,dl.l.google.com
+DOMAIN,beacons.gcp.gvt2.com
 DOMAIN,cache.pack.google.com
 DOMAIN,dg-meta.video.google.com
 DOMAIN,download.mlcc.google.com

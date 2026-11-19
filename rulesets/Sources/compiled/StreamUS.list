@@ -1,7 +1,7 @@
 # Ruleset: StreamUS
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 315
+# Rules: 316
 
 DOMAIN-SUFFIX,go.com
 DOMAIN-SUFFIX,abc.com
@@ -243,6 +243,7 @@ DOMAIN-SUFFIX,disney.com.br
 DOMAIN-SUFFIX,disney.com.hk
 DOMAIN-SUFFIX,disney.com.tw
 DOMAIN-SUFFIX,disney.demdex.net
+DOMAIN-SUFFIX,cdn.optimizely.com
 DOMAIN-SUFFIX,prod.hjholdings.tv
 DOMAIN-SUFFIX,d9.flashtalking.com
 DOMAIN-SUFFIX,discoveryplus.co.uk

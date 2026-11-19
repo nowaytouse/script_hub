@@ -1,7 +1,7 @@
 # Ruleset: AI
 # Policy: USER-DEFINED
 # Description: Rust-merged canonical ruleset
-# Rules: 417
+# Rules: 420
 DOMAIN,ai.google.dev
 DOMAIN,ai.zhaomi.cn
 DOMAIN,alkalicore-pa.clients6.google.com
@@ -13,6 +13,7 @@ DOMAIN,appsgenaiserver-pa.clients.google.com
 DOMAIN,appsgenaiserver-pa.clients6.google.com
 DOMAIN,appsgenaiserver-pa.googleapis.com
 DOMAIN,assets.msn.com
+DOMAIN,bridge.claudeusercontent.com
 DOMAIN,chat.openai.com.cdn.cloudflare.net
 DOMAIN,cloud.zed.dev
 DOMAIN,cloudaicompanion.googleapis.com
@@ -43,6 +44,7 @@ DOMAIN,self.events.data.microsoft.com
 DOMAIN,servd-anthropic-website.b-cdn.net
 DOMAIN,server.self-serve.windsurf.com
 DOMAIN,services.bingapis.com
+DOMAIN,static.cloudflareinsights.com
 DOMAIN,sydney.bing.com
 DOMAIN,webchannel-alkalimakersuite-pa.clients6.google.com
 DOMAIN,www.bing.com
@@ -202,6 +204,7 @@ DOMAIN-SUFFIX,elevenlabsusercontent.com
 DOMAIN-SUFFIX,envato-static.com
 DOMAIN-SUFFIX,envato.com
 DOMAIN-SUFFIX,envatousercontent.com
+DOMAIN-SUFFIX,events.statsigapi.net
 DOMAIN-SUFFIX,favonis.cloud
 DOMAIN-SUFFIX,favonis.com
 DOMAIN-SUFFIX,favonis.space
