@@ -353,6 +353,16 @@ fn measurement_cache_does_not_probe_named_aliases_again() {
 }
 
 #[test]
+fn measurement_cache_ignores_json_object_key_order() {
+    let first = json!({"type":"trojan","tag":"A","server":"node.example.invalid","tls":{"enabled":true,"server_name":"node.example.invalid"}});
+    let second = json!({"tls":{"server_name":"node.example.invalid","enabled":true},"server":"node.example.invalid","tag":"B","type":"trojan"});
+    assert_eq!(
+        measurement_key(&first).unwrap().as_str(),
+        measurement_key(&second).unwrap().as_str()
+    );
+}
+
+#[test]
 fn protocol_security_and_local_errors_are_not_dead_node_evidence() {
     for error in [
         ureq::Error::Tls("synthetic certificate policy"),

@@ -94,16 +94,9 @@ mod tests {
         let bytes = encode(&steps).unwrap();
         let restored = decode(&bytes).unwrap();
         assert_eq!(encode(&restored).unwrap(), bytes);
-        let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-        assert_eq!(
-            value
-                .as_object()
-                .unwrap()
-                .keys()
-                .map(String::as_str)
-                .collect::<Vec<_>>(),
-            ["format", "steps", "version"]
-        );
+        assert!(bytes.starts_with(
+            b"{\n  \"format\": \"script-hub-operations\",\n  \"version\": 1,\n  \"steps\": ["
+        ));
     }
 
     #[test]

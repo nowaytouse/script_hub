@@ -805,6 +805,7 @@ fn measurement_key(outbound: &Value) -> Result<Zeroizing<String>, EngineError> {
         .as_object_mut()
         .ok_or(EngineError::Infrastructure)?
         .remove("tag");
+    identity.0.sort_all_objects();
     serde_json::to_string(&identity.0)
         .map(Zeroizing::new)
         .map_err(|_| EngineError::Infrastructure)

@@ -319,7 +319,8 @@ fn mihomo(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> 
         };
         let mut normalized = node.export_sing_box().map_err(at_node)?;
         default_socks_version(&mut normalized.0);
-        let converted = mihomo_node(&normalized.0).map_err(at_node)?;
+        let mut converted = mihomo_node(&normalized.0).map_err(at_node)?;
+        converted.0.sort_all_objects();
         // A JSON object is a YAML flow mapping. Serialize it instead of
         // interpolating credentials and names into the YAML document.
         let mut row = Zeroizing::new(Vec::new());
@@ -481,6 +482,26 @@ mod tests {
             assert_eq!(
                 serde_json::from_str::<Value>(&exported).unwrap()["outbounds"][0]["udp_over_tcp"],
                 field
+            );
+        }
+    }
+
+    #[test]
+    fn generated_subscription_documents_use_canonical_object_order() {
+        let source = r#"[{"type":"socks","tag":"Sample","server":"sample.example.invalid","server_port":1080}]"#;
+        for (format, expected) in [
+            (
+                OutputFormat::SingBox,
+                "{\"outbounds\":[{\"server\":\"sample.example.invalid\",\"server_port\":1080,\"tag\":\"Sample\",\"type\":\"socks\"}]}\n",
+            ),
+            (
+                OutputFormat::Mihomo,
+                "proxies:\n  - {\"name\":\"Sample\",\"port\":1080,\"server\":\"sample.example.invalid\",\"type\":\"socks5\",\"udp\":true}\n",
+            ),
+        ] {
+            assert_eq!(
+                export_subscription(source, format).unwrap().as_str(),
+                expected
             );
         }
     }

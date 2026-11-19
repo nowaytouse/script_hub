@@ -210,7 +210,8 @@ impl Node {
     }
 
     pub(super) fn write_export_sing_box(&self, output: &mut Vec<u8>) -> Result<(), ModelError> {
-        let value = self.export_sing_box()?;
+        let mut value = self.export_sing_box()?;
+        value.0.sort_all_objects();
         serde_json::to_writer(output, &value.0).map_err(|_| ModelError::Render)
     }
 

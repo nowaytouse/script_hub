@@ -119,6 +119,9 @@ pub(super) fn append(source: &Value, row: &mut Zeroizing<String>) -> Result<(), 
                         .as_object()
                         .filter(|headers| !headers.is_empty())
                         .ok_or(ModelError::Unsupported)?;
+                    // Keep the exported header order stable across JSON map implementations.
+                    let mut headers = headers.iter().collect::<Vec<_>>();
+                    headers.sort_unstable_by_key(|&(name, _)| name);
                     let mut joined = Zeroizing::new(String::new());
                     for (key, value) in headers {
                         if key.is_empty()
