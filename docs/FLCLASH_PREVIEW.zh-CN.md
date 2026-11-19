@@ -31,7 +31,7 @@ HTTPS 响应修改还需要预览版自己的 HTTPS 解密开关和 CA 信任流
 cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-full /path/outside/repository/ScriptHub.AdBlock.Heidai.Full.sgmodule
 ~~~
 
-在原生模块页按文件导入，用于替换原 PROMAX 条目。再次导出并导入即可刷新。[来源目录](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list)登记了各客户端的官方完整发行版，原生直订带有上游原始拦截，其中包含 Apple 服务域名。
+在原生模块页按文件导入，用于替换原 PROMAX 条目。再次导出并导入即可刷新。各客户端可使用同一个[跨平台导出器](COMPATIBILITY.zh-CN.md#217heidai-完整源)生成有服务保护的规则。[来源目录](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list)登记了上游原始发行版。
 
 Rust 生成器读取包括 PROMAX 在内的当前公开 Surge 模块，生成独立的 FlClash Preview 产物。保留受支持的 URL／Header／Body Rewrite、Map Local、脚本和 MITM 主机范围；支持的内联路由规范化后保留。不兼容的节、参数或策略会进入兼容报告。
 

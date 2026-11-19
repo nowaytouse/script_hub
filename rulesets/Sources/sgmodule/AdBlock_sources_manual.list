@@ -9,7 +9,7 @@
 # Format: SOURCE|SUGGESTED_POLICY|PURPOSE|RISK
 
 # 217heidai complete upstream releases. The DNS file also carries source exceptions.
-# FlClash can export a protected local PROMAX from that file with promax --export-heidai-full.
+# Generate the reviewed local formats with promax --export-heidai-bundle.
 https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt|REFERENCE|AdGuardHomeFull|Complete ABP release with exceptions
 https://github.com/217heidai/adblockfilters/releases/download/rule/adblocksurge.list|REFERENCE|SurgeDomainSetFull|Use DOMAIN-SET with service protection
 https://github.com/217heidai/adblockfilters/releases/download/rule/adblockshadowrocket.sgmodule|REFERENCE|ShadowrocketModuleFull|Contains upstream blocking policies

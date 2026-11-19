@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Export the protected complete 217heidai DNS source for Surge, Shadowrocket, Mihomo, FlClash Preview, sing-box and AdGuard Home. Compact redundant DNS matches within each shared AdBlock category after evaluating source exceptions and service protections.
+
 - Protect Adobe.io and the Adobe sign-in, licensing, and deployment endpoints from shared AdBlock rules. Mark compiled sing-box rulesets as binary so update CI can still reject whitespace errors in text files.
 
 - Export a single local FlClash PROMAX from the complete 217heidai DNS release with source exceptions, protected-service checks, deduplication and the existing load budget. Register the original full releases, add reviewed AdGuard tracking hosts to shared Privacy rules, and synchronize the Apple service bundle with shared MITM exclusions.

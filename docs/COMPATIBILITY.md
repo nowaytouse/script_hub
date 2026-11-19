@@ -35,3 +35,38 @@ References: [Mihomo rule providers](https://wiki.metacubex.one/en/config/rule-pr
 [sing-box rule sets](https://sing-box.sagernet.org/configuration/rule-set/),
 [Surge scripting](https://manual.nssurge.com/scripting/http-request.html),
 and the [Shadowrocket App Store listing](https://apps.apple.com/us/app/shadowrocket/id932747118).
+
+## Complete 217heidai input
+
+The local exporter checks the declared counts of the official complete DNS
+release and projects one shared set of protected domain suffixes. It applies
+upstream exceptions before deduplication and checks the repository's service
+allowlist, Direct routing, public resolvers and current PROMAX MITM hosts.
+The manifest records the source version, SHA-256 and matcher counts.
+
+~~~sh
+cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-bundle /path/outside/repository/new-heidai-bundle --singbox /path/to/sing-box
+~~~
+
+Choose a new output directory each time. Omit `--singbox` to export the
+source-format JSON only for that client.
+
+| Client | Generated file and use |
+| --- | --- |
+| Surge | `.Surge.list` via `RULE-SET,<path>,REJECT`. Resolve the path relative to the profile directory or use an absolute path. |
+| Shadowrocket | Import `.Shadowrocket.module` as a routing module. |
+| Mihomo / FlClash routing | Load `.Mihomo.yaml` as a local rule provider with `type: file`, `behavior: classical` and `format: yaml`, then select a reject policy for the rule provider. Put it under the core's home directory. |
+| FlClash Preview | Import `.FlClash.sgmodule` from the native module page in place of standard PROMAX. It combines PROMAX and the projected full source while omitting suffixes already covered by the module. |
+| sing-box | Register `.SingBox.srs` as a local binary rule set or `.SingBox.json` as a local source rule set and select a reject action in the route or DNS rules that reference it. |
+| AdGuard Home | Add `.AdGuardHome.txt` as a DNS filter from a location allowed by the server. |
+
+Use the output for your client and keep the original raw 217heidai provider
+disabled to preserve the reviewed exclusions. These files are local exports
+because the complete feed aggregates sources with different redistribution
+terms. The source-specific exceptions apply to that feed.
+
+The shared compiler keeps app/Local, Advertising, Privacy, Security and
+ThreatIntel ownership separate. Within a category and action, a plain
+domain suffix owns the narrower plain matches it covers. Explicit matcher
+options and independent subscriptions retain their coverage. The complete
+217heidai feed stays identifiable as a mixed-source export.

@@ -116,7 +116,7 @@ hostname = %APPEND% x.com";
 }
 
 #[test]
-fn reviewed_browser_host_does_not_duplicate_a_network_suffix_in_another_category() {
+fn reviewed_browser_host_survives_a_network_suffix_in_another_category() {
     let browser = "https://raw.githubusercontent.com/kargig/greek-adblockplus-filter/master/void-gr-filters.txt";
     let network = "https://example.test/compiled.list";
     let entry = |source: &str, kind: &str, category: &str| super::SourceEntry {
@@ -141,8 +141,14 @@ fn reviewed_browser_host_does_not_duplicate_a_network_suffix_in_another_category
             .process_source_entries(&sources, &contents)
             .is_empty()
     );
-    assert!(manager.rules["REJECT"]["ThreatIntel"].contains("DOMAIN-SUFFIX,adman.kathimerini.gr"));
-    assert!(!manager.rules["REJECT"]["Advertising"].contains("DOMAIN,adman.kathimerini.gr"));
+    let exceptions = manager.source_exception_matcher().unwrap();
+    let published =
+        |category| AdBlockManager::partition_rules(&manager.rules["REJECT"][category], &exceptions);
+    assert_eq!(
+        published("ThreatIntel")[0],
+        ["DOMAIN-SUFFIX,adman.kathimerini.gr"]
+    );
+    assert_eq!(published("Advertising")[0], ["DOMAIN,adman.kathimerini.gr"]);
 }
 
 #[test]
@@ -2118,6 +2124,63 @@ fn rule_partition_preserves_exception_scope_order_and_invalid_fallbacks() {
 }
 
 #[test]
+fn published_domain_partition_compacts_only_equivalent_coverage_in_its_category() {
+    let inputs = [
+        ("Advertising", "DOMAIN,ads.root.example.test"),
+        ("Advertising", "DOMAIN-SUFFIX,child.root.example.test"),
+        ("Advertising", "DOMAIN-SUFFIX,Root.Example.test"),
+        ("Advertising", "DOMAIN-SUFFIX,root.example.test"),
+        ("Advertising", "DOMAIN,ads.notroot.example.test"),
+        (
+            "Advertising",
+            "DOMAIN,cdn.root.example.test,extended-matching",
+        ),
+        (
+            "Advertising",
+            "DOMAIN-SUFFIX,option.example.test,extended-matching",
+        ),
+        ("Advertising", "DOMAIN,img.option.example.test"),
+        ("ThreatIntel", "DOMAIN,api.root.example.test"),
+        ("ThreatIntel", "DOMAIN-SUFFIX,other.root.example.test"),
+        ("Advertising", "DOMAIN,ads.root.example.test,REJECT-DROP"),
+    ];
+    let mut reversed_inputs = inputs;
+    reversed_inputs.reverse();
+
+    for input in [inputs, reversed_inputs] {
+        let mut manager = AdBlockManager::new(std::env::temp_dir());
+        for (category, row) in input {
+            manager.add_rule_line(row, "REJECT", category);
+        }
+        let exceptions = manager.source_exception_matcher().unwrap();
+        let published = |policy, category| {
+            AdBlockManager::partition_rules(&manager.rules[policy][category], &exceptions)
+        };
+        assert_eq!(
+            published("REJECT", "Advertising")[0],
+            [
+                "DOMAIN,ads.notroot.example.test",
+                "DOMAIN,cdn.root.example.test,extended-matching",
+                "DOMAIN,img.option.example.test",
+                "DOMAIN-SUFFIX,Root.Example.test",
+                "DOMAIN-SUFFIX,option.example.test,extended-matching",
+            ]
+        );
+        assert_eq!(
+            published("REJECT", "ThreatIntel")[0],
+            [
+                "DOMAIN,api.root.example.test",
+                "DOMAIN-SUFFIX,other.root.example.test",
+            ]
+        );
+        assert_eq!(
+            published("REJECT-DROP", "Advertising")[0],
+            ["DOMAIN,ads.root.example.test"]
+        );
+    }
+}
+
+#[test]
 fn fully_excepted_categories_emit_no_empty_shards() {
     let unique = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -2213,16 +2276,20 @@ fn suffix_subsumption_is_case_insensitive_policy_scoped_and_label_bounded() {
         manager.add_rule_line(line, "REJECT", "Advertising");
     }
 
+    let exceptions = manager.source_exception_matcher().unwrap();
+    let published = |policy| {
+        AdBlockManager::partition_rules(&manager.rules[policy]["Advertising"], &exceptions)
+    };
     assert_eq!(
-        manager.rules["REJECT"]["Advertising"],
-        HashSet::from([
-            "DOMAIN-SUFFIX,Metrics.Example.test".to_string(),
-            "DOMAIN,ads.othermetrics.example.test".to_string(),
-        ])
+        published("REJECT")[0],
+        [
+            "DOMAIN,ads.othermetrics.example.test",
+            "DOMAIN-SUFFIX,Metrics.Example.test",
+        ]
     );
     assert_eq!(
-        manager.rules["REJECT-DROP"]["Advertising"],
-        HashSet::from(["DOMAIN,Ads.METRICS.EXAMPLE.test".to_string()])
+        published("REJECT-DROP")[0],
+        ["DOMAIN,Ads.METRICS.EXAMPLE.test"]
     );
 }
 
@@ -2246,7 +2313,7 @@ fn script_classifier_keeps_ascii_case_and_unicode_fallback_behavior() {
 }
 
 #[test]
-fn suffix_insertion_keeps_preexisting_domains_and_single_label_behavior() {
+fn suffix_partition_compacts_preexisting_domains_and_keeps_single_label_behavior() {
     let mut manager = AdBlockManager::new(std::env::temp_dir());
     for line in [
         "DOMAIN,ads.metrics.example.test",
@@ -2259,7 +2326,19 @@ fn suffix_insertion_keeps_preexisting_domains_and_single_label_behavior() {
         manager.add_rule_line(line, "reject", "Advertising");
     }
 
-    assert_eq!(manager.rules["REJECT"]["Advertising"].len(), 6);
+    assert_eq!(
+        AdBlockManager::partition_rules(
+            &manager.rules["REJECT"]["Advertising"],
+            &manager.source_exception_matcher().unwrap(),
+        )[0],
+        [
+            "DOMAIN,localhost",
+            "DOMAIN,metrics.test",
+            "DOMAIN-SUFFIX,localhost",
+            "DOMAIN-SUFFIX,metrics.example.test",
+            "DOMAIN-SUFFIX,test",
+        ]
+    );
 }
 
 #[test]

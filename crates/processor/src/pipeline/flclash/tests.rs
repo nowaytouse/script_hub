@@ -460,7 +460,7 @@ fn current_public_sources_project_to_native_modules_without_unsupported_sections
     assert_eq!(hosts.len(), 1);
     assert!(!hosts[0].1.contains('*'));
     assert!(text.len() <= super::MAX_PROMAX_BYTES);
-    assert!(text.len() > 30_000_000);
+    assert!(rows.len() > 700_000);
     assert!(rows.len() + rewrites.len() + body.len() + maps.len() <= super::MAX_PROMAX_RULES);
     assert!(
         rows.iter()

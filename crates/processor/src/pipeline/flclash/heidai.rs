@@ -1,4 +1,4 @@
-//! Local-only projection of the complete 217heidai AdGuard release.
+//! Shared local rule projection of the complete 217heidai AdGuard release.
 use super::{
     MAIN_MODULE, MAX_PROMAX_BYTES, OWNER, PROMAX_PROTECTED_SERVICE_HOSTS, PROMAX_WHITELIST,
     PUBLIC_DOH_BOOTSTRAPS, is_promax_domain, read_public, read_public_bounded,
@@ -15,10 +15,15 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
+mod platforms;
+
 const HEIDAI_FULL: &str =
     "https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt";
 const MAX_SOURCE_BYTES: usize = 16 * 1024 * 1024;
 const LOCAL_MARKER: &str = "# Script Hub local export · 217heidai complete input";
+const PREVIEW_FILE: &str = "ScriptHub.AdBlock.Heidai.Full.FlClash.sgmodule";
+const SINGBOX_SOURCE: &str = "ScriptHub.AdBlock.Heidai.Full.SingBox.json";
+const SINGBOX_BINARY: &str = "ScriptHub.AdBlock.Heidai.Full.SingBox.srs";
 const LOCAL_GUARDS: &[&str] = &[
     "DOMAIN-SUFFIX,apple.com",
     "DOMAIN-SUFFIX,aaplimg.com",
@@ -34,6 +39,7 @@ struct Feed {
     block_rows: usize,
     unsupported_blocks: usize,
     exceptions: HashSet<String>,
+    exception_rows: usize,
     version: String,
 }
 
@@ -99,6 +105,7 @@ fn parse_feed(text: &str) -> Result<Feed, String> {
         block_rows,
         unsupported_blocks,
         exceptions,
+        exception_rows,
         version: version.into(),
     })
 }
@@ -109,27 +116,11 @@ fn ancestors(host: &str) -> impl Iterator<Item = &str> {
     })
 }
 
-fn append_full_feed(
+fn select_domains<'a>(
     base: &str,
-    feed: &Feed,
+    feed: &'a Feed,
     safety: &SafetyPolicy,
-) -> Result<(String, usize), String> {
-    if !base.lines().any(|line| line == OWNER) {
-        return Err("Local export requires the repository-generated FlClash PROMAX".into());
-    }
-    let rule_start = base.find("\n[Rule]\n").ok_or("Missing PROMAX rules")? + "\n[Rule]\n".len();
-    let rule_end = base[rule_start..]
-        .find("\n[")
-        .map_or(base.len(), |index| rule_start + index);
-    let rules = &base[rule_start..rule_end];
-    let suffixes = rules
-        .lines()
-        .filter_map(|row| {
-            let (kind, rest) = row.split_once(',')?;
-            let (host, _) = rest.split_once(',')?;
-            (kind == "DOMAIN-SUFFIX").then_some(host)
-        })
-        .collect::<HashSet<_>>();
+) -> Result<Vec<&'a str>, String> {
     let exception_parents = feed
         .exceptions
         .iter()
@@ -149,7 +140,7 @@ fn append_full_feed(
         .collect::<HashSet<_>>();
     let mut selected = BTreeSet::new();
     for host in &feed.blocks {
-        if ancestors(host).any(|name| suffixes.contains(name) || feed.exceptions.contains(name))
+        if ancestors(host).any(|name| feed.exceptions.contains(name))
             || exception_parents.contains(host.as_str())
             || infrastructure_parents.contains(host.as_str())
             || psl::suffix(host.as_bytes())
@@ -165,15 +156,43 @@ fn append_full_feed(
             selected.insert(host.as_str());
         }
     }
+    Ok(selected
+        .iter()
+        .copied()
+        .filter(|host| {
+            !ancestors(host)
+                .skip(1)
+                .any(|parent| selected.contains(parent))
+        })
+        .collect())
+}
+
+fn append_full_feed(
+    base: &str,
+    version: &str,
+    domains: &[&str],
+) -> Result<(String, usize), String> {
+    if !base.lines().any(|line| line == OWNER) {
+        return Err("Local export requires the repository-generated FlClash PROMAX".into());
+    }
+    let rule_start = base.find("\n[Rule]\n").ok_or("Missing PROMAX rules")? + "\n[Rule]\n".len();
+    let rule_end = base[rule_start..]
+        .find("\n[")
+        .map_or(base.len(), |index| rule_start + index);
+    let rules = &base[rule_start..rule_end];
+    let suffixes = rules
+        .lines()
+        .filter_map(|row| {
+            let (host, policy) = row.strip_prefix("DOMAIN-SUFFIX,")?.split_once(',')?;
+            super::is_block_policy(policy).then_some(host)
+        })
+        .collect::<HashSet<_>>();
     let mut additions = String::new();
     let mut count = 0;
-    for host in &selected {
-        if ancestors(host)
-            .skip(1)
-            .any(|parent| selected.contains(parent))
-        {
-            continue;
-        }
+    for host in domains
+        .iter()
+        .filter(|host| !ancestors(host).any(|name| suffixes.contains(name)))
+    {
         additions.push_str("DOMAIN-SUFFIX,");
         additions.push_str(host);
         additions.push_str(",REJECT\n");
@@ -183,8 +202,7 @@ fn append_full_feed(
         .split_once('\n')
         .ok_or("Missing PROMAX metadata")?;
     let header = format!(
-        "#!name=FlClash Preview · AdBlock PROMAX (217heidai Full Local)\n{LOCAL_MARKER}\n# Complete upstream: {HEIDAI_FULL}\n# Upstream version: {}\n",
-        feed.version
+        "#!name=FlClash Preview · AdBlock PROMAX (217heidai Full Local)\n{LOCAL_MARKER}\n# Complete upstream: {HEIDAI_FULL}\n# Upstream version: {version}\n"
     );
     let mut result = String::with_capacity(base.len() + additions.len() + header.len());
     result.push_str(&header);
@@ -239,9 +257,23 @@ pub fn export_heidai_full(root: &Path, output: &Path) -> Result<String, String> 
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(error) => return Err(error.to_string()),
     }
-    let base = read_public_bounded(&root, &root.join(MAIN_MODULE), MAX_PROMAX_BYTES)?;
-    let whitelist = read_public(&root, &root.join(PROMAX_WHITELIST))?;
-    let direct = read_public(&root, &root.join("rulesets/RULE-SET/Direct.list"))?;
+    let (base, feed, safety, digest) = load_inputs(&root)?;
+    let domains = select_domains(&base, &feed, &safety)?;
+    let (result, added) = append_full_feed(&base, &feed.version, &domains)?;
+    crate::filesystem::replace_file(&output, result.as_bytes())
+        .map_err(|error| error.to_string())?;
+    Ok(format!(
+        "{} · {added} additional domains · {} bytes\n{}",
+        source_report(&feed, &digest),
+        result.len(),
+        output.display()
+    ))
+}
+
+fn load_inputs(root: &Path) -> Result<(String, Feed, SafetyPolicy, String), String> {
+    let base = read_public_bounded(root, &root.join(MAIN_MODULE), MAX_PROMAX_BYTES)?;
+    let whitelist = read_public(root, &root.join(PROMAX_WHITELIST))?;
+    let direct = read_public(root, &root.join("rulesets/RULE-SET/Direct.list"))?;
     let safety =
         SafetyPolicy::from_lines(
             whitelist
@@ -263,22 +295,125 @@ pub fn export_heidai_full(root: &Path, output: &Path) -> Result<String, String> 
     .get(HEIDAI_FULL)
     .map_err(|error| error.to_string())?;
     let feed = parse_feed(&raw)?;
-    let (result, added) = append_full_feed(&base, &feed, &safety)?;
-    crate::filesystem::replace_file(&output, result.as_bytes())
-        .map_err(|error| error.to_string())?;
     let mut digest = String::with_capacity(64);
     for byte in Sha256::digest(raw.as_bytes()) {
         write!(digest, "{byte:02x}").expect("writing to a string cannot fail");
     }
-    Ok(format!(
-        "217heidai {} · {} blocks read · {} exceptions read · {} unsupported blocks skipped · {added} additional domains · {} bytes · upstream SHA-256 {digest}\n{}",
-        feed.version,
-        feed.block_rows,
-        feed.exceptions.len(),
-        feed.unsupported_blocks,
-        result.len(),
-        output.display()
-    ))
+    Ok((base, feed, safety, digest))
+}
+
+fn source_report(feed: &Feed, digest: &str) -> String {
+    format!(
+        "217heidai {} · {} blocks read · {} exceptions read · {} unsupported blocks skipped · upstream SHA-256 {digest}",
+        feed.version, feed.block_rows, feed.exception_rows, feed.unsupported_blocks,
+    )
+}
+
+/// Export one protected full-source snapshot in the native formats the project supports.
+pub fn export_heidai_bundle(
+    root: &Path,
+    directory: &Path,
+    singbox: Option<&Path>,
+) -> Result<String, String> {
+    let root = root.canonicalize().map_err(|error| error.to_string())?;
+    let parent = directory
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+        .unwrap_or(Path::new("."))
+        .canonicalize()
+        .map_err(|error| error.to_string())?;
+    let name = directory
+        .file_name()
+        .ok_or("Specify a new output directory")?;
+    if parent.starts_with(&root) {
+        return Err("Choose a new local directory outside the repository".into());
+    }
+    let directory = parent.join(name);
+    match fs::symlink_metadata(&directory) {
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.to_string()),
+        Ok(_) => {
+            return Err("Choose a new output directory; the destination already exists".into());
+        }
+    }
+    let (base, feed, safety, digest) = load_inputs(&root)?;
+    let domains = select_domains(&base, &feed, &safety)?;
+    let (flclash, added) = append_full_feed(&base, &feed.version, &domains)?;
+    let mut files = platforms::render(&domains)?;
+    files.push((PREVIEW_FILE, flclash));
+    let names: Vec<_> = files
+        .iter()
+        .map(|(name, _)| *name)
+        .chain(singbox.map(|_| SINGBOX_BINARY))
+        .collect();
+    let manifest = serde_json::to_string_pretty(&serde_json::json!({
+        "source": HEIDAI_FULL,
+        "version": feed.version,
+        "upstream_sha256": digest,
+        "source_block_rows": feed.block_rows,
+        "source_exception_rows": feed.exception_rows,
+        "unsupported_block_rows": feed.unsupported_blocks,
+        "protected_full_source_matchers": domains.len(),
+        "additional_flclash_matchers": added,
+        "files": names,
+    }))
+    .map_err(|error| error.to_string())?;
+
+    let report = format!(
+        "{}\n{} protected full-source matchers · {added} additional FlClash matchers\n{}",
+        source_report(&feed, &digest),
+        domains.len(),
+        directory.display()
+    );
+    fs::create_dir(&directory).map_err(|error| error.to_string())?;
+    let mut written = Vec::new();
+    let result = (|| -> Result<(), String> {
+        for (name, content) in files {
+            let path = directory.join(name);
+            crate::filesystem::replace_file(&path, content.as_bytes())
+                .map_err(|error| format!("cannot write {name}: {error}"))?;
+            written.push(path);
+        }
+        if let Some(singbox) = singbox {
+            let binary = directory.join(SINGBOX_BINARY);
+            written.push(binary.clone());
+            let process = crate::pipeline::srs_generator::compiler_command(
+                &singbox.to_string_lossy(),
+                &directory.join(SINGBOX_SOURCE),
+                &binary,
+            )
+            .output()
+            .map_err(|error| format!("cannot run sing-box: {error}"))?;
+            if !process.status.success() {
+                return Err(format!(
+                    "sing-box could not compile protected feed: {}",
+                    String::from_utf8_lossy(&process.stderr).trim()
+                ));
+            }
+            let mut header = [0; 4];
+            if fs::File::open(&binary)
+                .and_then(|mut file| file.read_exact(&mut header))
+                .is_err()
+                || !header.starts_with(b"SRS")
+            {
+                return Err("sing-box did not produce a binary ruleset".into());
+            }
+        }
+        crate::filesystem::replace_file(
+            &directory.join("manifest.json"),
+            format!("{manifest}\n").as_bytes(),
+        )
+        .map_err(|error| format!("cannot write bundle manifest: {error}"))?;
+        Ok(())
+    })();
+    if result.is_err() {
+        for path in written {
+            let _ = fs::remove_file(path);
+        }
+        let _ = fs::remove_dir(&directory);
+    }
+    result?;
+    Ok(report)
 }
 
 #[cfg(test)]
@@ -315,12 +450,15 @@ mod tests {
         let base = format!(
             "#!name=PROMAX\n{OWNER}\n[Rule]\nDOMAIN-SUFFIX,base.test,REJECT\n\n[MITM]\nhostname = %APPEND% playback.media.test\n"
         );
-        let (output, count) = append_full_feed(
+        let feed = parse_feed(text).unwrap();
+        let domains = select_domains(
             &base,
-            &parse_feed(text).unwrap(),
+            &feed,
             &SafetyPolicy::from_lines(LOCAL_GUARDS.iter().copied()),
         )
         .unwrap();
+        assert_eq!(domains, ["ad.test", "copy.base.test"]);
+        let (output, count) = append_full_feed(&base, &feed.version, &domains).unwrap();
         assert_eq!(count, 1);
         assert!(output.contains("DOMAIN-SUFFIX,ad.test,REJECT\n"));
         assert!(output.contains("DOMAIN-SUFFIX,base.test,REJECT\n"));

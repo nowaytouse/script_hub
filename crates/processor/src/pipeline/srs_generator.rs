@@ -94,7 +94,7 @@ fn srs_output_dir(list_file: &Path, root_dir: &Path) -> PathBuf {
     }
 }
 
-fn compiler_command(singbox_path: &str, input: &Path, output: &Path) -> Command {
+pub(crate) fn compiler_command(singbox_path: &str, input: &Path, output: &Path) -> Command {
     let mut command = Command::new(singbox_path);
     command
         .env_remove("GITHUB_TOKEN")

@@ -20,4 +20,27 @@ Mihomo 对 Surge `extended-matching` 的适配仅保留基础域名匹配；TLS 
 
 SRS 转换不保留 Surge 逐条规则的 `no-resolve` 或 `extended-matching` 选项，这类适配产物也使用 `_supported` 名称；请引用当前文件，旧的未标记 SRS 名称不保留。解析行为取决于引用该规则集的 sing-box 路由和 DNS 配置，不由该选项决定。
 
+## 217heidai 完整源
+
+本地导出读取官方完整 DNS 发行版，核对声明条数，再生成一份共用的域名后缀规则。来源放行在去重前处理，并应用项目的服务白名单、直连清单、公共加密 DNS 和当前 PROMAX 的 MITM 主机保护。`manifest.json` 记录来源版本、SHA-256 和各阶段条数。
+
+~~~sh
+cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-bundle /path/outside/repository/new-heidai-bundle --singbox /path/to/sing-box
+~~~
+
+每次选择一个新的输出目录。省略 `--singbox` 时，sing-box 仍会收到可直接引用的源格式 JSON。
+
+| 客户端 | 产物与导入 |
+| --- | --- |
+| Surge | 用 `RULE-SET,<路径>,REJECT` 引用 `.Surge.list`。路径相对配置文件目录，也支持绝对路径。 |
+| Shadowrocket | 将 `.Shadowrocket.module` 导入为路由模块。 |
+| Mihomo / FlClash 路由 | 在内核工作目录内使用 `.Mihomo.yaml`，配置 `type: file`、`behavior: classical`、`format: yaml`，为引用添加拦截策略。 |
+| FlClash 预览版 | 从原生模块页导入 `.FlClash.sgmodule`，替换原 PROMAX。模块合并完整源的有效域名，并略过 PROMAX 已覆盖的后缀。 |
+| sing-box | 注册 `.SingBox.srs`（本地二进制）或 `.SingBox.json`（本地源格式），在引用该规则集的路由或 DNS 规则中选择拦截动作。 |
+| AdGuard Home | 从服务器允许的目录加载 `.AdGuardHome.txt` 作为 DNS 过滤器。 |
+
+使用客户端对应的产物，并停用该上游的原始订阅，确保共用服务保护生效。完整源聚合了再发布条件不同的第三方数据，合并产物由本地导出器生成。来源放行仅约束这一个来源。
+
+共享编译器保留本地应用、广告、隐私、安全和威胁情报分类。同分类、同动作内，普通域名后缀负责其覆盖的更窄普通规则。带显式匹配选项的规则和独立订阅保有各自的覆盖。217heidai 完整源以独立的混合来源记录。
+
 参考：[Mihomo 规则提供器](https://wiki.metacubex.one/en/config/rule-providers/)、[规则内容](https://wiki.metacubex.one/en/config/rule-providers/content/)、[sing-box 规则集](https://sing-box.sagernet.org/zh/configuration/rule-set/)、[Surge 脚本](https://manual.nssurge.com/scripting/http-request.html)及 [Shadowrocket App Store 页面](https://apps.apple.com/us/app/shadowrocket/id932747118)。

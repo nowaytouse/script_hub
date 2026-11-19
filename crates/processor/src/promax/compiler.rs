@@ -315,7 +315,6 @@ pub struct AdBlockManager {
     quarantine: Vec<crate::promax::safety::QuarantineRecord>,
     rules: HashMap<String, HashMap<String, HashSet<String>>>, // policy -> category -> rules
     seen_rules: HashMap<String, HashSet<String>>,             // policy -> rules
-    seen_suffixes: HashMap<String, HashSet<String>>,          // policy -> suffixes
     source_exceptions: HashSet<String>,                       // AdGuard/ABP @@ domain exceptions
     reviewed_ip_drops: HashSet<String>,
     ip_rewrite_candidates: HashMap<String, HashSet<String>>,
@@ -336,7 +335,6 @@ impl AdBlockManager {
         let root_dir = root_dir.canonicalize().unwrap_or(root_dir);
         let mut rules = HashMap::new();
         let mut seen_rules = HashMap::new();
-        let mut seen_suffixes = HashMap::new();
 
         for policy in &["REJECT", "REJECT-DROP", "REJECT-NO-DROP", "DIRECT"] {
             let mut cats = HashMap::new();
@@ -345,7 +343,6 @@ impl AdBlockManager {
             }
             rules.insert(policy.to_string(), cats);
             seen_rules.insert(policy.to_string(), HashSet::new());
-            seen_suffixes.insert(policy.to_string(), HashSet::new());
         }
 
         let mut sections = HashMap::new();
@@ -368,7 +365,6 @@ impl AdBlockManager {
             quarantine: Vec::new(),
             rules,
             seen_rules,
-            seen_suffixes,
             source_exceptions: HashSet::new(),
             reviewed_ip_drops: HashSet::new(),
             ip_rewrite_candidates: HashMap::new(),
@@ -921,7 +917,7 @@ impl AdBlockManager {
             };
             Cow::Owned(normalized)
         };
-        let mut parsed = match crate::promax::rule::SurgeRule::parse(&parse_candidate) {
+        let parsed = match crate::promax::rule::SurgeRule::parse(&parse_candidate) {
             Ok(rule) => rule,
             Err(parse_error) => {
                 self.quarantine
@@ -1064,26 +1060,6 @@ impl AdBlockManager {
         let seen_bucket = self.seen_rules.get_mut(policy).unwrap();
         if seen_bucket.contains(&rendered) {
             return;
-        }
-
-        // Validated domain payloads are ASCII; borrow ancestor slices instead of joining labels.
-        if matches!(
-            parsed.kind,
-            crate::promax::rule::RuleKind::Domain | crate::promax::rule::RuleKind::DomainSuffix
-        ) {
-            parsed.payload.make_ascii_lowercase();
-            let policy_suffixes = self.seen_suffixes.get_mut(policy).unwrap();
-            if parsed.kind == crate::promax::rule::RuleKind::Domain {
-                let mut candidate = parsed.payload.as_str();
-                while let Some((_, parent)) = candidate.split_once('.') {
-                    if policy_suffixes.contains(candidate) {
-                        return;
-                    }
-                    candidate = parent;
-                }
-            } else {
-                policy_suffixes.insert(parsed.payload);
-            }
         }
 
         let cat_bucket = self
@@ -1408,7 +1384,7 @@ impl AdBlockManager {
         let mut failures = Vec::new();
         let mut category_sources = HashMap::<String, usize>::new();
         self.verified_rolling_feeds.clear();
-        // A browser candidate must not duplicate an existing broader network rule.
+        // Network feeds own a literal rule when browser feeds provide the same rule.
         let (network, browser): (Vec<_>, Vec<_>) = source_entries
             .iter()
             .partition(|entry| entry.kind != "browser-domains");
@@ -1613,7 +1589,49 @@ impl AdBlockManager {
         for part in &mut parts {
             part.sort_unstable();
         }
+        Self::compact_domain_partition(&mut parts[0]);
         parts
+    }
+
+    fn compact_domain_partition(rows: &mut Vec<&str>) {
+        fn simple_domain(row: &str) -> Option<(bool, Cow<'_, str>)> {
+            let (kind, host) = row.split_once(',')?;
+            let suffix = match kind {
+                "DOMAIN" => false,
+                "DOMAIN-SUFFIX" => true,
+                _ => return None,
+            };
+            if host.contains(',') || !host.contains('.') {
+                return None;
+            }
+            let host = if host.bytes().any(|byte| byte.is_ascii_uppercase()) {
+                Cow::Owned(host.to_ascii_lowercase())
+            } else {
+                Cow::Borrowed(host)
+            };
+            Some((suffix, host))
+        }
+
+        let suffixes: HashSet<_> = rows
+            .iter()
+            .filter_map(|&row| simple_domain(row))
+            .filter_map(|(suffix, host)| suffix.then_some(host))
+            .collect();
+        let mut seen = HashSet::new();
+        // Each subscription keeps its own coverage. An optional category's
+        // broader matcher cannot replace a rule in this category.
+        rows.retain(|&row| {
+            let Some((suffix, host)) = simple_domain(row) else {
+                return true;
+            };
+            let covered = std::iter::successors(Some(host.as_ref()), |candidate| {
+                candidate.split_once('.').map(|(_, parent)| parent)
+            })
+            .skip(usize::from(suffix))
+            .take_while(|candidate| candidate.contains('.'))
+            .any(|candidate| suffixes.contains(candidate));
+            !covered && seen.insert((suffix, host))
+        });
     }
 
     fn generate_ruleset(

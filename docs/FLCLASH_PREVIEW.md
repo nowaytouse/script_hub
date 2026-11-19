@@ -33,7 +33,7 @@ Export a single local PROMAX module from the [complete official DNS release](htt
 cargo run --locked --package rust_processor --bin promax -- --root . --export-heidai-full /path/outside/repository/ScriptHub.AdBlock.Heidai.Full.sgmodule
 ~~~
 
-Import the result from the native module page in place of the standard PROMAX. Re-run the export and reimport to refresh. The [source catalog](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list) lists original complete releases for other clients. The upstream native exports contain raw block matches, including Apple service names.
+Import the result from the native module page in place of the standard PROMAX. Re-run the export and reimport to refresh. Use the shared [multi-client exporter](COMPATIBILITY.md#complete-217heidai-input) for the protected variants of this source. The [source catalog](../rulesets/Sources/sgmodule/AdBlock_sources_manual.list) also lists the original releases.
 
 The generator reads the current public Surge module outputs, including PROMAX, and produces a separate, reproducible Preview namespace. It retains supported URL/header/body rewrites, Map Local responses, script declarations and MITM host scopes. Supported inline routing is normalized; incompatible sections, options and policy targets are counted in the compatibility report.
 
