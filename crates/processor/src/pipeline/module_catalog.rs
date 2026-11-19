@@ -146,13 +146,6 @@ fn scan_modules(root: &Path, platform: &str, extension: &str) -> Result<Vec<Modu
     Ok(modules)
 }
 
-/// Native preview modules use the same metadata/URL inventory contract.
-/// Compatibility omissions and source fingerprints live in modules/flclash/catalog.json.
-pub fn flclash_catalog_snapshot(root: &Path) -> Result<Value, String> {
-    serde_json::to_value(scan_modules(root, "flclash", "sgmodule")?)
-        .map_err(|error| format!("cannot encode FlClash module catalog: {error}"))
-}
-
 /// Returns the platform module catalog without writing generated files.
 pub fn catalog_snapshot(root: &Path, shadowrocket: bool) -> Result<Value, String> {
     let (platform, extension) = if shadowrocket {
@@ -180,7 +173,7 @@ mod tests {
                 .unwrap()
                 .as_nanos()
         ));
-        let directory = root.join("modules/flclash/head_expanse");
+        let directory = root.join("modules/surge/head_expanse");
         fs::create_dir_all(&directory).unwrap();
         let mut file = fs::File::create(directory.join("PROMAX.sgmodule")).unwrap();
         file.write_all(b"#!name=Single PROMAX\n[Rule]\n\xff")
@@ -188,14 +181,14 @@ mod tests {
         file.set_len(crate::module_header::MAX_CDN_FILE_BYTES + 1)
             .unwrap();
         drop(file);
-        let items = super::flclash_catalog_snapshot(&root).unwrap();
+        let items = catalog_snapshot(&root, false).unwrap();
         assert_eq!(items[0]["name"], "Single PROMAX");
         assert_eq!(items[0]["install_url"], "");
         assert!(
             items[0]["github_install_url"]
                 .as_str()
                 .unwrap()
-                .contains("/modules/flclash/")
+                .contains("/modules/surge/")
         );
         fs::remove_dir_all(root).unwrap();
     }

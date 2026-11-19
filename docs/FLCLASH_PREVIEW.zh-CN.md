@@ -1,10 +1,18 @@
-# FlClash 预览版原生模块
+# FlClash RS 与 Surge 共用模块
 
 [English](FLCLASH_PREVIEW.md) · [简体中文](FLCLASH_PREVIEW.zh-CN.md)
 
-**专为带原生 MITM／模块管理功能的 FlClash 测试预览版研发**，目标设备版本为 `0.9.4+2026111517`。这里交付的是原生 `.sgmodule` 模块，不是订阅配置或配置扩展脚本；没有该功能入口的公开版本不能按此方式使用。
+## Surge 共用模块
 
-## 安装入口
+在 Script Hub 的**模块 → Surge / FlClash**复制同一个 Surge `.sgmodule` 链接。FlClash RS 从客户端的 **MITM → 模块 → 添加** 导入，导入后可查看生效的分流和重写条目。脚本按客户端流程审核授权。切换旧预览版模块时，保留一份启用的 PROMAX。
+
+[共用 Surge PROMAX](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule) 小于 1 MB，广告规则集随模块引用单独加载。FlClash RS 的 Surge 模块支持范围以当前客户端显示为准。[FlClash RS 构建](https://github.com/chen08209/FlClash/actions/runs/44287831009) · [规则集导入测试](https://github.com/chen08209/FlClash/blob/e06994ed6e15c6e80f8691cc4f933d34d8d60819/test/common/mitm_module_test.dart#L466-L525)
+
+## 早期预览版兼容入口
+
+下列适配产物面向 `0.9.4+2026111517` 所用的早期预览版解析器。
+
+### 兼容链接
 
 - [PROMAX 唯一安装入口](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/flclash/head_expanse/github/ScriptHub.AdBlock.Preview.sgmodule)。模块约 31 MB，包含广告、隐私和防钓鱼域名、防火墙端口规则及精选的应用 HTTPS 处理规则。
 - **其他预览版模块与兼容报告**：[modules/flclash](../modules/flclash/)。应用增强合集按需单独选择，不要把全部模块一键全开。

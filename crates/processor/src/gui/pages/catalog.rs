@@ -43,16 +43,16 @@ impl HubApp {
             ui.label(tr(Text::Platform));
             let old = self.module_platform;
             ui.add_enabled_ui(!self.active(), |ui| {
-                ui.selectable_value(&mut self.module_platform, ModulePlatform::Surge, "Surge");
+                ui.selectable_value(
+                    &mut self.module_platform,
+                    ModulePlatform::Surge,
+                    "Surge / FlClash",
+                )
+                .on_hover_text(tr(Text::SharedSurgeModulesHelp));
                 ui.selectable_value(
                     &mut self.module_platform,
                     ModulePlatform::Shadowrocket,
                     "Shadowrocket",
-                );
-                ui.selectable_value(
-                    &mut self.module_platform,
-                    ModulePlatform::FlClash,
-                    "FlClash Preview",
                 );
             });
             if old != self.module_platform {

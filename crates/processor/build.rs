@@ -80,11 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         write_template_artifacts(&output)?;
     }
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    for (platform, extension) in [
-        ("surge", "sgmodule"),
-        ("shadowrocket", "module"),
-        ("flclash", "sgmodule"),
-    ] {
+    for (platform, extension) in [("surge", "sgmodule"), ("shadowrocket", "module")] {
         println!(
             "cargo:rerun-if-changed={}",
             root.join("modules").join(platform).display()

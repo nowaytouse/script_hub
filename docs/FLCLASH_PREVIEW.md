@@ -1,10 +1,26 @@
-# FlClash Preview native modules
+# FlClash RS and Surge modules
 
 [English](FLCLASH_PREVIEW.md) · [简体中文](FLCLASH_PREVIEW.zh-CN.md)
 
-These modules target **FlClash testing/preview builds with the native MITM module page**, including the development device's `0.9.4+2026111517`. They are not ordinary Mihomo rule providers or profile-extension scripts. A public build without the feature cannot use this delivery path.
+## Shared Surge module
 
-## Install from the repository
+In Script Hub, open **Modules → Surge / FlClash** and copy the same Surge
+`.sgmodule` link for either client. In FlClash RS, use the client's native
+**MITM → Modules → Add** entry and review the effective routing and rewrite
+entries. Approve any scripts using the client's consent flow. When replacing
+an earlier projection, keep one active PROMAX entry.
+
+[Shared Surge PROMAX](https://raw.githubusercontent.com/nowaytouse/script_hub/master/modules/surge/head_expanse/github/%F0%9F%9A%AB%20Universal%20Ad-Blocking%20Rules%20Dependency%20Component%20PROMAX%20%28Kali-style%29.sgmodule)
+is below 1 MB and loads the maintained AdBlock rulesets separately. FlClash RS
+provides a Surge module importer. Its available sections and options depend
+on the client version. [FlClash RS build](https://github.com/chen08209/FlClash/actions/runs/44287831009) · [Rule-set importer tests](https://github.com/chen08209/FlClash/blob/e06994ed6e15c6e80f8691cc4f933d34d8d60819/test/common/mitm_module_test.dart#L466-L525)
+
+## Earlier preview builds
+
+These compatibility projections target the pinned early preview module
+parser used by `0.9.4+2026111517`.
+
+### Compatibility links
 
 PROMAX has one installation entry. The module is about 31 MB and combines ad, privacy and phishing domain rules with firewall ports and selected app-specific HTTPS handlers.
 

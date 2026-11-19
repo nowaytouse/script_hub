@@ -2,8 +2,8 @@
 
 [English](COMPATIBILITY.md) · [简体中文](COMPATIBILITY.zh-CN.md)
 
-The intended consumption targets are Shadowrocket, the latest Surge, the
-Mihomo core (including FlClash using that core), and the latest sing-box.
+The intended consumption targets are Shadowrocket, the latest Surge, FlClash
+RS for Surge modules, Mihomo for routing providers, and the latest sing-box.
 Other clients are not publication or compatibility targets. Client versions,
 platforms, settings and individual upstream resources can affect behavior;
 an artifact passing repository checks is not a device runtime test.
@@ -12,9 +12,9 @@ an artifact passing repository checks is not a device runtime test.
 | Target | Artifact and boundary |
 | --- | --- |
 | Shadowrocket | Use the Shadowrocket-specific modules and compatible rule lists. Module conversion is not a guarantee that every upstream script, rewrite or MITM behavior is equivalent. |
-| Surge | Use Surge modules and rule lists. Support targets the latest version, not historical releases. |
+| Surge / FlClash RS | Use the same Surge `.sgmodule` links from the Script Hub module catalog. PROMAX references shared external rulesets. FlClash RS exposes the effective and ignored entries after import. See the [shared module guide](FLCLASH_PREVIEW.md). |
 | Mihomo / FlClash routing | Generated providers use `rulesets/Mihomo/NAME.yaml` or `rulesets/AdBlock/Mihomo/NAME.yaml`; configure `behavior: classical` and `format: yaml`. `_supported.yaml` has omissions or adaptations, counted in its header. Use the provider, not a Surge or Shadowrocket module. |
-| FlClash MITM Preview | Dedicated native `.sgmodule` outputs under `modules/flclash/`, generated for the testing/preview module parser. Rewrite/script/MITM support and omissions are separate from routing providers. See the [Preview guide](FLCLASH_PREVIEW.md). |
+| Earlier FlClash Preview | Compatibility projections under `modules/flclash/` target the earlier pinned module parser. See the [legacy preview section](FLCLASH_PREVIEW.md#earlier-preview-builds). |
 | sing-box | Use the generated `.srs` rule sets, not a Surge or Shadowrocket module. Support targets the latest version. Files marked `_supported` contain only the supported subset, not an equivalent complete ruleset. |
 
 Domain, IP and extra families are separate. Select an appropriate policy in
@@ -56,7 +56,7 @@ source-format JSON only for that client.
 | Surge | `.Surge.list` via `RULE-SET,<path>,REJECT`. Resolve the path relative to the profile directory or use an absolute path. |
 | Shadowrocket | Import `.Shadowrocket.module` as a routing module. |
 | Mihomo / FlClash routing | Load `.Mihomo.yaml` as a local rule provider with `type: file`, `behavior: classical` and `format: yaml`, then select a reject policy for the rule provider. Put it under the core's home directory. |
-| FlClash Preview | Import `.FlClash.sgmodule` from the native module page in place of standard PROMAX. It combines PROMAX and the projected full source while omitting suffixes already covered by the module. |
+| Earlier FlClash Preview | Import `.FlClash.sgmodule` from the native module page in place of standard PROMAX. It combines PROMAX and the projected full source while omitting suffixes already covered by the module. FlClash RS can use the shared Surge module for standard PROMAX. |
 | sing-box | Register `.SingBox.srs` as a local binary rule set or `.SingBox.json` as a local source rule set and select a reject action in the route or DNS rules that reference it. |
 | AdGuard Home | Add `.AdGuardHome.txt` as a DNS filter from a location allowed by the server. |
 

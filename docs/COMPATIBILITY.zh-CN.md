@@ -2,16 +2,16 @@
 
 [English](COMPATIBILITY.md) · [简体中文](COMPATIBILITY.zh-CN.md)
 
-预期使用目标是 Shadowrocket、最新版 Surge、Mihomo 内核（包括使用该内核的 FlClash）和最新版 sing-box。其他客户端不属于发布或兼容性目标。客户端版本、平台、设置和上游资源均可能影响实际效果；仓库检查通过不等于设备实测通过。
+预期使用目标是 Shadowrocket、最新版 Surge、支持 Surge 模块的 FlClash RS、使用独立规则提供器的 Mihomo 和最新版 sing-box。客户端版本、平台、设置和上游资源会影响实际加载效果。
 
 `Sources/` 保存构建输入和上游参考，不是可直接使用的客户端配置。
 
 | 目标 | 产物与边界 |
 | --- | --- |
 | Shadowrocket | 使用 Shadowrocket 专用模块和兼容规则列表。模块转换不保证上游脚本、重写或 MITM 行为逐项等价。 |
-| Surge | 使用 Surge 模块和规则列表。支持目标为最新版，不保证历史版本。 |
+| Surge / FlClash RS | 共用 Script Hub 模块目录中的 Surge `.sgmodule` 链接。PROMAX 引用共用外部规则集，FlClash RS 导入后可查看有效和忽略的条目。详见[共用模块指南](FLCLASH_PREVIEW.zh-CN.md)。 |
 | Mihomo / FlClash 路由 | 生成的规则提供器位于 `rulesets/Mihomo/NAME.yaml` 或 `rulesets/AdBlock/Mihomo/NAME.yaml`；设置 `behavior: classical` 和 `format: yaml`。`_supported.yaml` 包含遗漏或适配，数量见文件头。应使用规则提供器，而非 Surge 或 Shadowrocket 模块。 |
-| FlClash MITM 预览版 | `modules/flclash/` 下的专用原生 `.sgmodule`，按测试预览版模块解析器生成。重写／脚本／MITM 与路由提供器分开，适配和遗漏见[预览版指南](FLCLASH_PREVIEW.zh-CN.md)。 |
+| 早期 FlClash 预览版 | `modules/flclash/` 下的适配产物针对早期固定版本解析器。详见[早期预览版兼容入口](FLCLASH_PREVIEW.zh-CN.md#早期预览版兼容入口)。 |
 | sing-box | 使用生成的 `.srs` 规则集，不要使用 Surge 或 Shadowrocket 模块。支持目标为最新版。带 `_supported` 的文件仅包含支持的子集，不是完整规则集的等价版本。 |
 
 域名、IP 和 extra 分类分开发布。请在客户端选择合适策略，并注意规则顺序与 DNS 解析；IP 分类可能包含 ASN 规则，并非一定是纯 IP-CIDR 集合。子集可能遗漏重要匹配条件。路由规则和二进制规则集均不能复现模块的脚本、HTTP 重写、响应修改或 MITM 效果。
@@ -35,7 +35,7 @@ cargo run --locked --package rust_processor --bin promax -- --root . --export-he
 | Surge | 用 `RULE-SET,<路径>,REJECT` 引用 `.Surge.list`。路径相对配置文件目录，也支持绝对路径。 |
 | Shadowrocket | 将 `.Shadowrocket.module` 导入为路由模块。 |
 | Mihomo / FlClash 路由 | 在内核工作目录内使用 `.Mihomo.yaml`，配置 `type: file`、`behavior: classical`、`format: yaml`，为引用添加拦截策略。 |
-| FlClash 预览版 | 从原生模块页导入 `.FlClash.sgmodule`，替换原 PROMAX。模块合并完整源的有效域名，并略过 PROMAX 已覆盖的后缀。 |
+| 早期 FlClash 预览版 | 从原生模块页导入 `.FlClash.sgmodule`，替换原 PROMAX。模块合并完整源的有效域名，并略过 PROMAX 已覆盖的后缀。新版 FlClash RS 的标准 PROMAX 使用 Surge 共用入口。 |
 | sing-box | 注册 `.SingBox.srs`（本地二进制）或 `.SingBox.json`（本地源格式），在引用该规则集的路由或 DNS 规则中选择拦截动作。 |
 | AdGuard Home | 从服务器允许的目录加载 `.AdGuardHome.txt` 作为 DNS 过滤器。 |
 

@@ -24,7 +24,7 @@ Surge 使用 `example.com@1.1.1.1` 测试 UDP 中继，独立于常用 DNS 和 H
 
 Surge 通过 `geoip-maxmind-url` 使用 [GeoIP All in One](https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb)。FlClash 继承原始 MMDB 地址，每周检查更新。小火箭需把模板注释中的地址填入 **设置 → GeoLite2 数据库 → 国家 URL**，再更新数据库。内置 sing-box 导出会在 Surge 对应的兜底位置使用同源 CN、JP、TW 和 US 的 SRS 快照。旧 sing-box 配置可重新导出以获得这些规则。服务规则沿用现有规则集地址。
 
-FlClash 只继承 Surge 源模板声明的分流规则。广告模块独立安装，原生 PROMAX 适配见[预览版模块指南](FLCLASH_PREVIEW.zh-CN.md)；模板不激活 MITM 或授予脚本权限。sing-box 保留现有原生 AdBlock 规则提供方，不执行这些模块。导出会按 App 内置目录校验本项目的规则集引用，不检查第三方地址的实时可用性。
+FlClash 继承 Surge 源模板声明的分流规则。FlClash RS 从 Surge 共用目录单独安装广告模块，详见[模块指南](FLCLASH_PREVIEW.zh-CN.md)。模板不激活 MITM 或授予脚本权限。sing-box 保留现有原生 AdBlock 规则提供方，不执行这些模块。导出会按 App 内置目录校验本项目的规则集引用，不检查第三方地址的实时可用性。
 
 1. 选择对应客户端的模板，勾选 **显示完整模板**，即可阅读原文。
 2. 点击 **编辑模板 → 应用修改**，可自行调整策略组、规则顺序等；也可复制一份到自己的文本编辑器修改。若想在应用内保留改动，在项目可用时点 **保存加密模板库**。这只会写入本地副本，不会替换公开示例。切到其他应用前请先保存；自动锁定会丢弃未保存的改动。

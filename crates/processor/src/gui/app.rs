@@ -2509,7 +2509,7 @@ mod tests {
     }
 
     #[test]
-    fn module_platforms_and_copy_work_without_opening_a_project() {
+    fn shared_surge_flclash_modules_and_shadowrocket_copy_without_a_project() {
         let ctx = egui::Context::default();
         ctx.enable_accesskit();
         let mut app = HubApp::new(None, Preferences::default(), None, None);
@@ -2528,12 +2528,25 @@ mod tests {
                 },
             )
         };
-        for (label, platform) in [
-            ("Surge", ModulePlatform::Surge),
-            ("Shadowrocket", ModulePlatform::Shadowrocket),
-            ("FlClash Preview", ModulePlatform::FlClash),
+        for (label, platform, namespace) in [
+            (
+                "Shadowrocket",
+                ModulePlatform::Shadowrocket,
+                "modules/shadowrocket/",
+            ),
+            ("Surge / FlClash", ModulePlatform::Surge, "modules/surge/"),
         ] {
             let output = draw(&mut app, Vec::new());
+            assert!(
+                !output
+                    .platform_output
+                    .accesskit_update
+                    .as_ref()
+                    .unwrap()
+                    .nodes
+                    .iter()
+                    .any(|(_, node)| node.label() == Some("FlClash Preview"))
+            );
             let center = |output: &egui::FullOutput, label: &str| {
                 let node = output
                     .platform_output
@@ -2567,44 +2580,29 @@ mod tests {
             click(&mut app, pos).drop_without_applying_deltas();
             assert_eq!(app.module_platform, platform);
             assert!(!app.catalog.modules.is_empty());
-            if platform == ModulePlatform::FlClash {
-                app.module_search = "PROMAX".to_owned();
-            }
+            app.module_search = "Universal Ad-Blocking Rules (PROMAX)".to_owned();
             let output = draw(&mut app, Vec::new());
-            if platform == ModulePlatform::FlClash {
-                assert_eq!(
-                    app.catalog
-                        .modules
-                        .iter()
-                        .filter(|m| m.matches("promax", ""))
-                        .count(),
-                    1
-                );
-                assert!(
-                    !output
-                        .platform_output
-                        .accesskit_update
-                        .as_ref()
-                        .unwrap()
-                        .nodes
-                        .iter()
-                        .any(|(_, n)| n.label() == Some(text(app.draft.language, Text::CopyCdn)))
-                );
-            }
-            let pos = center(&output, text(app.draft.language, Text::CopyGithub));
+            let module = &app.catalog.modules[app.selected_module.unwrap()];
+            assert!(module.name.contains("Universal Ad-Blocking Rules (PROMAX)"));
+            let links = [
+                (
+                    center(&output, text(app.draft.language, Text::CopyCdn)),
+                    module.install_url.clone(),
+                ),
+                (
+                    center(&output, text(app.draft.language, Text::CopyGithub)),
+                    module.github_install_url.clone(),
+                ),
+            ];
             output.drop_without_applying_deltas();
-            let expected = app.catalog.modules[app.selected_module.unwrap()]
-                .github_install_url
-                .clone();
-            let copied = click(&mut app, pos);
-            assert!(
-                copied
-                    .platform_output
-                    .commands
-                    .iter()
-                    .any(|c| matches!(c, egui::OutputCommand::CopyText(v) if v == &expected))
-            );
-            copied.drop_without_applying_deltas();
+            for (pos, expected) in links {
+                assert!(expected.contains(namespace));
+                let copied = click(&mut app, pos);
+                assert!(copied.platform_output.commands.iter().any(
+                    |command| matches!(command, egui::OutputCommand::CopyText(value) if value == &expected)
+                ));
+                copied.drop_without_applying_deltas();
+            }
             assert!(app.loaded_root.is_none() && app.workspace_loader.is_none());
         }
     }

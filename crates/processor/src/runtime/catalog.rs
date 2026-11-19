@@ -9,7 +9,6 @@ pub enum ModulePlatform {
     #[default]
     Surge,
     Shadowrocket,
-    FlClash,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -155,9 +154,6 @@ impl Catalog {
                 ModulePlatform::Shadowrocket => {
                     include_str!(concat!(env!("OUT_DIR"), "/modules-shadowrocket.json"))
                 }
-                ModulePlatform::FlClash => {
-                    include_str!(concat!(env!("OUT_DIR"), "/modules-flclash.json"))
-                }
             };
             serde_json::from_str(json).expect("build-generated public module inventory")
         };
@@ -173,18 +169,7 @@ impl Catalog {
     }
 
     pub fn load_platform(root: &Path, platform: ModulePlatform) -> Result<Self, String> {
-        if platform != ModulePlatform::FlClash {
-            return Self::load(root, platform == ModulePlatform::Shadowrocket);
-        }
-        Ok(Self {
-            modules: serde_json::from_value(crate::module_catalog::flclash_catalog_snapshot(root)?)
-                .map_err(|e| e.to_string())?,
-            counterparts: serde_json::from_value(crate::module_catalog::catalog_snapshot(
-                root, false,
-            )?)
-            .map_err(|e| e.to_string())?,
-            rules: load_rules(root)?,
-        })
+        Self::load(root, platform == ModulePlatform::Shadowrocket)
     }
     pub fn load(root: &Path, shadowrocket: bool) -> Result<Self, String> {
         let modules =
@@ -220,10 +205,9 @@ mod bundled_tests {
     #[test]
     fn bundled_modules_match_public_workspace_and_copy_without_opening_it() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        for platform in [
-            ModulePlatform::Surge,
-            ModulePlatform::Shadowrocket,
-            ModulePlatform::FlClash,
+        for (platform, namespace) in [
+            (ModulePlatform::Surge, "modules/surge/"),
+            (ModulePlatform::Shadowrocket, "modules/shadowrocket/"),
         ] {
             let bundled = Catalog::bundled(platform);
             let live = Catalog::load_platform(&root, platform).unwrap();
@@ -232,6 +216,7 @@ mod bundled_tests {
             let live_indices = (0..live.modules.len()).collect();
             let urls = selected_module_urls(&bundled.modules, &indices, true);
             assert!(!urls.is_empty());
+            assert!(urls.lines().all(|url| url.contains(namespace)));
             assert_eq!(
                 urls,
                 selected_module_urls(&live.modules, &live_indices, true)
@@ -240,28 +225,6 @@ mod bundled_tests {
             for (bundled, live) in bundled.modules.iter().zip(&live.modules) {
                 assert_eq!(bundled.name, live.name);
                 assert_eq!(bundled.desc, live.desc);
-            }
-            if platform == ModulePlatform::FlClash {
-                assert!(urls.contains("modules/flclash/"));
-                assert!(!urls.contains("ScriptHub%2EPROMAX"));
-                assert!(bundled.modules.iter().any(|module| {
-                    module.filename == "ScriptHub.AdBlock.Helper.Preview.sgmodule"
-                        && safe_https_single_field_url(&module.github_install_url)
-                }));
-                assert!(
-                    !bundled
-                        .modules
-                        .iter()
-                        .any(|module| { module.filename.contains("Firewall Port Blocker") })
-                );
-                let promax = bundled
-                    .modules
-                    .iter()
-                    .filter(|m| m.filename == "ScriptHub.AdBlock.Preview.sgmodule")
-                    .collect::<Vec<_>>();
-                assert_eq!(promax.len(), 1);
-                assert!(promax[0].install_url.is_empty());
-                assert!(safe_https_single_field_url(&promax[0].github_install_url));
             }
         }
     }
