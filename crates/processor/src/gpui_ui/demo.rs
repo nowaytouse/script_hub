@@ -7,7 +7,7 @@ use crate::relay::{
     demo::{self, DemoReport},
     export::{OutputFormat, export_subscription},
     library::Workspace,
-    model::Subscription,
+    model::{Subscription, script::SourceContext},
 };
 use crate::runtime::settings::{Language, Preferences};
 use gpui::{
@@ -34,6 +34,21 @@ struct Preview {
     names: Vec<String>,
 }
 
+fn import_sample_backup(workspace: &Workspace) -> Result<(Workspace, u64), RelayError> {
+    let backup = relay::compat::import(demo::backup()).map_err(|_| RelayError::InvalidInput)?;
+    let (candidate, summary) = relay::library_import::import(workspace, &backup, true)
+        .map_err(|_| RelayError::InvalidInput)?;
+    if backup.unsupported_count != 0 || summary.skipped != 0 || summary.collections != 1 {
+        return Err(RelayError::InvalidInput);
+    }
+    let id = candidate
+        .collections
+        .last()
+        .ok_or(RelayError::InvalidInput)?
+        .id;
+    Ok((candidate, id))
+}
+
 fn preview(workspace: &Workspace, id: u64, format: OutputFormat) -> Result<Preview, RelayError> {
     let collection = workspace
         .collections
@@ -46,6 +61,12 @@ fn preview(workspace: &Workspace, id: u64, format: OutputFormat) -> Result<Previ
             expected_source: Some(merged.clone()),
             local_content: Some(merged),
             processing: collection.processing.clone(),
+            script_source: SourceContext {
+                kind: "collection",
+                label: RelayConfig::script_source_label(&collection.name),
+                member_index: None,
+            },
+            output_format: format,
             rename: false,
             sort: false,
             test_nodes: false,
@@ -60,7 +81,7 @@ fn preview(workspace: &Workspace, id: u64, format: OutputFormat) -> Result<Previ
     let parsed = Subscription::parse(&output).map_err(RelayError::Model)?;
     Ok(Preview {
         before: result.total,
-        after: result.processed,
+        after: parsed.nodes().len(),
         names: parsed
             .nodes()
             .iter()
@@ -93,18 +114,15 @@ impl Demo {
         if self.backup_added || self.busy {
             return;
         }
-        let added = relay::compat::import(demo::backup())
-            .ok()
-            .and_then(|import| relay::library_import::import(&self.workspace, &import, true).ok());
-        match added {
-            Some((workspace, _)) => {
-                self.collection = workspace.collections.last().map(|item| item.id);
+        match import_sample_backup(&self.workspace) {
+            Ok((workspace, id)) => {
+                self.collection = Some(id);
                 self.workspace = workspace;
                 self.backup_added = true;
                 self.preview = None;
                 self.error = None;
             }
-            None => self.error = Some(Text::RelayDemoFailed),
+            Err(_) => self.error = Some(Text::RelayDemoFailed),
         }
         cx.notify();
     }
@@ -427,18 +445,43 @@ pub(super) fn run() -> ExitCode {
 mod tests {
     use super::*;
 
-    #[test]
-    fn native_demo_previews_bundled_collection_for_each_client() {
-        let workspace = demo::workspace().unwrap();
-        let id = workspace.collections[0].id;
+    fn assert_available_formats(workspace: &Workspace, id: u64) {
         for format in [
+            OutputFormat::Original,
             OutputFormat::Surge,
             OutputFormat::Mihomo,
             OutputFormat::SingBox,
         ] {
-            let output = preview(&workspace, id, format).unwrap();
+            let output = preview(workspace, id, format)
+                .unwrap_or_else(|err| panic!("Preview format {format:?} failed: {err}"));
             assert_eq!((output.before, output.after), (3, 2));
-            assert_eq!(output.names.len(), 2);
+            assert_eq!(output.names, ["1: Ready", "2: Secondary"]);
         }
+    }
+
+    #[test]
+    fn native_demo_previews_bundled_collection_for_each_client() {
+        let workspace = demo::workspace().unwrap();
+        assert_available_formats(&workspace, workspace.collections[0].id);
+    }
+
+    #[test]
+    fn native_demo_imports_and_previews_backup_for_each_client() {
+        let workspace = demo::workspace().unwrap();
+        let (candidate, id) = import_sample_backup(&workspace).unwrap();
+        assert_eq!(candidate.collections.len(), workspace.collections.len() + 1);
+        assert_eq!(candidate.collections.last().unwrap().name, "Backup Demo");
+        assert!(candidate.subscriptions.iter().all(|entry| {
+            entry.source.is_empty()
+                && entry.source_file.is_empty()
+                && entry.publish.output.is_empty()
+        }));
+        assert!(
+            candidate
+                .collections
+                .iter()
+                .all(|entry| entry.publish.output.is_empty())
+        );
+        assert_available_formats(&candidate, id);
     }
 }
