@@ -11,7 +11,7 @@ use std::time::Duration;
 
 impl Hub {
     pub(super) fn load_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
-        if self.working() || !self.templates.read(cx).can_close() {
+        if self.working(cx) || !self.templates.read(cx).can_close() {
             return;
         }
         self.loading = true;
@@ -32,8 +32,11 @@ impl Hub {
                 match result {
                     Ok((root, surge, shadowrocket, repository)) => {
                         hub.root = Some(root.clone());
-                        hub.templates
-                            .update(cx, |templates, cx| templates.set_workspace(Some(root), cx));
+                        hub.templates.update(cx, |templates, cx| {
+                            templates.set_workspace(Some(root.clone()), cx);
+                        });
+                        hub.sources
+                            .update(cx, |sources, cx| sources.set_workspace(Some(root), cx));
                         let mut warnings = Vec::new();
                         hub.surge = surge.unwrap_or_else(|error| {
                             warnings.push(error);
@@ -60,7 +63,7 @@ impl Hub {
         cx.notify();
     }
 
-    fn reload_repository(&mut self, cx: &mut Context<Self>) {
+    pub(super) fn reload_repository(&mut self, cx: &mut Context<Self>) {
         let Some(root) = self.root.clone() else {
             return;
         };
@@ -95,7 +98,7 @@ impl Hub {
     }
 
     fn queue_job(&mut self, kind: JobKind, cx: &mut Context<Self>) {
-        if self.working() || self.root.is_none() {
+        if self.root.is_none() || self.project_action_blocked(cx) {
             return;
         }
         self.message = None;
@@ -111,7 +114,7 @@ impl Hub {
         let Some(root) = self.root.clone() else {
             return;
         };
-        if self.working() {
+        if self.project_action_blocked(cx) {
             return;
         }
         let engine = self.saved_preferences.singbox.trim();
@@ -153,6 +156,8 @@ impl Hub {
         match Job::start(kind, options) {
             Ok(job) => {
                 self.job = Some(job);
+                self.history
+                    .update(cx, |history, cx| history.task_running(true, cx));
                 self.navigate(Page::Tasks, cx);
                 cx.spawn(async move |this, cx| {
                     loop {
@@ -162,10 +167,18 @@ impl Hub {
                         let active = this
                             .update(cx, |hub, cx| {
                                 let active = hub.job.as_ref().is_some_and(Job::is_running);
-                                if !active
-                                    && !matches!(kind, JobKind::Validate | JobKind::RefreshCatalog)
-                                {
-                                    hub.reload_repository(cx);
+                                if !active {
+                                    let history_open = hub.page == Page::History;
+                                    hub.history.update(cx, |history, cx| {
+                                        history.task_running(false, cx);
+                                        if history_open {
+                                            history.refresh(cx);
+                                        }
+                                    });
+                                    if !matches!(kind, JobKind::Validate | JobKind::RefreshCatalog)
+                                    {
+                                        hub.reload_repository(cx);
+                                    }
                                 }
                                 cx.notify();
                                 active
@@ -227,7 +240,11 @@ impl Hub {
                                 palette,
                                 false,
                             )
-                            .on_click(cx.listener(|hub, _, _, cx| hub.reload_repository(cx))),
+                            .on_click(cx.listener(|hub, _, _, cx| {
+                                if !hub.project_action_blocked(cx) {
+                                    hub.reload_repository(cx);
+                                }
+                            })),
                         ),
                 )
                 .when(self.loading, |node| {
@@ -676,90 +693,306 @@ impl Hub {
                 self.preferences.diagnostic_logs,
             ));
         }
-        div().flex().flex_col().gap_5()
-            .child(heading(self.tr(Text::Settings), self.local("Appearance and workspace preferences", "外观和工作区偏好", "外観とワークスペースの設定"), palette))
-            .child(panel(palette).p_5().gap_3()
-                .child(heading_style(self.tr(Text::Theme)))
-                .child(div().flex().flex_wrap().gap_2().children(theme.map(|theme| {
-                    let label = self.tr(match theme { Theme::System => Text::System, Theme::Light => Text::Light, Theme::Dark => Text::Dark });
-                    button(("set-theme", theme as usize), label, palette, self.preferences.theme == theme)
-                        .on_click(cx.listener(move |hub, _, _, cx| {
-                            hub.preferences.theme = theme;
-                            cx.set_global(UiStyle::from(&hub.preferences));
-                            cx.refresh_windows();
-                            cx.notify();
-                        }))
-                })))
-                .child(heading_style(self.local("Accent", "强调色", "アクセント")))
-                .child(div().flex().flex_wrap().gap_2().children(accents.map(|(accent, label)| {
-                    button(("set-accent", accent as usize), label, palette, self.preferences.accent == accent)
-                        .on_click(cx.listener(move |hub, _, _, cx| {
-                            hub.preferences.accent = accent;
-                            cx.set_global(UiStyle::from(&hub.preferences));
-                            cx.refresh_windows();
-                            cx.notify();
-                        }))
-                })))
-                .child(heading_style(self.tr(Text::Language)))
-                .child(div().flex().flex_wrap().gap_2().children(language.map(|(language, label)| {
-                    button(("set-language", language as usize), label, palette, self.preferences.language == language)
-                        .on_click(cx.listener(move |hub, _, _, cx| {
-                            hub.preferences.language = language;
-                            hub.reset_language(cx);
-                        }))
-                })))
-                .child(heading_style(self.local("List density", "列表密度", "リストの密度")))
-                .child(div().flex().gap_2().children([
-                    (Density::Comfortable, self.local("Comfortable", "舒适", "ゆったり")),
-                    (Density::Compact, self.local("Compact", "紧凑", "コンパクト")),
-                ].map(|(density, label)| button(("set-density", density as usize), label, palette, self.preferences.density == density)
-                    .on_click(cx.listener(move |hub, _, _, cx| { hub.preferences.density = density; cx.notify(); })))))
-                .child(heading_style(self.local("Interface scale", "界面缩放", "表示倍率")))
-                .child(div().flex().flex_wrap().gap_2().children([90u16, 100, 115, 130].map(|scale| {
-                    button(("set-scale", usize::from(scale)), format!("{scale}%"), palette, self.preferences.scale_percent == scale)
-                        .on_click(cx.listener(move |hub, _, _, cx| { hub.preferences.scale_percent = scale; cx.notify(); }))
-                })))
-                .child(heading_style(self.local("Window size on next launch", "下次启动时的窗口尺寸", "次回起動時のウィンドウサイズ")))
-                .child(div().flex().gap_2().children([
-                    (WindowSize::Compact, self.local("Compact", "小", "コンパクト")),
-                    (WindowSize::Standard, self.local("Standard", "标准", "標準")),
-                    (WindowSize::Wide, self.local("Wide", "宽", "ワイド")),
-                ].map(|(size, label)| button(("set-window", size as usize), label, palette, self.preferences.window == size)
-                    .on_click(cx.listener(move |hub, _, _, cx| { hub.preferences.window = size; cx.notify(); }))))))
-            .child(panel(palette).p_5().gap_3()
-                .child(heading_style(self.local("Workspace and tasks", "工作区与任务", "ワークスペースとタスク")))
-                .child(self.singbox.clone())
-                .child(div().flex().flex_wrap().gap_2().children(toggles.into_iter().map(|(id, label, enabled)| button(id, format!("{} {label}", if enabled { "✓" } else { "□" }), palette, false)
-                    .on_click(cx.listener(move |hub, _, _, cx| {
-                        match id {
-                            "setting-reopen" => hub.preferences.reopen_workspace = !hub.preferences.reopen_workspace,
-                            "setting-history" => hub.preferences.record_history = !hub.preferences.record_history,
-                            "setting-developer" => hub.preferences.developer_mode = !hub.preferences.developer_mode,
-                            _ => hub.preferences.diagnostic_logs = !hub.preferences.diagnostic_logs,
-                        }
-                        cx.notify();
-                    })))))
-                .child(div().flex().gap_2()
-                    .child(button("save-preferences", self.local("Save settings", "保存设置", "設定を保存"), palette, true)
-                        .on_click(cx.listener(|hub, _, _, cx| hub.save_preferences(cx))))
-                    .child(button("revert-preferences", self.local("Revert changes", "撤销更改", "変更を取り消す"), palette, false)
-                        .on_click(cx.listener(|hub, _, _, cx| {
-                            hub.preferences = hub.saved_preferences.clone();
-                            hub.message = None;
-                            hub.singbox.update(cx, |field, cx| field.set_value(hub.preferences.singbox.clone(), cx));
-                            hub.reset_language(cx);
-                            cx.set_global(UiStyle::from(&hub.preferences));
-                            cx.refresh_windows();
-                            cx.notify();
-                        })))))
-            .child(panel(palette).p_5().gap_3()
-                .child(heading_style(self.local("Advanced tools", "进阶工具", "高度なツール")))
-                .child(div().text_sm().text_color(palette.muted).child(self.local(
-                    "Open the classic workspace for relay schedules, pipeline editing, source maintenance and offline demonstrations.",
-                    "旧版工作区提供中转定时任务、流水线编辑、来源维护和离线演示。",
-                    "リレーのスケジュール、パイプライン編集、ソース管理、オフラインデモは従来のワークスペースで開きます。",
-                )))
-                .child(div().flex().child(button("open-classic", self.local("Switch to classic workspace", "切换到旧版工作区", "従来のワークスペースに切り替え"), palette, false)
-                    .on_click(cx.listener(|hub, _, _, cx| hub.open_classic(cx))))))
+        div()
+            .flex()
+            .flex_col()
+            .gap_5()
+            .child(heading(
+                self.tr(Text::Settings),
+                self.local(
+                    "Appearance and workspace preferences",
+                    "外观和工作区偏好",
+                    "外観とワークスペースの設定",
+                ),
+                palette,
+            ))
+            .child(
+                panel(palette)
+                    .p_5()
+                    .gap_3()
+                    .child(heading_style(self.tr(Text::Theme)))
+                    .child(
+                        div()
+                            .flex()
+                            .flex_wrap()
+                            .gap_2()
+                            .children(theme.map(|theme| {
+                                let label = self.tr(match theme {
+                                    Theme::System => Text::System,
+                                    Theme::Light => Text::Light,
+                                    Theme::Dark => Text::Dark,
+                                });
+                                button(
+                                    ("set-theme", theme as usize),
+                                    label,
+                                    palette,
+                                    self.preferences.theme == theme,
+                                )
+                                .on_click(cx.listener(
+                                    move |hub, _, _, cx| {
+                                        hub.preferences.theme = theme;
+                                        cx.set_global(UiStyle::from(&hub.preferences));
+                                        cx.refresh_windows();
+                                        cx.notify();
+                                    },
+                                ))
+                            })),
+                    )
+                    .child(heading_style(self.local("Accent", "强调色", "アクセント")))
+                    .child(div().flex().flex_wrap().gap_2().children(accents.map(
+                        |(accent, label)| {
+                            button(
+                                ("set-accent", accent as usize),
+                                label,
+                                palette,
+                                self.preferences.accent == accent,
+                            )
+                            .on_click(cx.listener(
+                                move |hub, _, _, cx| {
+                                    hub.preferences.accent = accent;
+                                    cx.set_global(UiStyle::from(&hub.preferences));
+                                    cx.refresh_windows();
+                                    cx.notify();
+                                },
+                            ))
+                        },
+                    )))
+                    .child(heading_style(self.tr(Text::Language)))
+                    .child(div().flex().flex_wrap().gap_2().children(language.map(
+                        |(language, label)| {
+                            button(
+                                ("set-language", language as usize),
+                                label,
+                                palette,
+                                self.preferences.language == language,
+                            )
+                            .on_click(cx.listener(
+                                move |hub, _, _, cx| {
+                                    hub.preferences.language = language;
+                                    hub.reset_language(cx);
+                                },
+                            ))
+                        },
+                    )))
+                    .child(heading_style(self.local(
+                        "List density",
+                        "列表密度",
+                        "リストの密度",
+                    )))
+                    .child(
+                        div().flex().gap_2().children(
+                            [
+                                (
+                                    Density::Comfortable,
+                                    self.local("Comfortable", "舒适", "ゆったり"),
+                                ),
+                                (
+                                    Density::Compact,
+                                    self.local("Compact", "紧凑", "コンパクト"),
+                                ),
+                            ]
+                            .map(|(density, label)| {
+                                button(
+                                    ("set-density", density as usize),
+                                    label,
+                                    palette,
+                                    self.preferences.density == density,
+                                )
+                                .on_click(cx.listener(
+                                    move |hub, _, _, cx| {
+                                        hub.preferences.density = density;
+                                        cx.notify();
+                                    },
+                                ))
+                            }),
+                        ),
+                    )
+                    .child(heading_style(self.local(
+                        "Interface scale",
+                        "界面缩放",
+                        "表示倍率",
+                    )))
+                    .child(
+                        div()
+                            .flex()
+                            .flex_wrap()
+                            .gap_2()
+                            .children([90u16, 100, 115, 130].map(|scale| {
+                                button(
+                                    ("set-scale", usize::from(scale)),
+                                    format!("{scale}%"),
+                                    palette,
+                                    self.preferences.scale_percent == scale,
+                                )
+                                .on_click(cx.listener(
+                                    move |hub, _, _, cx| {
+                                        hub.preferences.scale_percent = scale;
+                                        cx.notify();
+                                    },
+                                ))
+                            })),
+                    )
+                    .child(heading_style(self.local(
+                        "Window size on next launch",
+                        "下次启动时的窗口尺寸",
+                        "次回起動時のウィンドウサイズ",
+                    )))
+                    .child(
+                        div().flex().gap_2().children(
+                            [
+                                (
+                                    WindowSize::Compact,
+                                    self.local("Compact", "小", "コンパクト"),
+                                ),
+                                (WindowSize::Standard, self.local("Standard", "标准", "標準")),
+                                (WindowSize::Wide, self.local("Wide", "宽", "ワイド")),
+                            ]
+                            .map(|(size, label)| {
+                                button(
+                                    ("set-window", size as usize),
+                                    label,
+                                    palette,
+                                    self.preferences.window == size,
+                                )
+                                .on_click(cx.listener(
+                                    move |hub, _, _, cx| {
+                                        hub.preferences.window = size;
+                                        cx.notify();
+                                    },
+                                ))
+                            }),
+                        ),
+                    ),
+            )
+            .child(
+                panel(palette)
+                    .p_5()
+                    .gap_3()
+                    .child(heading_style(self.local(
+                        "Workspace and tasks",
+                        "工作区与任务",
+                        "ワークスペースとタスク",
+                    )))
+                    .child(self.singbox.clone())
+                    .child(
+                        div()
+                            .flex()
+                            .flex_wrap()
+                            .gap_2()
+                            .children(toggles.into_iter().map(|(id, label, enabled)| {
+                                button(
+                                    id,
+                                    format!("{} {label}", if enabled { "✓" } else { "□" }),
+                                    palette,
+                                    false,
+                                )
+                                .on_click(cx.listener(
+                                    move |hub, _, _, cx| {
+                                        match id {
+                                            "setting-reopen" => {
+                                                hub.preferences.reopen_workspace =
+                                                    !hub.preferences.reopen_workspace
+                                            }
+                                            "setting-history" => {
+                                                hub.preferences.record_history =
+                                                    !hub.preferences.record_history
+                                            }
+                                            "setting-developer" => {
+                                                hub.preferences.developer_mode =
+                                                    !hub.preferences.developer_mode
+                                            }
+                                            _ => {
+                                                hub.preferences.diagnostic_logs =
+                                                    !hub.preferences.diagnostic_logs
+                                            }
+                                        }
+                                        cx.notify();
+                                    },
+                                ))
+                            })),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .gap_2()
+                            .child(
+                                button(
+                                    "save-preferences",
+                                    self.local("Save settings", "保存设置", "設定を保存"),
+                                    palette,
+                                    true,
+                                )
+                                .on_click(cx.listener(|hub, _, _, cx| hub.save_preferences(cx))),
+                            )
+                            .child(
+                                button(
+                                    "revert-preferences",
+                                    self.local("Revert changes", "撤销更改", "変更を取り消す"),
+                                    palette,
+                                    false,
+                                )
+                                .on_click(cx.listener(
+                                    |hub, _, _, cx| {
+                                        hub.preferences = hub.saved_preferences.clone();
+                                        hub.message = None;
+                                        hub.singbox.update(cx, |field, cx| {
+                                            field.set_value(hub.preferences.singbox.clone(), cx)
+                                        });
+                                        hub.reset_language(cx);
+                                        cx.set_global(UiStyle::from(&hub.preferences));
+                                        cx.refresh_windows();
+                                        cx.notify();
+                                    },
+                                )),
+                            ),
+                    ),
+            )
+            .child(self.settings_tools(palette, cx))
+    }
+
+    fn settings_tools(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
+        panel(palette)
+            .p_5()
+            .gap_3()
+            .child(
+                div()
+                    .text_lg()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .child(self.local("Offline demo", "离线演示", "オフラインデモ")),
+            )
+            .child(
+                div()
+                    .text_sm()
+                    .text_color(palette.muted)
+                    .child(self.tr(Text::RelayDemoOffline)),
+            )
+            .child(
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .gap_2()
+                    .child(
+                        button(
+                            "open-demo",
+                            self.tr(Text::RelayDemoOpenWindow),
+                            palette,
+                            true,
+                        )
+                        .on_click(cx.listener(|hub, _, _, cx| hub.open_demo(cx))),
+                    )
+                    .child(
+                        button(
+                            "open-classic",
+                            self.local(
+                                "Switch to classic workspace",
+                                "切换到旧版工作区",
+                                "従来のワークスペースに切り替え",
+                            ),
+                            palette,
+                            false,
+                        )
+                        .on_click(cx.listener(|hub, _, _, cx| hub.open_classic(cx))),
+                    ),
+            )
     }
 }

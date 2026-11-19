@@ -5,6 +5,7 @@ use super::i18n::{Text, text};
 use crate::relay::export::{OutputFormat, export_subscription};
 use crate::relay::gist::{GistFile, PolicyLink, validate_filename, validate_name};
 use crate::relay::schedule::{RetryDeadline, server_retry_after};
+use crate::relay::session_schedule::{PrivateConfig, State as ScheduleState};
 use crate::relay::{Progress, RelayConfig, RelayError, RelayResult, RunMode};
 use crate::runtime::settings::Language;
 use eframe::egui;
@@ -61,118 +62,119 @@ pub(super) fn failure_message(
     language: crate::runtime::settings::Language,
     failure: &Failure,
 ) -> String {
+    match failure {
+        Failure::Validation(key) => text(language, *key).to_owned(),
+        Failure::Operation(error) => operation_failure_message(language, error),
+    }
+}
+
+pub(crate) fn operation_failure_message(language: Language, error: &RelayError) -> String {
     use crate::relay::model::pipeline::ResolveError;
     use crate::relay::{engine::EngineError, gist::GistError, model::ModelError};
-    if let Failure::Operation(error) = failure
-        && server_retry_after(error)
-            .is_some_and(|wait| RetryDeadline::new(Instant::now(), wait) == RetryDeadline::Session)
+    if server_retry_after(error)
+        .is_some_and(|wait| RetryDeadline::new(Instant::now(), wait) == RetryDeadline::Session)
     {
         return text(language, Text::RelayRetrySession).to_owned();
     }
-    let key = match failure {
-        Failure::Validation(key) => *key,
-        Failure::Operation(error) => match error {
-            RelayError::InvalidInput => Text::RelayConfigInvalid,
-            RelayError::InputUnavailable => Text::RelayInputUnavailable,
-            RelayError::InputInvalid => Text::RelaySubscriptionInvalid,
-            RelayError::InputHttpStatus(status) => {
-                return format!(
-                    "{} {status}",
-                    super::i18n::text(language, Text::RelayInputStatus)
-                );
-            }
-            RelayError::InputRateLimited {
+    let key = match error {
+        RelayError::InvalidInput => Text::RelayConfigInvalid,
+        RelayError::InputUnavailable => Text::RelayInputUnavailable,
+        RelayError::InputInvalid => Text::RelaySubscriptionInvalid,
+        RelayError::InputHttpStatus(status) => {
+            return format!(
+                "{} {status}",
+                super::i18n::text(language, Text::RelayInputStatus)
+            );
+        }
+        RelayError::InputRateLimited {
+            retry_after_seconds,
+        } => {
+            return match retry_after_seconds {
+                Some(seconds) => format!(
+                    "{} {seconds} s",
+                    super::i18n::text(language, Text::RelayInputLimited)
+                ),
+                None => super::i18n::text(language, Text::RelayInputLimited).to_owned(),
+            };
+        }
+        RelayError::NoHealthyNodes => Text::RelayNoHealthy,
+        RelayError::SourceChanged => Text::RelaySourceChanged,
+        RelayError::Cancelled => Text::RelayCancelled,
+        RelayError::ExportFormat => Text::RelayExportFormatMismatch,
+        RelayError::ExportNode { index, .. } => {
+            return super::i18n::text(language, Text::RelayExportNodeFailed)
+                .replace("{node}", &index.to_string());
+        }
+        RelayError::Model(error) => match error {
+            ModelError::InvalidInput => Text::RelaySubscriptionInvalid,
+            ModelError::Unsupported => Text::RelayUnsupported,
+            ModelError::SecurityBlocked => Text::RelaySecurityBlocked,
+            ModelError::InvalidDependency => Text::RelayDependencyInvalid,
+            ModelError::InvalidEdit => Text::RelayEditInvalid,
+            ModelError::InvalidHealth | ModelError::Render => Text::RelayRenderFailed,
+            ModelError::Resolution(error) => match error {
+                ResolveError::ConsentRequired => Text::ResolutionConsentRequired,
+                ResolveError::Cancelled => Text::ResolutionCancelled,
+                ResolveError::Unavailable => Text::ResolutionUnavailable,
+                ResolveError::InvalidResponse => Text::ResolutionResponseInvalid,
+                ResolveError::Budget => Text::ResolutionBudget,
+                ResolveError::Dnssec => Text::ResolutionDnssec,
+                ResolveError::InvalidOptions => Text::ResolutionOptionsInvalid,
+                ResolveError::RateLimited {
+                    retry_after_seconds,
+                } => {
+                    return format!(
+                        "{} {retry_after_seconds} s",
+                        super::i18n::text(language, Text::ResolutionRateLimited)
+                    );
+                }
+            },
+        },
+        RelayError::Engine(error) => match error {
+            EngineError::InvalidOptions => Text::RelayOptionsInvalid,
+            EngineError::Unavailable => Text::RelayEngineUnavailable,
+            EngineError::Cancelled => Text::RelayCancelled,
+            EngineError::Infrastructure => Text::RelayEngineFailed,
+        },
+        RelayError::Gist(error) => match error {
+            GistError::InvalidTarget => Text::RelayConfigInvalid,
+            GistError::PinnedTarget => Text::RelayPinnedTarget,
+            GistError::InvalidName => Text::RelayNameInvalid,
+            GistError::InvalidToken => Text::RelayTokenInvalid,
+            GistError::Cancelled => Text::RelayCancelled,
+            GistError::Transport => Text::RelayConnectionFailed,
+            GistError::RateLimited {
                 retry_after_seconds,
             } => {
                 return match retry_after_seconds {
                     Some(seconds) => format!(
                         "{} {seconds} s",
-                        super::i18n::text(language, Text::RelayInputLimited)
+                        super::i18n::text(language, Text::RelayRateLimited)
                     ),
-                    None => super::i18n::text(language, Text::RelayInputLimited).to_owned(),
+                    None => super::i18n::text(language, Text::RelayRateLimitedUnknown).to_owned(),
                 };
             }
-            RelayError::NoHealthyNodes => Text::RelayNoHealthy,
-            RelayError::SourceChanged => Text::RelaySourceChanged,
-            RelayError::Cancelled => Text::RelayCancelled,
-            RelayError::ExportFormat => Text::RelayExportFormatMismatch,
-            RelayError::ExportNode { index, .. } => {
-                return super::i18n::text(language, Text::RelayExportNodeFailed)
-                    .replace("{node}", &index.to_string());
+            GistError::HttpStatus(status) => {
+                return format!(
+                    "{} {status}",
+                    super::i18n::text(language, Text::RelayHttpStatus)
+                );
             }
-            RelayError::Model(error) => match error {
-                ModelError::InvalidInput => Text::RelaySubscriptionInvalid,
-                ModelError::Unsupported => Text::RelayUnsupported,
-                ModelError::SecurityBlocked => Text::RelaySecurityBlocked,
-                ModelError::InvalidDependency => Text::RelayDependencyInvalid,
-                ModelError::InvalidEdit => Text::RelayEditInvalid,
-                ModelError::InvalidHealth | ModelError::Render => Text::RelayRenderFailed,
-                ModelError::Resolution(error) => match error {
-                    ResolveError::ConsentRequired => Text::ResolutionConsentRequired,
-                    ResolveError::Cancelled => Text::ResolutionCancelled,
-                    ResolveError::Unavailable => Text::ResolutionUnavailable,
-                    ResolveError::InvalidResponse => Text::ResolutionResponseInvalid,
-                    ResolveError::Budget => Text::ResolutionBudget,
-                    ResolveError::Dnssec => Text::ResolutionDnssec,
-                    ResolveError::InvalidOptions => Text::ResolutionOptionsInvalid,
-                    ResolveError::RateLimited {
-                        retry_after_seconds,
-                    } => {
-                        return format!(
-                            "{} {retry_after_seconds} s",
-                            super::i18n::text(language, Text::ResolutionRateLimited)
-                        );
-                    }
-                },
-            },
-            RelayError::Engine(error) => match error {
-                EngineError::InvalidOptions => Text::RelayOptionsInvalid,
-                EngineError::Unavailable => Text::RelayEngineUnavailable,
-                EngineError::Cancelled => Text::RelayCancelled,
-                EngineError::Infrastructure => Text::RelayEngineFailed,
-            },
-            RelayError::Gist(error) => match error {
-                GistError::InvalidTarget => Text::RelayConfigInvalid,
-                GistError::PinnedTarget => Text::RelayPinnedTarget,
-                GistError::InvalidName => Text::RelayNameInvalid,
-                GistError::InvalidToken => Text::RelayTokenInvalid,
-                GistError::Cancelled => Text::RelayCancelled,
-                GistError::Transport => Text::RelayConnectionFailed,
-                GistError::RateLimited {
-                    retry_after_seconds,
-                } => {
-                    return match retry_after_seconds {
-                        Some(seconds) => format!(
-                            "{} {seconds} s",
-                            super::i18n::text(language, Text::RelayRateLimited)
-                        ),
-                        None => {
-                            super::i18n::text(language, Text::RelayRateLimitedUnknown).to_owned()
-                        }
-                    };
-                }
-                GistError::HttpStatus(status) => {
-                    return format!(
-                        "{} {status}",
-                        super::i18n::text(language, Text::RelayHttpStatus)
-                    );
-                }
-                GistError::InvalidResponse => Text::RelayResponseInvalid,
-                GistError::TooLarge => Text::RelayTooLarge,
-                GistError::IncompleteFiles => Text::RelayFileListIncomplete,
-                GistError::SelectFile(_) => Text::RelaySelectFile,
-                GistError::Conflict => Text::RelayOutputChanged,
-                GistError::PublicOutput => Text::RelayPublicOutput,
-                GistError::UncertainWrite => Text::RelayWriteUncertain,
-                GistError::VerificationFailed => Text::RelayReadbackFailed,
-                GistError::CreatedUnverified(created) => {
-                    return format!(
-                        "{} {}",
-                        super::i18n::text(language, Text::RelayReadbackFailed),
-                        created.url
-                    );
-                }
-            },
+            GistError::InvalidResponse => Text::RelayResponseInvalid,
+            GistError::TooLarge => Text::RelayTooLarge,
+            GistError::IncompleteFiles => Text::RelayFileListIncomplete,
+            GistError::SelectFile(_) => Text::RelaySelectFile,
+            GistError::Conflict => Text::RelayOutputChanged,
+            GistError::PublicOutput => Text::RelayPublicOutput,
+            GistError::UncertainWrite => Text::RelayWriteUncertain,
+            GistError::VerificationFailed => Text::RelayReadbackFailed,
+            GistError::CreatedUnverified(created) => {
+                return format!(
+                    "{} {}",
+                    super::i18n::text(language, Text::RelayReadbackFailed),
+                    created.url
+                );
+            }
         },
     };
     super::i18n::text(language, key).to_owned()
@@ -216,7 +218,7 @@ pub(super) struct RelayState {
     pub input_mode: InputMode,
     pub paste: Zeroizing<String>,
     pub reveal_paste: bool,
-    pub schedule: super::relay_schedule::State,
+    pub schedule: ScheduleState,
     pub selected_engine: Option<std::path::PathBuf>,
     pub reveal_source: bool,
     pub reveal_token: bool,
@@ -387,18 +389,6 @@ struct Pending {
     cancel: Arc<AtomicBool>,
     progress: Arc<Mutex<Option<Progress>>>,
     generation: u64,
-}
-
-pub(super) struct PrivateConfig(pub(super) RelayConfig);
-
-impl Drop for PrivateConfig {
-    fn drop(&mut self) {
-        self.0.source.zeroize();
-        self.0.source_file.zeroize();
-        self.0.output.zeroize();
-        self.0.output_file.zeroize();
-        self.0.title.zeroize();
-    }
 }
 
 impl Default for RelayState {
@@ -2120,7 +2110,6 @@ mod tests {
     fn collection_arming_requires_an_independent_target_and_explicit_consent() {
         use crate::relay::library::{Collection, Entry};
 
-        let ctx = egui::Context::default();
         let mut state = fixture();
         let source = state.source.to_string();
         let content = "A = socks5, cached.example, 1080\n";
@@ -2182,7 +2171,7 @@ mod tests {
         assert!(state.schedule.armed());
         assert!(state.workspace.draft_dirty && !state.workspace.dirty);
         assert_eq!(state.workspace.data.collections[0].name, "Collection");
-        assert!(state.schedule.tick(&ctx, true).is_none());
+        assert!(state.schedule.tick(true).is_none());
         assert!(!state.schedule.running());
     }
 

@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-- Start Script Hub in a GPUI window on Windows and macOS. Browse the shared module and ruleset catalogs, manage encrypted templates and subscriptions, and preview or export relay results in the redesigned workspace. The classic workspace remains available from Settings or with `--classic` for advanced relay workflows. `--demo` continues to open the offline demonstration.
+- Start Script Hub in a GPUI window on Windows and macOS. Browse the shared module and ruleset catalogs, manage encrypted templates and subscriptions, and preview or export relay results in the redesigned workspace. The classic workspace remains available from Settings or with `--classic`.
+
+- Manage custom rule sources and local task history in GPUI. Edit and reorder subscription processing steps, review imports and exports of operation plans, and schedule synchronization to an existing secret Gist after reviewing a preview. The native Help page includes privacy and licensing information, and `--demo` opens the native offline demonstration with bundled sample data.
 
 - Remove the separate FlClash Preview module publications, generator, and standalone local PROMAX export. FlClash RS installs the shared Surge modules, and the 217heidai bundle supplies a Mihomo provider for local profile routing.
 

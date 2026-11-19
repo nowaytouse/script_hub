@@ -1,8 +1,12 @@
 //! Native window and navigation for the Script Hub desktop application.
 
 mod catalog;
+mod demo;
+mod history;
 mod input;
+mod sources;
 mod subscriptions;
+mod support;
 mod templates;
 mod workspace;
 
@@ -14,9 +18,11 @@ use crate::runtime::settings::{self, Accent, Language, Preferences, Theme};
 use gpui::{
     App, Application, Bounds, ClipboardItem, Context, Div, ElementId, Entity, FontWeight, Global,
     Image, ImageFormat, PathPromptOptions, Rgba, SharedString, Stateful, Window, WindowAppearance,
-    WindowBounds, WindowOptions, div, img, prelude::*, px, rgb, size,
+    WindowBounds, WindowHandle, WindowOptions, div, img, prelude::*, px, rgb, size,
 };
+use history::TaskHistory;
 use input::TextInput;
+use sources::{SourceEditor, SourcesChanged};
 use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
@@ -24,6 +30,7 @@ use std::process::{Command, ExitCode};
 use std::rc::Rc;
 use std::sync::Arc;
 use subscriptions::Subscriptions;
+use support::Support;
 use templates::Templates;
 
 gpui::actions!(script_hub, [NextControl, PreviousControl]);
@@ -196,8 +203,11 @@ enum Page {
     Subscriptions,
     Relay,
     Workspace,
+    Sources,
     Tasks,
+    History,
     Settings,
+    Help,
 }
 
 impl Page {
@@ -211,8 +221,11 @@ impl Page {
             }
             Self::Relay => localized(language, "Relay", "中转", "リレー"),
             Self::Workspace => text(language, Text::Workspace),
+            Self::Sources => text(language, Text::Sources),
             Self::Tasks => text(language, Text::Tasks),
+            Self::History => text(language, Text::History),
             Self::Settings => text(language, Text::Settings),
+            Self::Help => text(language, Text::Help),
         }
     }
 
@@ -224,8 +237,11 @@ impl Page {
             Self::Subscriptions => "◎",
             Self::Relay => "⇄",
             Self::Workspace => "⌘",
+            Self::Sources => "↗",
             Self::Tasks => "◴",
+            Self::History => "◷",
             Self::Settings => "⚙",
+            Self::Help => "?",
         }
     }
 }
@@ -252,6 +268,10 @@ struct Hub {
     checked_rules: BTreeSet<usize>,
     templates: Entity<Templates>,
     subscriptions: Entity<Subscriptions>,
+    sources: Entity<SourceEditor>,
+    history: Entity<TaskHistory>,
+    support: Entity<Support>,
+    demo: Option<WindowHandle<demo::Demo>>,
     logo: Arc<Image>,
     message: Option<String>,
     job: Option<Job>,
@@ -291,6 +311,18 @@ impl Hub {
         }
         let templates = cx.new(Templates::new);
         let subscriptions = cx.new(Subscriptions::new);
+        let sources = cx.new(|cx| SourceEditor::new(language, cx));
+        let history_path = preference_path
+            .as_ref()
+            .map(|path| path.with_file_name("history.sqlite3"));
+        let history = cx.new(|cx| TaskHistory::new(history_path, language, cx));
+        let support = cx.new(|cx| Support::new(language, cx));
+        cx.subscribe(&sources, |hub, _, event: &SourcesChanged, cx| {
+            if hub.root.as_ref() == Some(&event.0) {
+                hub.reload_repository(cx);
+            }
+        })
+        .detach();
         cx.subscribe(
             &subscriptions,
             |hub, _, _: &subscriptions::OpenRelay, cx| hub.navigate(Page::Relay, cx),
@@ -321,6 +353,10 @@ impl Hub {
             checked_rules: BTreeSet::new(),
             templates,
             subscriptions,
+            sources,
+            history,
+            support,
+            demo: None,
             logo: Arc::new(Image::from_bytes(
                 ImageFormat::Png,
                 include_bytes!("../../assets/logo.png").to_vec(),
@@ -360,6 +396,12 @@ impl Hub {
             .update(cx, |state, cx| state.set_language(language, cx));
         self.subscriptions
             .update(cx, |state, cx| state.set_language(language, cx));
+        self.sources
+            .update(cx, |state, cx| state.set_language(language, cx));
+        self.history
+            .update(cx, |state, cx| state.set_language(language, cx));
+        self.support
+            .update(cx, |state, cx| state.set_language(language, cx));
         cx.notify();
     }
 
@@ -371,6 +413,12 @@ impl Hub {
             .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
         if page == Page::Templates && self.root.is_none() && !self.loading {
             self.find_template_store(cx);
+        }
+        if page == Page::History {
+            self.history.update(cx, |view, cx| view.refresh(cx));
+        } else {
+            self.history
+                .update(cx, |view, _| view.dismiss_confirmation());
         }
         cx.notify();
     }
@@ -398,14 +446,45 @@ impl Hub {
         .detach();
     }
 
-    fn working(&self) -> bool {
+    fn workspace_busy(&self) -> bool {
         self.loading || self.job.as_ref().is_some_and(Job::is_running)
     }
 
+    fn project_busy(&self, cx: &App) -> bool {
+        self.workspace_busy()
+            || self.sources.read(cx).is_writing()
+            || self.history.read(cx).is_writing()
+    }
+
+    fn working(&self, cx: &App) -> bool {
+        self.project_busy(cx) || self.subscriptions.read(cx).schedule_active()
+    }
+
+    fn project_action_blocked(&mut self, cx: &mut Context<Self>) -> bool {
+        let message = if self.subscriptions.read(cx).schedule_active() {
+            self.local(
+                "Stop scheduled sync on the Relay page before changing the workspace or running a project task.",
+                "请先在中转页停止定时同步，再切换工作区或运行项目任务。",
+                "ワークスペースの変更やプロジェクトタスクの実行前に、リレーページで定期同期を停止してください。",
+            )
+        } else if self.project_busy(cx) {
+            self.local(
+                "Wait for the current project operation to finish.",
+                "请等待当前项目操作完成。",
+                "現在のプロジェクト操作が完了するまで待ってください。",
+            )
+        } else {
+            return false;
+        };
+        self.message = Some(message.into());
+        cx.notify();
+        true
+    }
+
     fn can_close(&mut self, cx: &mut Context<Self>) -> bool {
-        if self.working()
+        if self.project_busy(cx)
             || !self.templates.read(cx).can_close()
-            || !self.subscriptions.read(cx).can_close()
+            || !self.subscriptions.read(cx).can_close(cx)
         {
             self.message = Some(
                 self.local(
@@ -472,8 +551,25 @@ impl Hub {
         }
     }
 
+    fn open_demo(&mut self, cx: &mut Context<Self>) {
+        if self.demo.as_ref().is_some_and(|handle| {
+            handle
+                .update(cx, |_, window, _| window.activate_window())
+                .is_ok()
+        }) {
+            return;
+        }
+        match demo::open(self.preferences.language, cx) {
+            Ok(handle) => self.demo = Some(handle),
+            Err(error) => {
+                self.message = Some(error);
+                cx.notify();
+            }
+        }
+    }
+
     fn pick_workspace(&mut self, cx: &mut Context<Self>) {
-        if self.working() {
+        if self.project_action_blocked(cx) {
             return;
         }
         let paths = cx.prompt_for_paths(PathPromptOptions {
@@ -503,6 +599,7 @@ impl Hub {
                 .gap_3()
                 .items_center()
                 .h(px(40.))
+                .flex_shrink_0()
                 .px_3()
                 .rounded_md()
                 .cursor_pointer()
@@ -531,33 +628,11 @@ impl Hub {
                 )
                 .on_click(cx.listener(move |hub, _, _, cx| hub.navigate(page, cx)))
         };
-        div()
-            .flex()
-            .flex_col()
-            .flex_shrink_0()
-            .w(px(if compact { 166. } else { 208. }))
-            .h_full()
-            .bg(palette.surface)
-            .border_r_1()
-            .border_color(palette.border)
-            .px_3()
-            .pt_4()
-            .pb_3()
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap_3()
-                    .px_2()
-                    .h(px(45.))
-                    .child(img(self.logo.clone()).size(px(30.)).flex_shrink_0())
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_size(px(17.))
-                            .child("Script Hub"),
-                    ),
-            )
+        let navigation = div()
+            .id("sidebar-navigation")
+            .flex_1()
+            .min_h_0()
+            .overflow_y_scroll()
             .child(
                 div()
                     .flex()
@@ -597,9 +672,40 @@ impl Hub {
                             .text_color(palette.muted)
                             .child(self.local("Project", "项目", "プロジェクト")),
                     )
-                    .children([Page::Workspace, Page::Tasks].map(link)),
+                    .children(
+                        [Page::Workspace, Page::Sources, Page::Tasks, Page::History].map(link),
+                    ),
+            );
+        div()
+            .flex()
+            .flex_col()
+            .flex_shrink_0()
+            .w(px(if compact { 166. } else { 208. }))
+            .h_full()
+            .bg(palette.surface)
+            .border_r_1()
+            .border_color(palette.border)
+            .px_3()
+            .pt_4()
+            .pb_3()
+            .child(
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_3()
+                    .px_2()
+                    .h(px(45.))
+                    .flex_shrink_0()
+                    .child(img(self.logo.clone()).size(px(30.)).flex_shrink_0())
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_size(px(17.))
+                            .child("Script Hub"),
+                    ),
             )
-            .child(div().flex_1())
+            .child(navigation)
+            .child(link(Page::Help))
             .child(link(Page::Settings))
     }
 
@@ -656,6 +762,12 @@ impl Hub {
 
 impl Render for Hub {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let project_busy = self.project_busy(cx);
+        self.subscriptions
+            .update(cx, |view, _| view.set_schedule_project_busy(project_busy));
+        let source_busy = self.workspace_busy() || self.subscriptions.read(cx).schedule_active();
+        self.sources
+            .update(cx, |view, cx| view.set_workspace_busy(source_busy, cx));
         let scale = f32::from(self.preferences.scale_percent) / 100.;
         window.set_rem_size(px(16. * scale));
         let palette = Palette::for_window(window, cx);
@@ -670,8 +782,11 @@ impl Render for Hub {
             Page::Templates => self.templates.clone().into_any_element(),
             Page::Subscriptions | Page::Relay => self.subscriptions.clone().into_any_element(),
             Page::Workspace => self.workspace_page(palette, cx).into_any_element(),
+            Page::Sources => self.sources.clone().into_any_element(),
             Page::Tasks => self.tasks_page(palette, cx).into_any_element(),
+            Page::History => self.history.clone().into_any_element(),
             Page::Settings => self.settings_page(palette, cx).into_any_element(),
+            Page::Help => self.support.clone().into_any_element(),
         };
         div()
             .id("script-hub")
@@ -740,14 +855,29 @@ impl Render for Hub {
     }
 }
 
+fn bind_keys(cx: &mut App) {
+    TextInput::bind_keys(cx);
+    cx.bind_keys([
+        gpui::KeyBinding::new("tab", NextControl, None),
+        gpui::KeyBinding::new("shift-tab", PreviousControl, None),
+    ]);
+}
+
+fn exit_when_all_windows_close(cx: &mut App) {
+    cx.on_window_closed(|cx| {
+        if cx.windows().is_empty() {
+            cx.quit();
+        }
+    })
+    .detach();
+}
+
 pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut prepare = None;
     let root = match args.next().as_deref() {
         Some("--worker") => return crate::runtime::worker::run(args),
         Some("--classic") => return crate::gui::app::run(args),
-        Some("--demo") => {
-            return crate::gui::app::run(std::iter::once("--demo".to_owned()).chain(args));
-        }
+        Some("--demo") if args.next().is_none() => return demo::run(),
         Some("--prepare-templates") => {
             let Some(setup) = crate::gui::app::parse_template_setup(args) else {
                 return ExitCode::from(2);
@@ -783,18 +913,9 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let result = Rc::new(Cell::new(ExitCode::SUCCESS));
     let exit = result.clone();
     Application::new().run(move |cx| {
-        TextInput::bind_keys(cx);
-        cx.bind_keys([
-            gpui::KeyBinding::new("tab", NextControl, None),
-            gpui::KeyBinding::new("shift-tab", PreviousControl, None),
-        ]);
+        bind_keys(cx);
         cx.set_global(UiStyle::from(&preferences));
-        cx.on_window_closed(|cx| {
-            if cx.windows().is_empty() {
-                cx.quit();
-            }
-        })
-        .detach();
+        exit_when_all_windows_close(cx);
         let [width, height] = preferences.window.dimensions();
         let bounds = Bounds::centered(None, size(px(width), px(height)), cx);
         let opened = cx.open_window(

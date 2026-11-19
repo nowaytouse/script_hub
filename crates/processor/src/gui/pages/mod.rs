@@ -8,7 +8,7 @@ mod settings;
 mod sources;
 mod subscription_list;
 mod subscriptions;
-mod support;
+pub(crate) mod support;
 mod tasks;
 mod templates;
 

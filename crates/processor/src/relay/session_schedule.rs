@@ -1,4 +1,4 @@
-//! Session-only scheduling state; no credentials are persisted.
+//! Shared desktop scheduling state. Credentials live only in the current session.
 use std::{
     sync::{
         Arc, Mutex,
@@ -9,14 +9,25 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::relay::{Failure, PrivateConfig};
-use crate::relay::{
+use super::{
     Progress, RelayConfig, RelayError, RelayResult, collection_schedule,
     library::Workspace,
     schedule::{self, RetryDeadline, Schedule},
 };
-use eframe::egui;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
+
+pub(crate) struct PrivateConfig(pub(crate) RelayConfig);
+
+impl Drop for PrivateConfig {
+    fn drop(&mut self) {
+        self.0.source.zeroize();
+        self.0.source_file.zeroize();
+        self.0.output.zeroize();
+        self.0.output_file.zeroize();
+        self.0.title.zeroize();
+        self.0.script_source.label.zeroize();
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct Summary {
@@ -58,7 +69,7 @@ impl Completed {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum Status {
+pub(crate) enum Status {
     Idle,
     Waiting { seconds: u64, retry: bool },
     Running,
@@ -70,7 +81,7 @@ pub struct State {
     pub interval_minutes: u64,
     pub progress: Option<Progress>,
     pub result: Option<Summary>,
-    pub(super) last_error: Option<Failure>,
+    pub last_error: Option<RelayError>,
     server_retry_until: Option<RetryDeadline>,
     schedule: Option<Schedule>,
     config: Option<PrivateConfig>,
@@ -173,7 +184,7 @@ impl State {
         self.config.is_some() && self.schedule.as_ref().is_some_and(|s| !s.is_paused())
     }
 
-    pub(super) fn can_run_now(&self) -> bool {
+    pub fn can_run_now(&self) -> bool {
         let now = Instant::now();
         self.armed()
             && !self.running()
@@ -186,7 +197,7 @@ impl State {
                 .is_some_and(|schedule| schedule.can_request_now(now))
     }
 
-    pub(super) fn request_run_now(&mut self) {
+    pub fn request_run_now(&mut self) {
         if self.can_run_now()
             && let Some(schedule) = &mut self.schedule
         {
@@ -203,7 +214,15 @@ impl State {
         self.server_retry_until
     }
 
-    pub(super) fn status(&self) -> Status {
+    pub fn record_server_retry(&mut self, error: &RelayError) {
+        if let Some(wait) = schedule::server_retry_after(error) {
+            self.server_retry_until = self
+                .server_retry_until
+                .max(Some(RetryDeadline::new(Instant::now(), wait)));
+        }
+    }
+
+    pub fn status(&self) -> Status {
         self.status_at(Instant::now())
     }
 
@@ -231,7 +250,17 @@ impl State {
         }
     }
 
-    pub fn tick(&mut self, ctx: &egui::Context, admitted: bool) -> Option<Completed> {
+    pub fn poll_delay(&self) -> Option<Duration> {
+        if self.running() {
+            Some(Duration::from_millis(100))
+        } else if self.armed() {
+            Some(Duration::from_secs(1))
+        } else {
+            None
+        }
+    }
+
+    pub fn tick(&mut self, admitted: bool) -> Option<Completed> {
         let mut completed = None;
         if let Some(pending) = &self.pending
             && pending.generation == self.generation
@@ -255,12 +284,8 @@ impl State {
                 Err(RelayError::InvalidInput)
             };
             let now = Instant::now();
-            if let Err(error) = &outcome
-                && let Some(wait) = schedule::server_retry_after(error)
-            {
-                self.server_retry_until = self
-                    .server_retry_until
-                    .max(Some(RetryDeadline::new(now, wait)));
+            if let Err(error) = &outcome {
+                self.record_server_retry(error);
             }
             if let Some(schedule) = &mut self.schedule {
                 schedule.finish_status(now, outcome.as_ref().map(|_| ()));
@@ -274,7 +299,7 @@ impl State {
                         completed = Some(result);
                     }
                     Err(error) => {
-                        self.last_error = Some(Failure::Operation(error));
+                        self.last_error = Some(error);
                     }
                 }
                 if self.schedule.as_ref().is_some_and(Schedule::is_paused) {
@@ -338,17 +363,12 @@ impl State {
                         .as_mut()
                         .unwrap()
                         .finish_status(now, Err(&error));
-                    self.last_error = Some(Failure::Operation(error));
+                    self.last_error = Some(error);
                     self.config = None;
                     self.collection = None;
                     self.token = None;
                 }
             }
-        }
-        if self.running() {
-            ctx.request_repaint_after(Duration::from_millis(100));
-        } else if self.armed() {
-            ctx.request_repaint_after(Duration::from_secs(1));
         }
         completed
     }
@@ -379,7 +399,7 @@ mod tests {
         assert!(state.arm(config(), "").is_err());
         assert!(state.arm(config(), "test").is_ok());
         assert!(state.armed());
-        assert!(state.tick(&egui::Context::default(), true).is_none());
+        assert!(state.tick(true).is_none());
         assert!(!state.running());
         state.stop();
         assert!(!state.armed());
@@ -395,6 +415,42 @@ mod tests {
         assert!(state.arm(config(), "test").is_err());
     }
 
+    #[test]
+    fn due_schedule_waits_for_admission_without_launching_a_worker() {
+        let mut state = State::default();
+        state.arm(config(), "test").unwrap();
+        assert!(state.can_run_now());
+        state.request_run_now();
+        assert!(state.tick(false).is_none());
+        assert_eq!(
+            state.status(),
+            Status::Waiting {
+                seconds: 0,
+                retry: false
+            }
+        );
+        assert_eq!(state.poll_delay(), Some(Duration::from_secs(1)));
+        assert!(!state.running());
+        state.stop();
+        assert!(state.tick(true).is_none());
+        assert_eq!(state.poll_delay(), None);
+    }
+
+    #[test]
+    fn manual_server_cooldown_cannot_be_bypassed_by_arming() {
+        let mut state = State::default();
+        state.record_server_retry(&RelayError::InputRateLimited {
+            retry_after_seconds: Some(60),
+        });
+        let initial = state.server_retry_until();
+        state.record_server_retry(&RelayError::InputRateLimited {
+            retry_after_seconds: Some(1),
+        });
+        assert_eq!(state.server_retry_until(), initial);
+        state.stop();
+        assert!(state.arm(config(), "test").is_err());
+    }
+
     fn finish_failed_run(state: &mut State, error: RelayError) {
         let schedule = state.schedule.as_mut().unwrap();
         assert!(schedule.begin(schedule.next_due().unwrap()));
@@ -407,10 +463,9 @@ mod tests {
             progress: Arc::new(Mutex::new(None)),
             generation: state.generation,
         });
-        let ctx = egui::Context::default();
         let deadline = Instant::now() + Duration::from_secs(2);
         while state.running() && Instant::now() < deadline {
-            assert!(state.tick(&ctx, false).is_none());
+            assert!(state.tick(false).is_none());
             thread::yield_now();
         }
         assert!(!state.running());
@@ -491,7 +546,7 @@ mod tests {
         release.send(()).unwrap();
         let deadline = Instant::now() + Duration::from_secs(2);
         while state.running() && Instant::now() < deadline {
-            assert!(state.tick(&egui::Context::default(), false).is_none());
+            assert!(state.tick(false).is_none());
             thread::yield_now();
         }
         assert_eq!(state.status(), Status::Idle);
@@ -548,11 +603,11 @@ mod tests {
         let deadline = Instant::now() + Duration::from_secs(2);
         let mut completed = None;
         while state.running() && Instant::now() < deadline {
-            completed = state.tick(&egui::Context::default(), false);
+            completed = state.tick(false);
             thread::yield_now();
         }
         assert_eq!(completed.unwrap().result().content.as_str(), "fresh");
         assert_eq!(state.result.unwrap().total, 1);
-        assert!(state.tick(&egui::Context::default(), false).is_none());
+        assert!(state.tick(false).is_none());
     }
 }

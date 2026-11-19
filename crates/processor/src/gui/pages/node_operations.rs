@@ -372,7 +372,7 @@ fn script_arguments(
     changed
 }
 
-fn operation_label(op: &Operation) -> Text {
+pub(crate) fn operation_label(op: &Operation) -> Text {
     match op {
         Operation::Script { .. } => Text::OperationScript,
         Operation::NameFilter { .. } => Text::OperationNameFilter,
@@ -412,7 +412,7 @@ enum Action {
     Delete,
 }
 
-fn new_operations() -> [Operation; 26] {
+pub(crate) fn new_operations() -> [Operation; 26] {
     [
         Operation::NameFilter {
             pattern: String::new(),
@@ -631,7 +631,7 @@ fn clear_rows(ctx: &egui::Context, step: u64, names: &[&str], limit: usize) {
     });
 }
 
-fn next_step_id(steps: &[Step]) -> Option<u64> {
+pub(crate) fn next_step_id(steps: &[Step]) -> Option<u64> {
     steps
         .iter()
         .map(|step| step.id)
@@ -1705,7 +1705,7 @@ pub(super) fn show(
     changed
 }
 
-fn operation_group(op: &Operation) -> u8 {
+pub(crate) fn operation_group(op: &Operation) -> u8 {
     match op {
         Operation::NameFilter { .. }
         | Operation::MemberNameFilter { .. }

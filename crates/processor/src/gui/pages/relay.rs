@@ -3,8 +3,8 @@ use crate::gui::app::HubApp;
 use crate::gui::file_dialog::FileAction;
 use crate::gui::i18n::{Text, text};
 use crate::gui::relay::{InputMode, RelayState, RelayStep, ReviewPane, SECRET_IDS};
-use crate::gui::relay_schedule::Status as ScheduleStatus;
 use crate::gui::theme::Palette;
+use crate::relay::session_schedule::Status as ScheduleStatus;
 use crate::relay::{Progress, RelayStage, RunMode};
 use eframe::egui;
 use zeroize::Zeroize;
@@ -84,7 +84,7 @@ impl HubApp {
                         if matches!(schedule_status, ScheduleStatus::Paused | ScheduleStatus::Waiting { retry: true, .. })
                             && let Some(error) = &state.schedule.last_error
                         {
-                            ui.colored_label(colors.warning, crate::gui::relay::failure_message(language, error));
+                            ui.colored_label(colors.warning, crate::gui::operation_failure_message(language, error));
                         }
                         if let Some(result) = state.schedule.result {
                             ui.label(format!("{}: {} · {} {} · {} {}", tr(Text::ScheduleLastConfirmed), tr(if result.unchanged { Text::RelayUnchanged } else { Text::RelayPublished }), tr(Text::RelayTotal), result.total, tr(Text::RelayRemoved), result.removed));

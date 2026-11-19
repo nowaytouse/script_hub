@@ -1214,15 +1214,18 @@ impl eframe::App for HubApp {
             && self.relay.workspace.confirm.is_none()
             && !self.relay.workspace.password_form;
         let schedule_was_running = self.relay.schedule.running();
-        if let Some(result) = self.relay.schedule.tick(ctx, schedule_admitted) {
+        if let Some(result) = self.relay.schedule.tick(schedule_admitted) {
             match result {
-                super::relay_schedule::Completed::Subscription(result) => {
+                crate::relay::session_schedule::Completed::Subscription(result) => {
                     self.relay.accept_scheduled(*result);
                 }
-                super::relay_schedule::Completed::Collection(completed) => {
+                crate::relay::session_schedule::Completed::Collection(completed) => {
                     self.relay.accept_scheduled_collection(*completed);
                 }
             }
+        }
+        if let Some(delay) = self.relay.schedule.poll_delay() {
+            ctx.request_repaint_after(delay);
         }
         if !schedule_was_running && self.relay.schedule.running() {
             self.relay.invalidate_surge_policy();

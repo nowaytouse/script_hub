@@ -1,5 +1,6 @@
 use super::super::{Palette, button, heading, input::TextInput, panel};
 use super::{FileMode, Item, Source, Subscriptions, clear};
+use crate::gui::i18n::{Text, text};
 use crate::relay::{RelayStage, export::OutputFormat};
 use gpui::{
     ClipboardItem, Div, ElementId, Entity, SharedString, Stateful, Window, div, prelude::*, px,
@@ -34,7 +35,7 @@ impl Render for Subscriptions {
 }
 
 impl Subscriptions {
-    fn action(
+    pub(super) fn action(
         &self,
         id: impl Into<ElementId>,
         title: impl Into<SharedString>,
@@ -44,9 +45,12 @@ impl Subscriptions {
         f: impl Fn(&mut Self, &mut Context<Self>) + 'static,
     ) -> Stateful<Div> {
         button(id, title, palette, primary)
-            .when(self.pending, |button| button.opacity(0.55))
+            .when(
+                self.pending || self.schedule_active() || self.selecting_plan_file(cx),
+                |button| button.opacity(0.55),
+            )
             .on_click(cx.listener(move |this, _, _, cx| {
-                if !this.pending {
+                if !this.pending && !this.schedule_active() && !this.selecting_plan_file(cx) {
                     f(this, cx);
                 }
             }))
@@ -59,13 +63,7 @@ impl Subscriptions {
                 .running
                 .as_ref()
                 .and_then(|run| run.progress.lock().ok().and_then(|value| *value))
-                .map(|progress| match progress.stage {
-                    RelayStage::Read => self.tr("Reading source…", "正在读取来源…"),
-                    RelayStage::Check => self.tr("Checking nodes…", "正在检查节点…"),
-                    RelayStage::Render => self.tr("Formatting output…", "正在整理导出…"),
-                    RelayStage::Publish => self.tr("Publishing to GitHub…", "正在发布到 GitHub…"),
-                    RelayStage::Complete => self.tr("Wrapping up…", "即将完成…"),
-                })
+                .map(|progress| self.progress_text(progress.stage))
                 .unwrap_or_else(|| self.tr("Working…", "正在处理…"));
             display = display.child(description(stage, palette));
         }
@@ -87,6 +85,16 @@ impl Subscriptions {
         display
     }
 
+    pub(super) fn progress_text(&self, stage: RelayStage) -> &'static str {
+        match stage {
+            RelayStage::Read => self.tr("Reading source…", "正在读取来源…"),
+            RelayStage::Check => self.tr("Checking nodes…", "正在检查节点…"),
+            RelayStage::Render => self.tr("Formatting output…", "正在整理导出…"),
+            RelayStage::Publish => self.tr("Publishing to GitHub…", "正在发布到 GitHub…"),
+            RelayStage::Complete => self.tr("Wrapping up…", "即将完成…"),
+        }
+    }
+
     fn library(&self, palette: Palette, cx: &Context<Self>) -> Div {
         let body = column()
             .child(heading(
@@ -97,7 +105,8 @@ impl Subscriptions {
                 ),
                 palette,
             ))
-            .child(self.messages(palette));
+            .child(self.messages(palette))
+            .children(self.schedule_panel(palette, cx));
         if self.store.is_none() {
             let title = if self.storage_exists {
                 self.tr("Unlock library", "解锁资料库")
@@ -415,7 +424,7 @@ impl Subscriptions {
             }
         }
         panel(palette).w_full().p_5().child(
-            form.child(
+            form.child(self.library_pipeline.clone()).child(
                 row()
                     .child(self.action(
                         "save-subscription",
@@ -455,7 +464,8 @@ impl Subscriptions {
                 ),
                 palette,
             ))
-            .child(self.messages(palette));
+            .child(self.messages(palette))
+            .children(self.schedule_panel(palette, cx));
         if cancel {
             body = body.child(
                 button(
@@ -486,8 +496,10 @@ impl Subscriptions {
                         matches!(self.source, Source::Link),
                         cx,
                         |this, cx| {
-                            this.set_source(Source::Link, cx);
-                            cx.notify();
+                            if !matches!(this.source, Source::Link) {
+                                this.set_source(Source::Link, cx);
+                                cx.notify();
+                            }
                         },
                     ))
                     .child(self.action(
@@ -509,7 +521,7 @@ impl Subscriptions {
             );
         if let Some(name) = source_title {
             source = source.child(description(name.to_owned(), palette));
-        } else {
+        } else if !self.schedule_active() {
             source = source
                 .child(field(
                     self.tr("Subscription URL", "订阅链接"),
@@ -520,12 +532,14 @@ impl Subscriptions {
                     self.tr("Source filename", "源文件名"),
                     &self.relay_file,
                     palette,
-                ))
-                .child(field(
-                    self.tr("Private Gist token (optional)", "私密 Gist 令牌（可选）"),
-                    &self.source_token,
-                    palette,
                 ));
+        }
+        if self.is_remote_source() && !self.schedule_active() {
+            source = source.child(field(
+                self.tr("Private Gist token (optional)", "私密 Gist 令牌（可选）"),
+                &self.source_token,
+                palette,
+            ));
         }
         let mut formats = row();
         for (label, format) in [
@@ -550,19 +564,64 @@ impl Subscriptions {
                 },
             ));
         }
+        let preview_title = if self.needs_source_review(cx) {
+            self.tr("Review remote source", "检查远程来源")
+        } else {
+            self.tr("Run preview", "运行预览")
+        };
         source = source
             .child(section(self.tr("Output format", "输出格式"), palette))
             .child(formats)
+            .when(!self.schedule_active(), |source| {
+                source.child(description(
+                    self.tr(
+                        "Edits here apply to this relay session. Edit a library item to save its steps.",
+                        "此处编辑仅用于当前中继。要保存步骤，请编辑资料库中的项目。",
+                    ),
+                    palette,
+                )).child(self.relay_pipeline.clone())
+            })
+            .when_some(self.reviewed_source.as_ref().filter(|_| !self.schedule_active()), |source, review| {
+                source.child(description(
+                    format!("{} {}", self.tr("Nodes in reviewed remote source", "已检查远程来源节点数"), review.nodes),
+                    palette,
+                ))
+            })
+            .when(!self.schedule_active() && self.needs_resolution(cx), |source| {
+                source.child(description(
+                    self.tr(
+                        "Domain resolution sends node hostnames to the DNS resolvers configured in the steps.",
+                        "域名解析会把节点主机名发送给各步骤中配置的 DNS 解析器。",
+                    ),
+                    palette,
+                )).child(self.action(
+                    "relay-resolution-consent",
+                    if self.allow_resolution {
+                        self.tr("Revoke DNS approval", "撤销 DNS 授权")
+                    } else {
+                        self.tr("Allow DNS for this preview", "允许本次预览查询 DNS")
+                    },
+                    palette,
+                    self.allow_resolution,
+                    cx,
+                    |this, cx| {
+                        this.allow_resolution = !this.allow_resolution;
+                        cx.notify();
+                    },
+                ))
+            })
             .child(self.action(
                 "relay-preview",
-                self.tr("Run preview", "运行预览"),
+                preview_title,
                 palette,
                 true,
                 cx,
                 Self::preview,
             ));
         body = body.child(panel(palette).w_full().p_5().child(source));
-        if let Some(preview) = self.current_preview(cx) {
+        if !self.schedule_active()
+            && let Some(preview) = self.current_preview(cx)
+        {
             let mut summary = column()
                 .child(section(self.tr("Preview results", "预览结果"), palette))
                 .child(description(
@@ -577,6 +636,37 @@ impl Subscriptions {
                     ),
                     palette,
                 ))
+                .when(!preview.result.stages.is_empty(), |summary| {
+                    summary
+                        .child(section(self.tr("Step results", "步骤结果"), palette))
+                        .children(preview.result.stages.iter().filter_map(|stage| {
+                            let step = preview
+                                .config
+                                .0
+                                .processing
+                                .pipeline
+                                .iter()
+                                .find(|step| step.id == stage.id)?;
+                            Some(description(
+                                format!(
+                                    "{} · {} → {} · {} {} · {} {} · {} {}",
+                                    crate::gui::i18n::text(
+                                        self.language,
+                                        crate::gui::operation_label(&step.operation)
+                                    ),
+                                    stage.before,
+                                    stage.after,
+                                    self.tr("renamed", "已重命名"),
+                                    stage.renamed,
+                                    self.tr("modified", "已修改"),
+                                    stage.modified,
+                                    self.tr("skipped", "已跳过"),
+                                    stage.skipped,
+                                ),
+                                palette,
+                            ))
+                        }))
+                })
                 .child(
                     row()
                         .when(self.allow_plaintext, |row| {
@@ -659,7 +749,7 @@ impl Subscriptions {
                     ), palette))
                     .child(field(self.tr("Gist destination", "Gist 目标"), &self.output_url, palette))
                     .child(field(self.tr("Output filename", "输出文件名"), &self.output_name, palette))
-                    .child(field(self.tr("New Gist title", "新建 Gist 的标题"), &self.output_title, palette))
+                    .child(field(text(self.language, Text::RelayTitle), &self.output_title, palette))
                     .child(field(self.tr("GitHub token", "GitHub 令牌"), &self.token, palette))
                     .child(row()
                         .child(self.action("relay-confirm-gist", self.tr("Publish to secret Gist", "发布到私密 Gist"), palette, true, cx, Self::publish))
@@ -667,7 +757,8 @@ impl Subscriptions {
                             clear(&this.token, cx);
                             this.reviewing_publish = false;
                             cx.notify();
-                        })));
+                        })))
+                    .child(self.schedule_setup(palette, cx));
             }
             body = body.child(panel(palette).w_full().p_5().child(summary));
         }
@@ -694,15 +785,15 @@ impl Subscriptions {
     }
 }
 
-fn column() -> Div {
+pub(super) fn column() -> Div {
     div().flex().flex_col().items_start().gap(px(14.)).w_full()
 }
 
-fn row() -> Div {
+pub(super) fn row() -> Div {
     div().flex().flex_wrap().items_center().gap(px(8.))
 }
 
-fn section(label: impl Into<SharedString>, palette: Palette) -> Div {
+pub(super) fn section(label: impl Into<SharedString>, palette: Palette) -> Div {
     div()
         .text_color(palette.ink)
         .text_size(px(15.))
@@ -710,14 +801,14 @@ fn section(label: impl Into<SharedString>, palette: Palette) -> Div {
         .child(label.into())
 }
 
-fn description(label: impl Into<SharedString>, palette: Palette) -> Div {
+pub(super) fn description(label: impl Into<SharedString>, palette: Palette) -> Div {
     div()
         .text_color(palette.muted)
         .text_size(px(13.))
         .child(label.into())
 }
 
-fn field(label: &'static str, input: &Entity<TextInput>, palette: Palette) -> Div {
+pub(super) fn field(label: &'static str, input: &Entity<TextInput>, palette: Palette) -> Div {
     column()
         .gap(px(5.))
         .child(description(label, palette))

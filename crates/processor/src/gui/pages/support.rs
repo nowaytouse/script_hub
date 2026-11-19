@@ -4,7 +4,8 @@ use crate::gui::i18n::{Text, text};
 use crate::runtime::settings::Language;
 use eframe::egui::{self, RichText};
 
-const LICENSE: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../LICENSE"));
+pub(crate) const LICENSE: &str =
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../LICENSE"));
 const NOTICES: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../THIRD_PARTY_NOTICES.md"
@@ -18,21 +19,21 @@ const PRIVACY_ZH_CN: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../PRIVACY.zh-CN.md"
 ));
-const DEPENDENCIES: &str = include_str!(concat!(
+pub(crate) const DEPENDENCIES: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/THIRD_PARTY_LICENSES.txt"
 ));
-const REPOSITORY: &str = "https://github.com/nowaytouse/script_hub";
+pub(crate) const REPOSITORY: &str = "https://github.com/nowaytouse/script_hub";
 const NOTICE_SEPARATOR: &str =
     "==============================================================================";
-const NOTICE_RESULT_LIMIT: usize = 20;
+pub(crate) const NOTICE_RESULT_LIMIT: usize = 20;
 
 fn build_revision() -> Option<&'static str> {
     option_env!("GITHUB_SHA")
         .filter(|sha| sha.len() == 40 && sha.bytes().all(|b| b.is_ascii_hexdigit()))
 }
 
-fn build_details() -> String {
+pub(crate) fn build_details() -> String {
     let mut details = format!(
         "Script Hub {}\nTarget: {} / {}\nBuild: {}\nLicense: {}",
         env!("CARGO_PKG_VERSION"),
@@ -116,10 +117,10 @@ impl DiagnosticStatusSnapshot {
     }
 }
 
-fn matching_notices<'a>(
-    content: &'a str,
-    words: &'a [String],
-) -> impl Iterator<Item = (usize, &'a str, &'a str, &'a str)> {
+pub(crate) fn matching_notices<'content>(
+    content: &'content str,
+    words: &[String],
+) -> impl Iterator<Item = (usize, &'content str, &'content str, &'content str)> {
     // Borrow each block, preserving the original license text and its line endings.
     let mut remaining = Some(content);
     let mut blocks = std::iter::from_fn(move || {
@@ -152,11 +153,18 @@ fn matching_notices<'a>(
         })
 }
 
-fn localized_documents(language: Language) -> (&'static str, &'static str) {
+pub(crate) fn localized_documents(language: Language) -> (&'static str, &'static str) {
     match language.resolved() {
         Language::ZhCn => (NOTICES_ZH_CN, PRIVACY_ZH_CN),
         _ => (NOTICES, PRIVACY),
     }
+}
+
+pub(crate) fn build_source_url() -> String {
+    build_revision().map_or_else(
+        || REPOSITORY.to_owned(),
+        |sha| format!("{REPOSITORY}/tree/{sha}"),
+    )
 }
 
 impl HubApp {
@@ -240,8 +248,7 @@ impl HubApp {
                         });
                         ui.add_space(16.0);
                         ui.label(tr(Text::LicenseScope));
-                        let source = build_revision()
-                            .map_or_else(|| REPOSITORY.to_owned(), |sha| format!("{REPOSITORY}/tree/{sha}"));
+                        let source = build_source_url();
                         ui.horizontal_wrapped(|ui| {
                             if ui.button(tr(Text::CopyBuildDetails)).clicked() {
                                 self.copy(ui.ctx(), &build_details());

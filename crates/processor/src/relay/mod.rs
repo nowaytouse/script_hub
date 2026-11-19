@@ -17,6 +17,8 @@ pub mod model;
 pub mod plan;
 pub mod resolve;
 pub mod schedule;
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+pub(crate) mod session_schedule;
 
 use serde::Deserialize;
 use std::{
