@@ -62,6 +62,13 @@ jobs:
           cache-shared-key: script-hub-processor
           cache-save-if: ${{ github.ref == 'refs/heads/master' }}
           cache-on-failure: false
+      - name: Check the Metal shader compiler
+        if: runner.os == 'macOS'
+        run: |
+          if ! xcrun -sdk macosx metal --version; then
+            xcodebuild -downloadComponent MetalToolchain
+            xcrun -sdk macosx metal --version
+          fi
       - name: Read package version
         id: version
         shell: bash

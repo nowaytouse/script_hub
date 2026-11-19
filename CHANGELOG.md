@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Start Script Hub in a GPUI window on Windows and macOS. Browse the shared module and ruleset catalogs, manage encrypted templates and subscriptions, and preview or export relay results in the redesigned workspace. The classic workspace remains available from Settings or with `--classic` for advanced relay workflows. `--demo` continues to open the offline demonstration.
+
 - Remove the separate FlClash Preview module publications, generator, and standalone local PROMAX export. FlClash RS installs the shared Surge modules, and the 217heidai bundle supplies a Mihomo provider for local profile routing.
 
 - Share the Surge module catalog and canonical install links with FlClash RS. The shared PROMAX uses external rulesets to keep its module small. Refresh the Cargo lockfile.

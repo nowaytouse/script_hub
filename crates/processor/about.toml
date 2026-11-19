@@ -5,5 +5,11 @@ ignore-build-dependencies = false
 ignore-dev-dependencies = false
 ignore-transitive-dependencies = false
 
+[ar_archive_writer]
+accepted = ["Apache-2.0 WITH LLVM-exception"]
+
+[cbindgen]
+accepted = ["MPL-2.0"]
+
 [smartstring]
 accepted = ["MPL-2.0"]

@@ -1013,7 +1013,7 @@ fn bundled_vault(executable: &Path) -> Option<PathBuf> {
     }
 }
 
-fn writable_template_destination(path: &Path) -> bool {
+pub(crate) fn writable_template_destination(path: &Path) -> bool {
     std::env::current_exe()
         .ok()
         .is_some_and(|executable| outside_application_assets(path, &executable))
@@ -1204,7 +1204,7 @@ fn application_bundle(path: &Path) -> std::io::Result<bool> {
     Ok(info.is_file() && executables.is_dir())
 }
 
-fn inferred_client(path: &Path) -> Client {
+pub(crate) fn inferred_client(path: &Path) -> Client {
     let filename = path
         .file_name()
         .unwrap_or_default()
@@ -1229,7 +1229,7 @@ fn inferred_client(path: &Path) -> Client {
     }
 }
 
-fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
+pub(crate) fn configuration_export_path(path: &Path, client: Client) -> Option<PathBuf> {
     let default_extension = match client {
         Client::FlClash => Some("yaml"),
         Client::SingBox => Some("json"),
@@ -1258,7 +1258,7 @@ pub(super) fn clear_secret_widget(ctx: &egui::Context, id: &str) {
     ctx.data_mut(|data| data.remove::<egui::text_edit::TextEditState>(egui::Id::unique(id)));
 }
 
-pub(super) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
+pub(crate) fn safe_export_destination(path: &Path, workspace: Option<&Path>) -> bool {
     #[cfg(windows)]
     if path
         .file_name()

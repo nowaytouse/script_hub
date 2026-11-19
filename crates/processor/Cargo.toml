@@ -20,7 +20,22 @@ path = "src/bin/relay.rs"
 required-features = ["gui"]
 
 [features]
-gui = ["dep:eframe", "dep:argon2", "dep:chacha20poly1305", "dep:getrandom", "dep:zeroize", "dep:url", "dep:libc", "dep:serde-saphyr", "dep:hickory-proto", "dep:ipnet", "dep:age", "dep:rhai"]
+gui = [
+    "dep:gpui",
+    "dep:unicode-segmentation",
+    "dep:eframe",
+    "dep:argon2",
+    "dep:chacha20poly1305",
+    "dep:getrandom",
+    "dep:zeroize",
+    "dep:url",
+    "dep:libc",
+    "dep:serde-saphyr",
+    "dep:hickory-proto",
+    "dep:ipnet",
+    "dep:age",
+    "dep:rhai",
+]
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -63,4 +78,6 @@ libc = { version = "0.2", optional = true }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 sys-locale = "0.3.2"
+gpui = { version = "=0.2.2", optional = true, default-features = false, features = ["windows-manifest"] }
+unicode-segmentation = { version = "1.12", optional = true }
 eframe = { version = "0.37", optional = true, default-features = false, features = ["accesskit", "clipboard", "default_fonts", "glow", "system_fonts"] }

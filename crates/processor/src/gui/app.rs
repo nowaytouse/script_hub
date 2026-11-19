@@ -118,7 +118,7 @@ fn load_workspace(
     })
 }
 
-fn template_storage_root(
+pub(crate) fn template_storage_root(
     selected: Option<&Path>,
     remembered: Option<&Path>,
     executable: Option<&Path>,
@@ -1609,7 +1609,7 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     }
 }
 
-fn parse_template_setup(
+pub(crate) fn parse_template_setup(
     args: impl Iterator<Item = String>,
 ) -> Option<(Vec<PathBuf>, PathBuf, PathBuf)> {
     let mut paths: Vec<_> = args.map(PathBuf::from).collect();

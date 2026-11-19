@@ -8,5 +8,5 @@ mod pages;
 mod relay;
 mod relay_schedule;
 mod subscriptions;
-mod templates;
+pub(crate) mod templates;
 mod theme;

@@ -5,7 +5,7 @@ fn main() -> std::process::ExitCode {
     if rust_processor::app::print_version("script-hub-gui") {
         return std::process::ExitCode::SUCCESS;
     }
-    rust_processor::gui::app::run(std::env::args().skip(1))
+    rust_processor::gpui_ui::run(std::env::args().skip(1))
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
