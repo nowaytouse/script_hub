@@ -1189,8 +1189,14 @@ mod tests {
                 "{candidate}"
             );
         }
-        let tracking = SurgeRule::parse("DOMAIN,sstats.adobe.com").unwrap();
-        assert_eq!(safety.decision(&tracking), SafetyDecision::Keep);
+        for candidate in [
+            "DOMAIN,sstats.adobe.com",
+            "DOMAIN,notadobe.io",
+            "DOMAIN,adobe.io.example.test",
+        ] {
+            let rule = SurgeRule::parse(candidate).unwrap();
+            assert_eq!(safety.decision(&rule), SafetyDecision::Keep, "{candidate}");
+        }
         assert_eq!(
             safety.functional_decision(r"^https://cc-api-data\.adobe\.io/ _ reject"),
             SafetyDecision::Quarantine("protected-functional-intersection")
