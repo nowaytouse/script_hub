@@ -7,6 +7,7 @@ on:
     paths:
       - 'crates/processor/**'
       - 'crates/dev/**'
+      - 'crates/grid/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
@@ -23,6 +24,7 @@ on:
     paths:
       - 'crates/processor/**'
       - 'crates/dev/**'
+      - 'crates/grid/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
