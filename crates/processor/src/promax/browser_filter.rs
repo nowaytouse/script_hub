@@ -102,12 +102,6 @@ fn host(text: &str) -> Option<String> {
     .then_some(canonical)
 }
 
-fn suffixes(host: &str) -> impl Iterator<Item = &str> {
-    std::iter::successors(Some(host), |name| {
-        name.split_once('.').map(|(_, tail)| tail)
-    })
-}
-
 pub(super) fn category(source: &str) -> Option<&'static str> {
     match source {
         BRAVE_FIRST_PARTY
@@ -245,13 +239,16 @@ pub(super) fn project(source: &str, text: &str) -> Result<Vec<(usize, String)>, 
         return Err("browser filter has an unclosed conditional".into());
     }
     // Keep the generic Badware projection conservative when a child is excepted.
-    let exception_parents: HashSet<_> = exceptions.iter().flat_map(|name| suffixes(name)).collect();
+    let exception_parents: HashSet<_> = exceptions
+        .iter()
+        .flat_map(|name| crate::dns_name::ancestors(name))
+        .collect();
     Ok(blocks
         .into_iter()
         .filter(|(name, _)| {
-            !suffixes(name).any(|suffix| exceptions.contains(suffix))
+            !crate::dns_name::ancestors(name).any(|suffix| exceptions.contains(suffix))
                 && (reviewed.is_some() || !exception_parents.contains(name.as_str()))
-                && !suffixes(name)
+                && !crate::dns_name::ancestors(name)
                     .any(|suffix| prefixes.iter().any(|prefix| suffix.starts_with(prefix)))
         })
         .map(|(name, line)| (line, format!("DOMAIN,{name}")))

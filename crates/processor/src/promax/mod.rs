@@ -3,6 +3,7 @@ mod browser_filter;
 mod compiler;
 pub(crate) mod feed;
 pub mod functional;
+pub(crate) mod heidai_feed;
 mod inline;
 pub mod rule;
 pub mod safety;

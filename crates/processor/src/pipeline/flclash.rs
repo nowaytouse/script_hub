@@ -1,16 +1,18 @@
 //! Deterministic native modules for the pinned FlClash preview importer.
 //! This is static importer compatibility, not execution of third-party scripts.
 use super::firewall_sync::{FIREWALL_SURGE_FILE, HELPER_SURGE_FILE, PUBLIC_DOH_BOOTSTRAPS};
+use crate::dns_name::is_dotted_ascii_host;
+use crate::filesystem::{read_public, read_public_bounded};
 use crate::promax::rule::SurgeRule;
-use crate::promax::safety::{SafetyDecision, SafetyPolicy};
+use crate::promax::safety::{SafetyDecision, SafetyPolicy, WHITELIST_PATH};
 use percent_encoding::{NON_ALPHANUMERIC, utf8_percent_encode};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-mod heidai;
-pub use heidai::{export_heidai_bundle, export_heidai_full};
+pub(super) mod full_feed;
+pub use super::heidai::{export_heidai_bundle, export_heidai_full};
 
 pub const CONTRACT_REVISION: &str = "5e73f3fb673a0012cc7c7312a52da33b76b78295";
 pub const IMPORTER_BLOB: &str = "8dad1a3c5dd3c13ee476ebc5b9306e43f9ea54e5";
@@ -23,7 +25,6 @@ const MAX_PROMAX_SOURCE_BYTES: usize = 8 * 1024 * 1024;
 // The generator still needs to read and replace the previously published PROMAX.
 const MAX_EXISTING_ARTIFACT_BYTES: usize = 64 * 1024 * 1024;
 const PROMAX_AD_LIST: &str = "rulesets/AdBlock/AdBlock_Local.list";
-const PROMAX_WHITELIST: &str = "rulesets/Sources/adblock_whitelist.list";
 const PROMAX_DOMAIN_LISTS: &[&str] = &[
     PROMAX_AD_LIST,
     "rulesets/AdBlock/AdBlock_Advertising_01.list",
@@ -45,7 +46,7 @@ const PROMAX_HTTP_RECIPES: &str = include_str!("flclash/promax_http.tsv");
 const PROMAX_INLINE_JSON: &str =
     r#"data-type=text data="{}" status-code=200 header="Content-Type:application/json""#;
 const PROMAX_INLINE_EMPTY: &str = r#"data-type=text data="  " status-code=200"#;
-const PROMAX_PROTECTED_SERVICE_HOSTS: &[&str] = &[
+pub(super) const PROMAX_PROTECTED_SERVICE_HOSTS: &[&str] = &[
     "DOMAIN,17u.cn",
     "DOMAIN,www.17u.cn",
     "DOMAIN,wx.17u.cn",
@@ -624,7 +625,7 @@ fn reviewed_promax_http(section: &str, line: &str) -> Option<(String, String)> {
     let (escaped_host, _) = rest.split_once('/')?;
     let host = escaped_host.replace(r"\.", ".");
     if host.replace('.', r"\.") != escaped_host
-        || !is_promax_domain(&host)
+        || !is_dotted_ascii_host(&host)
         || crate::mitm_manager::is_restricted(&host)
     {
         return None;
@@ -1043,32 +1044,6 @@ fn encode(path: &str) -> String {
 fn fingerprint(text: &str) -> String {
     format!("{:x}", md5::compute(text.as_bytes()))
 }
-fn read_public(root: &Path, path: &Path) -> Result<String, String> {
-    read_public_bounded(root, path, 32 * 1024 * 1024)
-}
-
-fn read_public_bounded(root: &Path, path: &Path, limit: usize) -> Result<String, String> {
-    for p in path.ancestors().take_while(|p| *p != root) {
-        let m =
-            fs::symlink_metadata(p).map_err(|e| format!("cannot inspect {}: {e}", p.display()))?;
-        if m.file_type().is_symlink() {
-            return Err(format!("symlink in public input: {}", p.display()));
-        }
-    }
-    let m = fs::metadata(path).map_err(|e| e.to_string())?;
-    if !m.is_file() || m.len() > limit as u64 {
-        return Err(format!(
-            "invalid or oversized public artifact {}",
-            path.display()
-        ));
-    }
-    // Git stores public text with LF even when core.autocrlf produces a CRLF
-    // worktree. Fingerprints, source byte counts and output must use that same
-    // canonical text on every platform; the raw file size was bounded above.
-    let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    Ok(text.replace("\r\n", "\n"))
-}
-
 fn public_adblock_path(url: &str) -> Result<PathBuf, String> {
     let name = [
         "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/",
@@ -1105,20 +1080,6 @@ fn routing_notices() -> String {
         }
     }
     content
-}
-
-fn is_promax_domain(domain: &str) -> bool {
-    domain.len() <= 253
-        && domain.rsplit_once('.').is_some_and(|(_, suffix)| {
-            suffix.bytes().all(|byte| byte.is_ascii_alphabetic()) || suffix.starts_with("xn--")
-        })
-        && domain.split('.').all(|label| {
-            !label.is_empty()
-                && label.len() <= 63
-                && label
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
-        })
 }
 
 fn render_routing(
@@ -1164,7 +1125,7 @@ fn render_routing(
         let parts = fields(row).ok_or("malformed public PROMAX ruleset row")?;
         if let [kind, domain] = parts.as_slice()
             && matches!(kind.as_str(), "DOMAIN" | "DOMAIN-SUFFIX")
-            && is_promax_domain(domain)
+            && is_dotted_ascii_host(domain)
         {
             let domain = domain.to_ascii_lowercase();
             let line = format!(
@@ -1208,7 +1169,7 @@ fn render_routing(
 }
 
 fn plan_promax_routing(root: &Path, source: &str) -> Result<Vec<RoutingReport>, String> {
-    let whitelist = read_public(root, &root.join(PROMAX_WHITELIST))?;
+    let whitelist = read_public(root, &root.join(WHITELIST_PATH))?;
     let safety = SafetyPolicy::from_lines(
         whitelist
             .lines()

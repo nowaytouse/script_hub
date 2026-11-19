@@ -1,12 +1,13 @@
 //! Render the same reviewed 217heidai domain suffixes for each client.
 
-use crate::pipeline::mihomo_generator;
+use crate::pipeline::{mihomo_generator, srs_generator};
+use std::collections::HashMap;
 use std::fmt::Write as _;
 
 const SURGE: &str = "ScriptHub.AdBlock.Heidai.Full.Surge.list";
 const SHADOWROCKET: &str = "ScriptHub.AdBlock.Heidai.Full.Shadowrocket.module";
 const MIHOMO: &str = "ScriptHub.AdBlock.Heidai.Full.Mihomo.yaml";
-const SING_BOX: &str = "ScriptHub.AdBlock.Heidai.Full.SingBox.json";
+pub(super) const SING_BOX: &str = "ScriptHub.AdBlock.Heidai.Full.SingBox.json";
 const ADGUARD_HOME: &str = "ScriptHub.AdBlock.Heidai.Full.AdGuardHome.txt";
 
 pub(super) fn render(domains: &[&str]) -> Result<Vec<(&'static str, String)>, String> {
@@ -35,10 +36,10 @@ pub(super) fn render(domains: &[&str]) -> Result<Vec<(&'static str, String)>, St
     if mihomo.supported != domains.len() || mihomo.omitted != 0 || mihomo.adapted != 0 {
         return Err("Mihomo projection did not preserve all approved domain suffixes".into());
     }
-    let sing_box = serde_json::to_string(&serde_json::json!({
-        "version": 5,
-        "rules": [{ "domain_suffix": domains }]
-    }))
+    let sing_box = srs_generator::render_source(HashMap::from([(
+        "domain_suffix".to_string(),
+        domains.iter().map(|host| (*host).to_string()).collect(),
+    )]))
     .map_err(|error| error.to_string())?;
 
     Ok(vec![

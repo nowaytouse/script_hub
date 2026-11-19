@@ -382,9 +382,7 @@ impl AdBlockManager {
     }
 
     pub fn load_whitelist(&mut self) -> Result<(), String> {
-        let path = self
-            .root_dir
-            .join("rulesets/Sources/adblock_whitelist.list");
+        let path = self.root_dir.join(crate::promax::safety::WHITELIST_PATH);
         let content = fs::read_to_string(&path).map_err(|error| {
             format!(
                 "required whitelist {} is unreadable: {error}",
@@ -1624,12 +1622,10 @@ impl AdBlockManager {
             let Some((suffix, host)) = simple_domain(row) else {
                 return true;
             };
-            let covered = std::iter::successors(Some(host.as_ref()), |candidate| {
-                candidate.split_once('.').map(|(_, parent)| parent)
-            })
-            .skip(usize::from(suffix))
-            .take_while(|candidate| candidate.contains('.'))
-            .any(|candidate| suffixes.contains(candidate));
+            let covered = crate::dns_name::ancestors(host.as_ref())
+                .skip(usize::from(suffix))
+                .take_while(|candidate| candidate.contains('.'))
+                .any(|candidate| suffixes.contains(candidate));
             !covered && seen.insert((suffix, host))
         });
     }

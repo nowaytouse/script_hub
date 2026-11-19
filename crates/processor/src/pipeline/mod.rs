@@ -6,6 +6,7 @@ pub mod flclash;
 pub mod functional_update;
 pub mod general_update;
 pub(crate) mod geo_rulesets;
+pub mod heidai;
 mod helper_hosts;
 pub mod merge_bundles;
 pub mod mihomo_generator;

@@ -1066,16 +1066,7 @@ impl RuleBoundary {
     }
 
     fn suffix_ancestor(&self, host: &str) -> bool {
-        let mut candidate = host;
-        loop {
-            if self.suffixes.contains(candidate) {
-                return true;
-            }
-            let Some((_, parent)) = candidate.split_once('.') else {
-                return false;
-            };
-            candidate = parent;
-        }
+        crate::dns_name::ancestors(host).any(|candidate| self.suffixes.contains(candidate))
     }
 
     fn has_descendant(&self, suffix: &str) -> bool {

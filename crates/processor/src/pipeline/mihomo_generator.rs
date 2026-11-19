@@ -49,22 +49,7 @@ pub fn render_classical(input: &str) -> Result<Option<Rendered>, String> {
         if rule.policy.is_some() {
             return Err(format!("policy in rule on line {}", index + 1));
         }
-        let ip = matches!(
-            rule.kind,
-            RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::IpAsn | RuleKind::GeoIp
-        );
-        let domain = matches!(
-            rule.kind,
-            RuleKind::Domain
-                | RuleKind::DomainSuffix
-                | RuleKind::DomainKeyword
-                | RuleKind::DomainWildcard
-        );
-        if rule.options.iter().any(|option| match option.as_str() {
-            "NO-RESOLVE" => !ip,
-            "EXTENDED-MATCHING" => !domain && rule.kind != RuleKind::UrlRegex,
-            _ => true,
-        }) {
+        if !rule.has_valid_provider_options() {
             return Err(format!("unsupported rule option on line {}", index + 1));
         }
         let common = matches!(

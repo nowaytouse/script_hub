@@ -73,7 +73,7 @@ fn main() {
             eprintln!("--export-heidai-bundle is a separate local export mode");
             std::process::exit(2);
         }
-        match rust_processor::pipeline::flclash::export_heidai_bundle(
+        match rust_processor::pipeline::heidai::export_heidai_bundle(
             &root,
             &directory,
             singbox.as_deref(),
@@ -95,7 +95,7 @@ fn main() {
             eprintln!("--export-heidai-full is a separate local export mode");
             std::process::exit(2);
         }
-        match rust_processor::pipeline::flclash::export_heidai_full(&root, &output) {
+        match rust_processor::pipeline::heidai::export_heidai_full(&root, &output) {
             Ok(report) => println!("{report}"),
             Err(error) => {
                 eprintln!("Unable to export complete 217heidai source: {error}");

@@ -29,6 +29,12 @@ impl SingboxRuleset {
     }
 }
 
+pub(crate) fn render_source(
+    groups: HashMap<String, Vec<String>>,
+) -> Result<String, serde_json::Error> {
+    serde_json::to_string(&SingboxRuleset::new(groups))
+}
+
 fn wildcard_to_regex(value: &str) -> String {
     let escaped = escape(value);
     let r = escaped.replace(r"\*", ".*").replace(r"\?", ".");
@@ -43,22 +49,10 @@ pub(crate) fn is_input_manifest(path: &Path) -> bool {
 
 fn rule_fields(line: &str) -> Option<(&str, Cow<'_, str>)> {
     let rule = crate::promax::rule::SurgeRule::parse(line).ok()?;
-    let kind = rule.kind.as_str();
-    if rule.policy.is_some()
-        || rule.options.iter().any(|option| match option.as_str() {
-            "NO-RESOLVE" => !matches!(kind, "IP-CIDR" | "IP-CIDR6" | "IP-ASN" | "GEOIP"),
-            // These matching enhancements are configured by the referencing
-            // client's DNS/sniffing rules; the base hostname matcher remains.
-            "EXTENDED-MATCHING" => !matches!(
-                kind,
-                "DOMAIN" | "DOMAIN-SUFFIX" | "DOMAIN-KEYWORD" | "DOMAIN-WILDCARD" | "URL-REGEX"
-            ),
-            _ => true,
-        })
-    {
+    if rule.policy.is_some() || !rule.has_valid_provider_options() {
         return None;
     }
-    Some((kind, Cow::Owned(rule.payload)))
+    Some((rule.kind.as_str(), Cow::Owned(rule.payload)))
 }
 
 fn files_equal(left: &Path, right: &Path) -> std::io::Result<bool> {
@@ -231,9 +225,7 @@ fn compile_srs(
         }
     }
 
-    let srs_json = SingboxRuleset::new(final_rules);
-
-    let data = match serde_json::to_string(&srs_json) {
+    let data = match render_source(final_rules) {
         Ok(d) => d,
         Err(_) => return false,
     };

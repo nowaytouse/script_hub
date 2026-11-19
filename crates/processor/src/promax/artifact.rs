@@ -211,16 +211,7 @@ pub(crate) fn validate_coverage_floor_with_rolling(
             .domains
             .iter()
             .filter(|domain| {
-                let mut candidate = domain.as_str();
-                loop {
-                    if published_suffixes.contains(candidate) {
-                        return true;
-                    }
-                    let Some((_, parent)) = candidate.split_once('.') else {
-                        return false;
-                    };
-                    candidate = parent;
-                }
+                crate::dns_name::ancestors(domain).any(|name| published_suffixes.contains(name))
             })
             .count();
         if (covered as u128) < floor {

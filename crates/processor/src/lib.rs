@@ -1,5 +1,6 @@
 //! Shared ruleset processing, artifact publication and desktop update workflows.
 
+mod dns_name;
 mod filesystem;
 mod module_header;
 mod rulesets;

@@ -3,10 +3,52 @@
 use crate::url_rewriter;
 use std::fs;
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Component, Path};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+pub(crate) fn read_public(root: &Path, path: &Path) -> Result<String, String> {
+    read_public_bounded(root, path, 32 * 1024 * 1024)
+}
+
+/// Read a bounded publication input below the repository with canonical LF.
+pub(crate) fn read_public_bounded(
+    root: &Path,
+    path: &Path,
+    limit: usize,
+) -> Result<String, String> {
+    if path.strip_prefix(root).ok().is_none_or(|relative| {
+        relative.as_os_str().is_empty()
+            || relative
+                .components()
+                .any(|component| component == Component::ParentDir)
+    }) {
+        return Err(format!(
+            "public artifact is outside the repository: {}",
+            path.display()
+        ));
+    }
+    for p in path.ancestors().take_while(|p| *p != root) {
+        let m =
+            fs::symlink_metadata(p).map_err(|e| format!("cannot inspect {}: {e}", p.display()))?;
+        if m.file_type().is_symlink() {
+            return Err(format!("symlink in public input: {}", p.display()));
+        }
+    }
+    let m = fs::metadata(path).map_err(|e| e.to_string())?;
+    if !m.is_file() || m.len() > limit as u64 {
+        return Err(format!(
+            "invalid or oversized public artifact {}",
+            path.display()
+        ));
+    }
+    // Git stores public text with LF even when core.autocrlf produces a CRLF
+    // worktree. Fingerprints, source byte counts and output must use that same
+    // canonical text on every platform; the raw file size was bounded above.
+    let text = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    Ok(text.replace("\r\n", "\n"))
+}
 
 pub(crate) fn replace_file(path: &Path, bytes: &[u8]) -> io::Result<()> {
     let parent = path.parent().unwrap_or(Path::new(""));
@@ -120,7 +162,9 @@ pub fn safe_write_file_internal(p: &std::path::Path, content_str: &str, atomic: 
 
 #[cfg(test)]
 mod tests {
-    use super::{normalize_generated_text, replace_file, verify_missing_directory};
+    use super::{
+        normalize_generated_text, read_public_bounded, replace_file, verify_missing_directory,
+    };
     use std::fs;
 
     #[test]
@@ -139,6 +183,29 @@ mod tests {
         fs::write(root.join("missing"), "not a directory").unwrap();
         assert!(verify_missing_directory(&missing).is_err());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn public_reader_keeps_limit_and_rejects_parent_traversal() {
+        let base = std::env::temp_dir().join(format!(
+            "script-hub-public-reader-{}-{}",
+            std::process::id(),
+            super::TEMP_SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        let root = base.join("public");
+        fs::create_dir_all(&root).unwrap();
+        let published = root.join("rules.list");
+        fs::write(&published, "value\r\n").unwrap();
+        let outside = base.join("outside.list");
+        fs::write(&outside, "private").unwrap();
+        assert_eq!(
+            read_public_bounded(&root, &published, 7).unwrap(),
+            "value\n"
+        );
+        assert!(read_public_bounded(&root, &published, 6).is_err());
+        assert!(read_public_bounded(&root, &outside, 32).is_err());
+        assert!(read_public_bounded(&root, &root.join("../outside.list"), 32).is_err());
+        fs::remove_dir_all(base).unwrap();
     }
 
     #[test]

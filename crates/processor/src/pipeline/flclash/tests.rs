@@ -90,7 +90,7 @@ fn temporary() -> PathBuf {
     fs::create_dir_all(path.join("modules/surge/head_expanse")).unwrap();
     fs::create_dir_all(path.join("rulesets/Sources")).unwrap();
     fs::write(
-        path.join(super::PROMAX_WHITELIST),
+        path.join(crate::promax::safety::WHITELIST_PATH),
         "DOMAIN,protected.example.test\n",
     )
     .unwrap();

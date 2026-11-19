@@ -83,6 +83,24 @@ impl RuleKind {
         matches!(self, Self::DomainRegex | Self::UrlRegex)
     }
 
+    fn supports_no_resolve(self) -> bool {
+        matches!(
+            self,
+            Self::IpCidr | Self::IpCidr6 | Self::IpAsn | Self::GeoIp
+        )
+    }
+
+    fn supports_extended_matching(self) -> bool {
+        matches!(
+            self,
+            Self::Domain
+                | Self::DomainSuffix
+                | Self::DomainKeyword
+                | Self::DomainWildcard
+                | Self::UrlRegex
+        )
+    }
+
     pub(crate) fn supports_pre_matching(self) -> bool {
         matches!(
             self,
@@ -172,6 +190,16 @@ impl SurgeRule {
         self.render(true, default_policy, false)
     }
 
+    /// Common input contract for policy-neutral providers. Each target still
+    /// decides which valid matchers and options it can represent.
+    pub(crate) fn has_valid_provider_options(&self) -> bool {
+        self.options.iter().all(|option| match option.as_str() {
+            "NO-RESOLVE" => self.kind.supports_no_resolve(),
+            "EXTENDED-MATCHING" => self.kind.supports_extended_matching(),
+            _ => false,
+        })
+    }
+
     pub(crate) fn ip_rewrite_target(&self) -> Option<String> {
         if !matches!(self.kind, RuleKind::IpCidr | RuleKind::IpCidr6) {
             return None;
@@ -203,10 +231,8 @@ impl SurgeRule {
     }
 
     pub(crate) fn prevent_dns_resolution(&mut self) {
-        if matches!(
-            self.kind,
-            RuleKind::IpCidr | RuleKind::IpCidr6 | RuleKind::GeoIp | RuleKind::IpAsn
-        ) && !self.options.iter().any(|option| option == "NO-RESOLVE")
+        if self.kind.supports_no_resolve()
+            && !self.options.iter().any(|option| option == "NO-RESOLVE")
         {
             self.options.push("NO-RESOLVE".to_string());
         }

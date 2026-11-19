@@ -6,6 +6,8 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::net::IpAddr;
 
+pub(crate) const WHITELIST_PATH: &str = "rulesets/Sources/adblock_whitelist.list";
+
 static MEDIA_MARKER: Lazy<Regex> = Lazy::new(|| {
     Regex::new(
         r"(?i)(png|jpe?g|gif|webp|avif|heic|mp4|m3u8|images?|media|videos?|avatars?|thumbnails?|thumb|[0-9]{2,4}x[0-9]{2,4})",
@@ -857,16 +859,7 @@ impl SafetyPolicy {
     }
 
     fn has_ancestor(&self, host: &str, protected: &HashSet<String>) -> bool {
-        let mut candidate = host;
-        loop {
-            if protected.contains(candidate) {
-                return true;
-            }
-            let Some((_, parent)) = candidate.split_once('.') else {
-                return false;
-            };
-            candidate = parent;
-        }
+        crate::dns_name::ancestors(host).any(|candidate| protected.contains(candidate))
     }
 
     fn has_descendant(&self, host: &str) -> bool {
