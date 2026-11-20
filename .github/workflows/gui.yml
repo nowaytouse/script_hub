@@ -52,7 +52,8 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 35
+    # A cold Windows run links the optimized app after the full test suite.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 55 || 35 }}
     env:
       CARGO_BUILD_JOBS: '1'
     steps:
