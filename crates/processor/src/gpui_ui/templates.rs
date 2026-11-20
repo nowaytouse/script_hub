@@ -177,6 +177,16 @@ impl Templates {
         }
     }
 
+    pub(super) fn detach_workspace(&mut self, cx: &mut Context<Self>) {
+        if self.can_close() {
+            self.next_workspace = Some(None);
+            self.lock(false, cx);
+        } else {
+            // A refresh can fail while an edit or file operation is underway.
+            self.set_workspace(None, cx);
+        }
+    }
+
     fn change_workspace(&mut self, root: Option<PathBuf>, cx: &mut Context<Self>) {
         self.workspace = root;
         self.store = self.workspace.as_deref().and_then(|path| {

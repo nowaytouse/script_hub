@@ -10,6 +10,12 @@ use gpui::{Context, Div, FontWeight, Window, div, prelude::*, px};
 use std::path::PathBuf;
 use std::time::Duration;
 
+fn select_workspace(root: &mut Option<PathBuf>, requested: &mut Option<PathBuf>, path: PathBuf) {
+    // An explicit request replaces the active project even if validation fails.
+    *root = None;
+    *requested = Some(path);
+}
+
 impl Hub {
     pub(super) fn validate_workspace(&mut self, cx: &mut Context<Self>) {
         self.queue_job(JobKind::Validate, cx);
@@ -19,10 +25,37 @@ impl Hub {
         if self.working(cx) || !self.templates.read(cx).can_close() {
             return;
         }
+        self.clear_workspace(path.clone(), cx);
+        self.read_workspace(path, cx);
+    }
+
+    fn clear_workspace(&mut self, requested: PathBuf, cx: &mut Context<Self>) {
+        select_workspace(&mut self.root, &mut self.requested_root, requested);
+        self.surge = Catalog::bundled(ModulePlatform::Surge);
+        self.shadowrocket = Catalog::bundled(ModulePlatform::Shadowrocket);
+        self.repository = None;
+        self.reset_workspace_selections();
+        self.commit.update(cx, super::input::TextInput::clear);
+        self.templates.update(cx, |templates, cx| {
+            templates.detach_workspace(cx);
+        });
+        self.sources
+            .update(cx, |sources, cx| sources.set_workspace(None, cx));
+    }
+
+    fn reset_workspace_selections(&mut self) {
+        self.checked_modules.clear();
+        self.checked_rules.clear();
+        self.selected_changes.clear();
+        self.inspect_module = None;
+        self.active_category = None;
+    }
+
+    fn read_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
         self.loading = true;
-        self.requested_root = Some(path.clone());
         self.pending_job = None;
         self.message = None;
+        let requested = path.clone();
         let task = cx.background_executor().spawn(async move {
             let root = validate_root(&path)?;
             let surge = Catalog::load_platform(&root, ModulePlatform::Surge);
@@ -52,14 +85,15 @@ impl Hub {
                             Catalog::bundled(ModulePlatform::Shadowrocket)
                         });
                         hub.repository = repository.map_err(|error| warnings.push(error)).ok();
-                        hub.checked_modules.clear();
-                        hub.checked_rules.clear();
-                        hub.selected_changes.clear();
-                        hub.inspect_module = None;
-                        hub.active_category = None;
+                        hub.reset_workspace_selections();
                         hub.message = (!warnings.is_empty()).then(|| warnings.join("\n"));
                     }
-                    Err(error) => hub.message = Some(error),
+                    Err(error) => {
+                        if hub.root.is_some() {
+                            hub.clear_workspace(requested, cx);
+                        }
+                        hub.message = Some(error);
+                    }
                 }
                 cx.notify();
             });
@@ -69,10 +103,13 @@ impl Hub {
     }
 
     pub(super) fn reload_repository(&mut self, cx: &mut Context<Self>) {
+        if self.working(cx) || !self.templates.read(cx).can_close() {
+            return;
+        }
         let Some(root) = self.root.clone() else {
             return;
         };
-        self.load_workspace(root, cx);
+        self.read_workspace(root, cx);
     }
 
     fn job_label(&self, job: JobKind) -> &'static str {
@@ -147,7 +184,7 @@ impl Hub {
                     && self.saved_preferences.diagnostic_logs,
             });
         let options = JobOptions {
-            root,
+            root: root.clone(),
             singbox: (!engine.is_empty()).then(|| PathBuf::from(engine)),
             commit_message: (kind == JobKind::GitCommit).then_some(message),
             paths: if kind == JobKind::GitCommit {
@@ -182,7 +219,11 @@ impl Hub {
                                             history.refresh(cx);
                                         }
                                     });
-                                    if !matches!(kind, JobKind::Validate | JobKind::RefreshCatalog)
+                                    if hub.root.as_ref() == Some(&root)
+                                        && !matches!(
+                                            kind,
+                                            JobKind::Validate | JobKind::RefreshCatalog
+                                        )
                                     {
                                         hub.reload_repository(cx);
                                     }
@@ -204,6 +245,16 @@ impl Hub {
     }
 
     fn choose_workspace_card(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
+        if self.loading {
+            return panel(palette)
+                .p_5()
+                .text_color(palette.muted)
+                .child(self.local(
+                    "Reading workspace…",
+                    "正在读取工作区…",
+                    "ワークスペースを読み込み中…",
+                ));
+        }
         panel(palette).p_5().gap_3()
             .child(self.local("Choose the Script Hub repository to manage local files and run tasks.", "选择 Script Hub 仓库，管理本地文件并运行任务。", "ローカルファイルを管理してタスクを実行するには、Script Hub のリポジトリを選択します。"))
             .child(div().flex().child(button("workspace-start", self.local("Open workspace", "打开工作区", "ワークスペースを開く"), palette, true)
@@ -325,12 +376,70 @@ impl Hub {
             panel(palette)
                 .child(
                     div()
+                        .flex()
+                        .flex_wrap()
+                        .items_center()
+                        .justify_between()
+                        .gap_2()
                         .px_4()
                         .py_3()
                         .border_b_1()
                         .border_color(palette.border)
                         .font_weight(FontWeight::MEDIUM)
-                        .child(self.local("Changed files", "变更文件", "変更ファイル")),
+                        .child(self.local("Changed files", "变更文件", "変更ファイル"))
+                        .when(!repo.changes.is_empty(), |header| {
+                            header.child(
+                                div()
+                                    .flex()
+                                    .flex_wrap()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(div().text_sm().text_color(palette.muted).child(
+                                        format!(
+                                            "{} {}/{}",
+                                            self.local("Selected", "已选择", "選択済み"),
+                                            self.selected_changes.len(),
+                                            repo.changes.len(),
+                                        ),
+                                    ))
+                                    .child(
+                                        button(
+                                            "repo-select-all",
+                                            self.local("Select all", "全选", "すべて選択"),
+                                            palette,
+                                            false,
+                                        )
+                                        .on_click(
+                                            cx.listener(|hub, _, _, cx| {
+                                                if !hub.project_action_blocked(cx)
+                                                    && let Some(repo) = &hub.repository
+                                                {
+                                                    hub.selected_changes = repo
+                                                        .changes
+                                                        .iter()
+                                                        .map(|change| change.path.clone())
+                                                        .collect();
+                                                    cx.notify();
+                                                }
+                                            }),
+                                        ),
+                                    )
+                                    .child(
+                                        button(
+                                            "repo-clear-selection",
+                                            self.local("Clear selection", "清除选择", "選択を解除"),
+                                            palette,
+                                            false,
+                                        )
+                                        .on_click(
+                                            cx.listener(|hub, _, _, cx| {
+                                                hub.selected_changes.clear();
+                                                cx.notify();
+                                            }),
+                                        ),
+                                    ),
+                            )
+                        }),
                 )
                 .when(repo.changes.is_empty(), |node| {
                     node.child(div().p_4().text_color(palette.muted).child(self.local(
@@ -1196,5 +1305,24 @@ impl Hub {
                     .on_click(cx.listener(|hub, _, _, cx| hub.open_demo(cx))),
                 ),
             )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn failed_explicit_selection_leaves_no_active_project() {
+        let previous = PathBuf::from("previous-workspace");
+        let mut root = Some(previous.clone());
+        let mut requested = Some(previous);
+        let invalid = PathBuf::new();
+
+        select_workspace(&mut root, &mut requested, invalid.clone());
+
+        assert!(validate_root(&invalid).is_err());
+        assert_eq!(root, None);
+        assert_eq!(requested, Some(invalid));
     }
 }

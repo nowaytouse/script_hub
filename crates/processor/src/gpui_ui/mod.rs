@@ -465,7 +465,7 @@ impl Hub {
             .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
         if page == Page::Templates {
             self.templates.update(cx, |state, cx| state.visit(cx));
-            if self.root.is_none() && !self.loading {
+            if self.root.is_none() && self.requested_root.is_none() && !self.loading {
                 self.find_template_store(cx);
             }
         }
@@ -479,12 +479,10 @@ impl Hub {
     }
 
     fn find_template_store(&self, cx: &mut Context<Self>) {
-        let requested = self.requested_root.clone();
-        let selected = requested.clone();
         let remembered = PathBuf::from(self.saved_preferences.root.as_str());
         let task = cx.background_executor().spawn(async move {
             crate::desktop::template_paths::template_storage_root(
-                selected.as_deref(),
+                None,
                 (!remembered.as_os_str().is_empty()).then_some(remembered.as_path()),
                 std::env::current_exe().ok().as_deref(),
             )
@@ -492,7 +490,7 @@ impl Hub {
         cx.spawn(async move |this, cx| {
             let root = task.await;
             let _ = this.update(cx, |hub, cx| {
-                if hub.root.is_none() && hub.requested_root == requested && !hub.loading {
+                if hub.root.is_none() && hub.requested_root.is_none() && !hub.loading {
                     hub.templates
                         .update(cx, |state, cx| state.set_workspace(root, cx));
                 }
