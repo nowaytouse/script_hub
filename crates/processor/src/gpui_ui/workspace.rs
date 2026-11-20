@@ -1,15 +1,20 @@
 use super::{Hub, Page, Palette, UiStyle, button, heading, panel};
-use crate::gui::i18n::Text;
+use crate::desktop::i18n::Text;
+use crate::desktop::tasks::{is_problem, stage_text};
 use crate::runtime::catalog::{Catalog, ModulePlatform};
 use crate::runtime::history::HistoryOptions;
 use crate::runtime::job::{Job, JobKind, JobOptions, JobOutcome, validate_root};
 use crate::runtime::repository;
 use crate::runtime::settings::{self, Accent, Density, Language, Theme, WindowSize};
-use gpui::{Context, Div, FontWeight, div, prelude::*, px};
+use gpui::{Context, Div, FontWeight, Window, div, prelude::*, px};
 use std::path::PathBuf;
 use std::time::Duration;
 
 impl Hub {
+    pub(super) fn validate_workspace(&mut self, cx: &mut Context<Self>) {
+        self.queue_job(JobKind::Validate, cx);
+    }
+
     pub(super) fn load_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
         if self.working(cx) || !self.templates.read(cx).can_close() {
             return;
@@ -135,7 +140,7 @@ impl Hub {
         let history = self
             .preference_path
             .as_ref()
-            .filter(|_| self.saved_preferences.record_history)
+            .filter(|_| self.preferences_ready && self.saved_preferences.record_history)
             .map(|path| HistoryOptions {
                 path: path.with_file_name("history.sqlite3"),
                 keep_logs: self.saved_preferences.developer_mode
@@ -156,6 +161,8 @@ impl Hub {
         match Job::start(kind, options) {
             Ok(job) => {
                 self.job = Some(job);
+                self.log_query.update(cx, super::input::TextInput::clear);
+                self.problems_only = false;
                 self.history
                     .update(cx, |history, cx| history.task_running(true, cx));
                 self.navigate(Page::Tasks, cx);
@@ -492,6 +499,18 @@ impl Hub {
                             cx.notify();
                         }))
                     })))
+                    .child(div().text_sm().text_color(palette.muted).child(self.tr(
+                        match self.job_kind {
+                            JobKind::Validate => Text::ValidateDescription,
+                            JobKind::RefreshCatalog => Text::CatalogDescription,
+                            JobKind::Update => Text::UpdateDescription,
+                            JobKind::QuickUpdate => Text::QuickDescription,
+                            JobKind::GamingOnly => Text::GamingDescription,
+                            JobKind::AdBlockOnly => Text::AdBlockDescription,
+                            JobKind::SrsOnly => Text::SrsDescription,
+                            _ => Text::HelpGit,
+                        },
+                    )))
                     .child(
                         div().flex().child(
                             button(
@@ -533,12 +552,14 @@ impl Hub {
             let elapsed = view.elapsed.as_secs();
             let progress = view
                 .progress
-                .and_then(|event| event.completed.zip(event.total));
-            let status = if let Some((done, total)) = progress {
-                format!("{} · {done} / {total}", view.status)
-            } else {
-                view.status
-            };
+                .and_then(|event| event.completed.zip(event.total))
+                .filter(|&(_, total)| total > 0);
+            let stage = view.running.then(|| {
+                view.progress.map_or(self.tr(Text::StagePrepare), |event| {
+                    self.tr(stage_text(event.stage))
+                })
+            });
+            let search = self.log_query.read(cx).value().trim().to_lowercase();
             page = page.child(
                 panel(palette)
                     .p_5()
@@ -560,7 +581,35 @@ impl Hub {
                                 elapsed % 60
                             ))),
                     )
-                    .child(div().text_sm().text_color(palette.muted).child(status))
+                    .child(div().text_sm().text_color(palette.muted).child(view.status))
+                    .when_some(stage, |card, stage| {
+                        card.child(div().text_sm().font_weight(FontWeight::MEDIUM).child(stage))
+                    })
+                    .when_some(progress, |card, (done, total)| {
+                        card.child(
+                            div()
+                                .text_xs()
+                                .text_color(palette.muted)
+                                .child(format!("{done} / {total}")),
+                        )
+                        .child(
+                            div().h(px(5.)).rounded_full().bg(palette.subtle).child(
+                                div()
+                                    .h_full()
+                                    .w(gpui::relative(done.min(total) as f32 / total as f32))
+                                    .rounded_full()
+                                    .bg(palette.accent),
+                            ),
+                        )
+                    })
+                    .when_some(view.exit_code, |card, code| {
+                        card.child(
+                            div()
+                                .text_sm()
+                                .text_color(palette.muted)
+                                .child(format!("{} {code}", self.tr(Text::ExitCode))),
+                        )
+                    })
                     .child(
                         div()
                             .flex()
@@ -598,10 +647,47 @@ impl Hub {
                                             );
                                         }
                                     })),
+                            )
+                            .child(
+                                button("clear-job-logs", self.tr(Text::ClearLogs), palette, false)
+                                    .on_click(cx.listener(|hub, _, _, cx| {
+                                        if let Some(job) = &hub.job {
+                                            job.clear_logs();
+                                            cx.notify();
+                                        }
+                                    })),
                             ),
                     )
                     .when(self.show_logs, |node| {
                         node.child(
+                            div()
+                                .text_xs()
+                                .text_color(palette.muted)
+                                .child(self.tr(Text::ShareLogsWarning)),
+                        )
+                        .child(
+                            div()
+                                .flex()
+                                .flex_wrap()
+                                .items_center()
+                                .gap_2()
+                                .child(div().flex_1().min_w(px(180.)).child(self.log_query.clone()))
+                                .child(
+                                    button(
+                                        "task-problems-only",
+                                        self.tr(Text::ProblemsOnly),
+                                        palette,
+                                        self.problems_only,
+                                    )
+                                    .on_click(cx.listener(
+                                        |hub, _, _, cx| {
+                                            hub.problems_only = !hub.problems_only;
+                                            cx.notify();
+                                        },
+                                    )),
+                                ),
+                        )
+                        .child(
                             div()
                                 .id("task-logs")
                                 .overflow_y_scroll()
@@ -611,16 +697,30 @@ impl Hub {
                                 .bg(palette.subtle)
                                 .text_xs()
                                 .children(
-                                    view.logs.into_iter().map(|line| div().py_1().child(line)),
+                                    view.logs
+                                        .into_iter()
+                                        .filter(|line| {
+                                            (!self.problems_only || is_problem(line))
+                                                && (search.is_empty()
+                                                    || line.to_lowercase().contains(&search))
+                                        })
+                                        .map(|line| div().py_1().child(line)),
                                 ),
                         )
                     }),
+            );
+        } else {
+            page = page.child(
+                panel(palette)
+                    .p_5()
+                    .text_color(palette.muted)
+                    .child(self.tr(Text::NoTask)),
             );
         }
         page
     }
 
-    fn save_preferences(&mut self, cx: &mut Context<Self>) {
+    fn save_preferences(&mut self, cx: &mut Context<Self>) -> bool {
         let Some(path) = &self.preference_path else {
             self.message = Some(
                 self.local(
@@ -631,23 +731,101 @@ impl Hub {
                 .into(),
             );
             cx.notify();
-            return;
+            return false;
         };
         let mut preferences = self.preferences.clone();
         preferences.singbox = self.singbox.read(cx).value().trim().into();
         if let Some(root) = &self.root {
             preferences.root = root.to_string_lossy().into();
         }
-        self.message = Some(match settings::save(path, &preferences) {
+        let saved = match settings::save(path, &preferences) {
             Ok(()) => {
                 self.preferences = preferences;
                 self.saved_preferences = self.preferences.clone();
-                self.local("Settings saved", "设置已保存", "設定を保存しました")
-                    .into()
+                self.preferences_ready = true;
+                self.message = Some(self.tr(Text::SettingsSaved).into());
+                true
             }
-            Err(error) => error,
-        });
+            Err(error) => {
+                self.message = Some(error);
+                false
+            }
+        };
         cx.notify();
+        saved
+    }
+
+    fn apply_settings_draft(&mut self, preferences: settings::Preferences, cx: &mut Context<Self>) {
+        self.singbox.update(cx, |field, cx| {
+            field.set_value(preferences.singbox.clone(), cx)
+        });
+        self.preferences = preferences;
+        self.message = None;
+        self.reset_language(cx);
+        cx.set_global(UiStyle::from(&self.preferences));
+        cx.refresh_windows();
+    }
+
+    fn finish_settings_quit(&mut self, save: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if self.close_blocked(cx) {
+            self.can_close(cx);
+        } else if !save || self.save_preferences(cx) {
+            self.confirm_quit = false;
+            window.remove_window();
+        }
+    }
+
+    fn settings_quit_card(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
+        panel(palette)
+            .p_4()
+            .gap_3()
+            .child(
+                div()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .child(self.tr(Text::UnsavedChanges)),
+            )
+            .child(
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .gap_2()
+                    .when(self.preference_path.is_some(), |row| {
+                        row.child(
+                            button(
+                                "save-settings-quit",
+                                self.tr(Text::SettingsSaveAndQuit),
+                                palette,
+                                true,
+                            )
+                            .on_click(cx.listener(
+                                |hub, _, window, cx| hub.finish_settings_quit(true, window, cx),
+                            )),
+                        )
+                    })
+                    .child(
+                        button(
+                            "discard-settings-quit",
+                            self.tr(Text::SettingsDiscardAndQuit),
+                            palette,
+                            false,
+                        )
+                        .on_click(cx.listener(|hub, _, window, cx| {
+                            hub.finish_settings_quit(false, window, cx)
+                        })),
+                    )
+                    .child(
+                        button(
+                            "cancel-settings-quit",
+                            self.tr(Text::Cancel),
+                            palette,
+                            false,
+                        )
+                        .on_click(cx.listener(|hub, _, _, cx| {
+                            hub.confirm_quit = false;
+                            cx.notify();
+                        })),
+                    ),
+            )
     }
 
     pub(super) fn settings_page(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
@@ -706,6 +884,16 @@ impl Hub {
                 ),
                 palette,
             ))
+            .when(self.confirm_quit, |page| {
+                page.child(self.settings_quit_card(palette, cx))
+            })
+            .when(!self.preferences_ready, |page| {
+                page.child(
+                    panel(palette)
+                        .p_4()
+                        .child(self.tr(Text::HistorySettingsUnavailable)),
+                )
+            })
             .child(
                 panel(palette)
                     .p_5()
@@ -914,6 +1102,7 @@ impl Hub {
                     .child(
                         div()
                             .flex()
+                            .flex_wrap()
                             .gap_2()
                             .child(
                                 button(
@@ -922,7 +1111,11 @@ impl Hub {
                                     palette,
                                     true,
                                 )
-                                .on_click(cx.listener(|hub, _, _, cx| hub.save_preferences(cx))),
+                                .on_click(cx.listener(
+                                    |hub, _, _, cx| {
+                                        hub.save_preferences(cx);
+                                    },
+                                )),
                             )
                             .child(
                                 button(
@@ -933,15 +1126,41 @@ impl Hub {
                                 )
                                 .on_click(cx.listener(
                                     |hub, _, _, cx| {
-                                        hub.preferences = hub.saved_preferences.clone();
-                                        hub.message = None;
-                                        hub.singbox.update(cx, |field, cx| {
-                                            field.set_value(hub.preferences.singbox.clone(), cx)
-                                        });
-                                        hub.reset_language(cx);
-                                        cx.set_global(UiStyle::from(&hub.preferences));
-                                        cx.refresh_windows();
-                                        cx.notify();
+                                        hub.apply_settings_draft(hub.saved_preferences.clone(), cx);
+                                    },
+                                )),
+                            )
+                            .child(
+                                button(
+                                    "reset-settings",
+                                    self.tr(Text::ResetSettings),
+                                    palette,
+                                    false,
+                                )
+                                .on_click(cx.listener(
+                                    |hub, _, _, cx| {
+                                        hub.apply_settings_draft(
+                                            settings::Preferences {
+                                                root: hub.preferences.root.clone(),
+                                                ..Default::default()
+                                            },
+                                            cx,
+                                        );
+                                    },
+                                )),
+                            )
+                            .child(
+                                button(
+                                    "quit-settings",
+                                    self.tr(Text::SettingsQuit),
+                                    palette,
+                                    false,
+                                )
+                                .on_click(cx.listener(
+                                    |hub, _, window, cx| {
+                                        if hub.can_close(cx) {
+                                            window.remove_window();
+                                        }
                                     },
                                 )),
                             ),
@@ -967,32 +1186,15 @@ impl Hub {
                     .child(self.tr(Text::RelayDemoOffline)),
             )
             .child(
-                div()
-                    .flex()
-                    .flex_wrap()
-                    .gap_2()
-                    .child(
-                        button(
-                            "open-demo",
-                            self.tr(Text::RelayDemoOpenWindow),
-                            palette,
-                            true,
-                        )
-                        .on_click(cx.listener(|hub, _, _, cx| hub.open_demo(cx))),
+                div().flex().flex_wrap().gap_2().child(
+                    button(
+                        "open-demo",
+                        self.tr(Text::RelayDemoOpenWindow),
+                        palette,
+                        true,
                     )
-                    .child(
-                        button(
-                            "open-classic",
-                            self.local(
-                                "Switch to classic workspace",
-                                "切换到旧版工作区",
-                                "従来のワークスペースに切り替え",
-                            ),
-                            palette,
-                            false,
-                        )
-                        .on_click(cx.listener(|hub, _, _, cx| hub.open_classic(cx))),
-                    ),
+                    .on_click(cx.listener(|hub, _, _, cx| hub.open_demo(cx))),
+                ),
             )
     }
 }

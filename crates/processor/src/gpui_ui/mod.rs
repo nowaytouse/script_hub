@@ -4,21 +4,23 @@ mod catalog;
 mod demo;
 mod history;
 mod input;
+mod navigation;
 mod sources;
 mod subscriptions;
 mod support;
 mod templates;
 mod workspace;
 
-use crate::gui::i18n::{Text, text};
+use crate::desktop::i18n::{Text, text};
 use crate::runtime::catalog::{Catalog, ModulePlatform};
 use crate::runtime::job::{Job, JobKind};
 use crate::runtime::repository::RepositoryStatus;
 use crate::runtime::settings::{self, Accent, Language, Preferences, Theme};
 use gpui::{
-    App, Application, Bounds, ClipboardItem, Context, Div, ElementId, Entity, FontWeight, Global,
-    Image, ImageFormat, PathPromptOptions, Rgba, SharedString, Stateful, Window, WindowAppearance,
-    WindowBounds, WindowHandle, WindowOptions, div, img, prelude::*, px, rgb, size,
+    App, Application, Bounds, ClipboardItem, Context, Div, ElementId, Entity, FocusHandle,
+    FontWeight, Global, Image, ImageFormat, PathPromptOptions, Rgba, SharedString, Stateful,
+    Window, WindowAppearance, WindowBounds, WindowHandle, WindowOptions, div, img, prelude::*, px,
+    rgb, size,
 };
 use history::TaskHistory;
 use input::TextInput;
@@ -26,14 +28,23 @@ use sources::{SourceEditor, SourcesChanged};
 use std::cell::Cell;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
-use std::process::{Command, ExitCode};
+use std::process::ExitCode;
 use std::rc::Rc;
 use std::sync::Arc;
 use subscriptions::Subscriptions;
 use support::Support;
 use templates::Templates;
 
-gpui::actions!(script_hub, [NextControl, PreviousControl]);
+gpui::actions!(
+    script_hub,
+    [
+        NextControl,
+        PreviousControl,
+        TogglePageSearch,
+        ClosePageSearch,
+        OpenPageSearchResult
+    ]
+);
 
 #[derive(Clone, Copy)]
 struct UiStyle {
@@ -197,6 +208,7 @@ pub(super) fn localized(
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Page {
+    Overview,
     Modules,
     Rules,
     Templates,
@@ -213,6 +225,7 @@ enum Page {
 impl Page {
     fn label(self, language: Language) -> &'static str {
         match self {
+            Self::Overview => text(language, Text::Overview),
             Self::Modules => text(language, Text::Modules),
             Self::Rules => localized(language, "Rule sets", "规则集", "ルールセット"),
             Self::Templates => text(language, Text::Templates),
@@ -231,6 +244,7 @@ impl Page {
 
     fn icon(self) -> &'static str {
         match self {
+            Self::Overview => "⌂",
             Self::Modules => "◫",
             Self::Rules => "≡",
             Self::Templates => "▤",
@@ -248,6 +262,7 @@ impl Page {
 
 struct Hub {
     page: Page,
+    main_focus: FocusHandle,
     root: Option<PathBuf>,
     requested_root: Option<PathBuf>,
     repository: Option<RepositoryStatus>,
@@ -255,10 +270,13 @@ struct Hub {
     preferences: Preferences,
     saved_preferences: Preferences,
     preference_path: Option<PathBuf>,
+    preferences_ready: bool,
     module_platform: ModulePlatform,
     surge: Catalog,
     shadowrocket: Catalog,
     search: Entity<TextInput>,
+    page_query: Entity<TextInput>,
+    page_search_open: bool,
     rule_search: Entity<TextInput>,
     rule_policy: Entity<TextInput>,
     singbox: Entity<TextInput>,
@@ -278,6 +296,9 @@ struct Hub {
     job_kind: JobKind,
     pending_job: Option<JobKind>,
     show_logs: bool,
+    log_query: Entity<TextInput>,
+    problems_only: bool,
+    confirm_quit: bool,
     commit: Entity<TextInput>,
     selected_changes: BTreeSet<String>,
 }
@@ -286,14 +307,23 @@ impl Hub {
     fn new(
         preferences: Preferences,
         preference_path: Option<PathBuf>,
+        preferences_ready: bool,
         message: Option<String>,
         cx: &mut Context<Self>,
     ) -> Self {
         let language = preferences.language;
         let search = cx.new(|cx| TextInput::new(text(language, Text::SearchModules), false, cx));
+        let page_query = cx.new(|cx| {
+            TextInput::new(
+                localized(language, "Search pages", "搜索页面", "ページを検索"),
+                false,
+                cx,
+            )
+        });
         let rule_search = cx.new(|cx| TextInput::new(text(language, Text::SearchRules), false, cx));
         let rule_policy =
             cx.new(|cx| TextInput::new(text(language, Text::RuleSetPolicyHint), false, cx));
+        let log_query = cx.new(|cx| TextInput::new(text(language, Text::SearchLogs), false, cx));
         let singbox = cx.new(|cx| {
             let mut input = TextInput::new("sing-box", false, cx);
             input.set_value(preferences.singbox.clone(), cx);
@@ -306,7 +336,15 @@ impl Hub {
                 cx,
             )
         });
-        for input in [&search, &rule_search, &rule_policy, &singbox, &commit] {
+        for input in [
+            &search,
+            &page_query,
+            &rule_search,
+            &rule_policy,
+            &singbox,
+            &commit,
+            &log_query,
+        ] {
             cx.observe(input, |_, _, cx| cx.notify()).detach();
         }
         let templates = cx.new(Templates::new);
@@ -332,6 +370,7 @@ impl Hub {
         subscriptions.update(cx, |state, cx| state.set_language(language, cx));
         Self {
             page: Page::Modules,
+            main_focus: cx.focus_handle().tab_stop(false),
             root: None,
             requested_root: None,
             repository: None,
@@ -339,10 +378,13 @@ impl Hub {
             saved_preferences: preferences.clone(),
             preferences,
             preference_path,
+            preferences_ready,
             module_platform: ModulePlatform::Surge,
             surge: Catalog::bundled(ModulePlatform::Surge),
             shadowrocket: Catalog::bundled(ModulePlatform::Shadowrocket),
             search,
+            page_query,
+            page_search_open: false,
             rule_search,
             rule_policy,
             singbox,
@@ -366,6 +408,9 @@ impl Hub {
             job_kind: JobKind::Validate,
             pending_job: None,
             show_logs: true,
+            log_query,
+            problems_only: false,
+            confirm_quit: false,
             selected_changes: BTreeSet::new(),
         }
     }
@@ -382,8 +427,13 @@ impl Hub {
         let language = self.preferences.language;
         let fields = [
             (&self.search, self.tr(Text::SearchModules)),
+            (
+                &self.page_query,
+                self.local("Search pages", "搜索页面", "ページを検索"),
+            ),
             (&self.rule_search, self.tr(Text::SearchRules)),
             (&self.rule_policy, self.tr(Text::RuleSetPolicyHint)),
+            (&self.log_query, self.tr(Text::SearchLogs)),
             (
                 &self.commit,
                 self.local("Commit message", "提交说明", "コミットメッセージ"),
@@ -406,13 +456,18 @@ impl Hub {
     }
 
     fn navigate(&mut self, page: Page, cx: &mut Context<Self>) {
+        self.close_page_search(cx);
         self.page = page;
+        self.confirm_quit = false;
         self.pending_job = None;
         self.message = None;
         self.subscriptions
             .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
-        if page == Page::Templates && self.root.is_none() && !self.loading {
-            self.find_template_store(cx);
+        if page == Page::Templates {
+            self.templates.update(cx, |state, cx| state.visit(cx));
+            if self.root.is_none() && !self.loading {
+                self.find_template_store(cx);
+            }
         }
         if page == Page::History {
             self.history.update(cx, |view, cx| view.refresh(cx));
@@ -428,7 +483,7 @@ impl Hub {
         let selected = requested.clone();
         let remembered = PathBuf::from(self.saved_preferences.root.as_str());
         let task = cx.background_executor().spawn(async move {
-            crate::gui::app::template_storage_root(
+            crate::desktop::template_paths::template_storage_root(
                 selected.as_deref(),
                 (!remembered.as_os_str().is_empty()).then_some(remembered.as_path()),
                 std::env::current_exe().ok().as_deref(),
@@ -481,11 +536,19 @@ impl Hub {
         true
     }
 
-    fn can_close(&mut self, cx: &mut Context<Self>) -> bool {
-        if self.project_busy(cx)
+    fn close_blocked(&self, cx: &App) -> bool {
+        self.project_busy(cx)
             || !self.templates.read(cx).can_close()
             || !self.subscriptions.read(cx).can_close(cx)
-        {
+    }
+
+    fn settings_dirty(&self, cx: &App) -> bool {
+        self.preferences != self.saved_preferences
+            || self.singbox.read(cx).value().trim() != self.saved_preferences.singbox
+    }
+
+    fn can_close(&mut self, cx: &mut Context<Self>) -> bool {
+        if self.close_blocked(cx) {
             self.message = Some(
                 self.local(
                     "Finish the current operation or review your changes before closing.",
@@ -497,18 +560,16 @@ impl Hub {
             cx.notify();
             return false;
         }
-        let dirty = self.preferences != self.saved_preferences
-            || self.singbox.read(cx).value().trim() != self.saved_preferences.singbox;
-        if dirty {
+        if self.subscriptions.read(cx).has_unsaved_session() {
+            self.navigate(Page::Subscriptions, cx);
+            self.subscriptions
+                .update(cx, |view, cx| view.confirm_end_session(cx));
+            return false;
+        }
+        if self.settings_dirty(cx) {
             self.navigate(Page::Settings, cx);
-            self.message = Some(
-                self.local(
-                    "Save or revert your settings before closing.",
-                    "请保存或撤销设置后再关闭。",
-                    "閉じる前に設定を保存するか取り消してください。",
-                )
-                .into(),
-            );
+            self.confirm_quit = true;
+            cx.notify();
             return false;
         }
         true
@@ -528,27 +589,6 @@ impl Hub {
             .into(),
         );
         cx.notify();
-    }
-
-    fn open_classic(&mut self, cx: &mut Context<Self>) {
-        if !self.can_close(cx) {
-            return;
-        }
-        let started = std::env::current_exe().and_then(|executable| {
-            let mut command = Command::new(executable);
-            command.arg("--classic");
-            if let Some(root) = &self.root {
-                command.arg("--root").arg(root);
-            }
-            command.spawn()
-        });
-        match started {
-            Ok(_) => cx.quit(),
-            Err(error) => {
-                self.message = Some(error.to_string());
-                cx.notify();
-            }
-        }
     }
 
     fn open_demo(&mut self, cx: &mut Context<Self>) {
@@ -649,6 +689,7 @@ impl Hub {
                     )
                     .children(
                         [
+                            Page::Overview,
                             Page::Modules,
                             Page::Rules,
                             Page::Templates,
@@ -749,13 +790,30 @@ impl Hub {
                     ),
             )
             .child(
-                button(
-                    "pick-workspace",
-                    self.local("Open workspace", "打开工作区", "ワークスペースを開く"),
-                    palette,
-                    false,
-                )
-                .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
+                div()
+                    .flex()
+                    .items_center()
+                    .gap_2()
+                    .child(
+                        button(
+                            "search-pages",
+                            self.local("Search pages", "搜索页面", "ページを検索"),
+                            palette,
+                            self.page_search_open,
+                        )
+                        .on_click(
+                            cx.listener(|hub, _, window, cx| hub.toggle_page_search(window, cx)),
+                        ),
+                    )
+                    .child(
+                        button(
+                            "pick-workspace",
+                            self.local("Open workspace", "打开工作区", "ワークスペースを開く"),
+                            palette,
+                            false,
+                        )
+                        .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
+                    ),
             )
     }
 }
@@ -768,6 +826,11 @@ impl Render for Hub {
         let source_busy = self.workspace_busy() || self.subscriptions.read(cx).schedule_active();
         self.sources
             .update(cx, |view, cx| view.set_workspace_busy(source_busy, cx));
+        let saved = self.preferences_ready.then_some(&self.saved_preferences);
+        let checker_selected = self.subscriptions.read(cx).checker_selected();
+        self.support.update(cx, |support, cx| {
+            support.set_diagnostics(saved, checker_selected, cx)
+        });
         let scale = f32::from(self.preferences.scale_percent) / 100.;
         window.set_rem_size(px(16. * scale));
         let palette = Palette::for_window(window, cx);
@@ -777,6 +840,7 @@ impl Render for Hub {
             32.
         };
         let content = match self.page {
+            Page::Overview => self.overview_page(palette, cx).into_any_element(),
             Page::Modules => self.modules_page(window, palette, cx).into_any_element(),
             Page::Rules => self.rules_page(palette, cx).into_any_element(),
             Page::Templates => self.templates.clone().into_any_element(),
@@ -790,7 +854,12 @@ impl Render for Hub {
         };
         div()
             .id("script-hub")
+            .track_focus(&self.main_focus)
+            .key_context(navigation::HUB_CONTEXT)
             .tab_group()
+            .on_action(cx.listener(|hub, _: &TogglePageSearch, window, cx| {
+                hub.toggle_page_search(window, cx)
+            }))
             .on_action(|_: &NextControl, window, _| window.focus_next())
             .on_action(|_: &PreviousControl, window, _| window.focus_prev())
             .size_full()
@@ -807,6 +876,9 @@ impl Render for Hub {
                     .min_w_0()
                     .min_h_0()
                     .child(self.header(palette, cx))
+                    .when(self.page_search_open, |view| {
+                        view.child(self.page_search(palette, cx))
+                    })
                     .when_some(self.message.as_ref(), |node, message| {
                         node.child(
                             div()
@@ -860,6 +932,21 @@ fn bind_keys(cx: &mut App) {
     cx.bind_keys([
         gpui::KeyBinding::new("tab", NextControl, None),
         gpui::KeyBinding::new("shift-tab", PreviousControl, None),
+        gpui::KeyBinding::new(
+            if cfg!(target_os = "macos") {
+                "cmd-k"
+            } else {
+                "ctrl-k"
+            },
+            TogglePageSearch,
+            Some(navigation::HUB_CONTEXT),
+        ),
+        gpui::KeyBinding::new("escape", ClosePageSearch, Some(navigation::COMMAND_CONTEXT)),
+        gpui::KeyBinding::new(
+            "enter",
+            OpenPageSearchResult,
+            Some(navigation::COMMAND_CONTEXT),
+        ),
     ]);
 }
 
@@ -876,10 +963,9 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut prepare = None;
     let root = match args.next().as_deref() {
         Some("--worker") => return crate::runtime::worker::run(args),
-        Some("--classic") => return crate::gui::app::run(args),
         Some("--demo") if args.next().is_none() => return demo::run(),
         Some("--prepare-templates") => {
-            let Some(setup) = crate::gui::app::parse_template_setup(args) else {
+            let Some(setup) = crate::desktop::template_paths::parse_template_setup(args) else {
                 return ExitCode::from(2);
             };
             prepare = Some(setup);
@@ -891,20 +977,24 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         },
         Some("--help" | "-h") => {
             println!(
-                "Usage: script-hub-gui [--root <workspace>] | --classic [--root <workspace>]\n       script-hub-gui --demo | --prepare-templates <public.vault> <local-backup.vault> <config>..."
+                "Usage: script-hub-gui [--root <workspace>]\n       script-hub-gui --demo | --prepare-templates <public.vault> <local-backup.vault> <config>..."
             );
             return ExitCode::SUCCESS;
         }
         Some(_) => return ExitCode::from(2),
         None => None,
     };
-    let saved = settings::preferences_path().and_then(|path| {
-        let preferences = settings::load(&path)?.unwrap_or_default();
-        Ok((path, preferences))
-    });
-    let (preference_path, preferences, message) = match saved {
-        Ok((path, preferences)) => (Some(path), preferences, None),
-        Err(error) => (None, Preferences::default(), Some(error)),
+    let (preference_path, saved) = match settings::preferences_path() {
+        Ok(path) => {
+            let saved = settings::load(&path);
+            (Some(path), saved)
+        }
+        Err(error) => (None, Err(error)),
+    };
+    let preferences_ready = saved.is_ok();
+    let (preferences, message) = match saved {
+        Ok(preferences) => (preferences.unwrap_or_default(), None),
+        Err(error) => (Preferences::default(), Some(error)),
     };
     let root = root.or_else(|| {
         (prepare.is_none() && preferences.reopen_workspace && !preferences.root.is_empty())
@@ -930,7 +1020,19 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
             },
             move |window, cx| {
                 let root = cx.new(|cx| {
-                    let mut hub = Hub::new(preferences, preference_path, message, cx);
+                    let mut hub =
+                        Hub::new(preferences, preference_path, preferences_ready, message, cx);
+                    hub.main_focus.focus(window);
+                    cx.subscribe_in(
+                        &hub.subscriptions,
+                        window,
+                        |hub, _, _: &subscriptions::QuitAfterLibraryReview, window, cx| {
+                            if hub.can_close(cx) {
+                                window.remove_window();
+                            }
+                        },
+                    )
+                    .detach();
                     cx.observe_window_appearance(window, |_, _, cx| cx.notify())
                         .detach();
                     if let Some(path) = root {

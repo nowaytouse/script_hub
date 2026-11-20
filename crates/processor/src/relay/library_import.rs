@@ -21,7 +21,11 @@ pub struct Summary {
     pub skipped: usize,
 }
 
-fn unique_name(name: &str, existing: impl Fn(&str) -> bool, next_id: u64) -> Result<String, Error> {
+pub(crate) fn unique_name(
+    name: &str,
+    existing: impl Fn(&str) -> bool,
+    next_id: u64,
+) -> Result<String, Error> {
     if name.is_empty() || name.len() > 512 || name.chars().any(char::is_control) {
         return Err(Error::Invalid);
     }

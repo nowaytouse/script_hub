@@ -1,10 +1,15 @@
 use super::super::{Palette, button, input::TextInput, localized, panel};
 use super::view::{description, field};
 use super::{documents_directory, read_limited};
-use crate::gui::i18n::{Text, text};
-use crate::gui::{new_operations, next_step_id, operation_group, operation_label};
+use crate::desktop::i18n::{Text, text};
+use crate::desktop::operations::{
+    MAX_STEPS, new_operations, next_step_id, operation_group, operation_label,
+};
 use crate::relay::{
-    model::pipeline::{self, Operation, RegexSortUnmatched, Step},
+    model::{
+        pipeline::{self, Operation, RegexSortUnmatched, Step},
+        script::{SyntaxError, check_syntax},
+    },
     plan,
 };
 use crate::runtime::settings::Language;
@@ -12,11 +17,42 @@ use gpui::{
     App, AppContext as _, Context, Div, ElementId, Entity, EventEmitter, FontWeight,
     PathPromptOptions, Stateful, Window, div, prelude::*,
 };
+use zeroize::Zeroizing;
 
-const MAX_STEPS: usize = 64;
 const MAX_PLAN_BYTES: usize = 1024 * 1024;
 
 pub(super) struct PipelineChanged;
+
+struct SyntaxFeedback {
+    checked_json: Zeroizing<String>,
+    result: Option<Result<(), SyntaxError>>,
+}
+
+impl SyntaxFeedback {
+    fn message(&self, language: Language) -> String {
+        let tr = |key| text(language, key);
+        match self.result {
+            None => localized(
+                language,
+                "Enter valid JSON parameters for a script step.",
+                "请输入有效的脚本步骤 JSON 参数。",
+                "スクリプトステップの有効な JSON パラメーターを入力してください。",
+            )
+            .to_owned(),
+            Some(Ok(())) => tr(Text::OperationScriptSyntaxOk).to_owned(),
+            Some(Err(SyntaxError::Size)) => tr(Text::OperationScriptSize).to_owned(),
+            Some(Err(SyntaxError::EntryPoint)) => tr(Text::OperationScriptEntry).to_owned(),
+            Some(Err(SyntaxError::Parse { line, column })) => {
+                let message = tr(Text::OperationScriptSyntaxError);
+                match (line, column) {
+                    (Some(line), Some(column)) => format!("{message} ({line}:{column})."),
+                    (Some(line), None) => format!("{message} ({line})."),
+                    _ => format!("{message}."),
+                }
+            }
+        }
+    }
+}
 
 #[derive(Clone, Copy)]
 enum Forms {
@@ -61,16 +97,27 @@ pub(super) struct PipelineEditor {
     replacement: Option<Vec<Step>>,
     export_requested: bool,
     status: Option<&'static str>,
+    syntax_feedback: Option<SyntaxFeedback>,
 }
 
 impl EventEmitter<PipelineChanged> for PipelineEditor {}
 
 impl PipelineEditor {
     pub(super) fn new(cx: &mut Context<Self>) -> Self {
+        let parameters = cx.new(|cx| TextInput::multiline("{}", 7, cx));
+        cx.observe(&parameters, |editor, parameters, cx| {
+            if editor.syntax_feedback.as_ref().is_some_and(|feedback| {
+                feedback.checked_json.as_str() != parameters.read(cx).value()
+            }) {
+                editor.syntax_feedback = None;
+                cx.notify();
+            }
+        })
+        .detach();
         Self {
             language: Language::En,
             steps: Vec::new(),
-            parameters: cx.new(|cx| TextInput::multiline("{}", 7, cx)),
+            parameters,
             primary_text: cx.new(|cx| TextInput::new("", false, cx)),
             secondary_text: cx.new(|cx| TextInput::new("", false, cx)),
             form: None,
@@ -82,6 +129,7 @@ impl PipelineEditor {
             replacement: None,
             export_requested: false,
             status: None,
+            syntax_feedback: None,
         }
     }
 
@@ -264,9 +312,23 @@ impl PipelineEditor {
     fn hide_parameters(&mut self, cx: &mut Context<Self>) {
         self.editing = None;
         self.form = None;
+        self.syntax_feedback = None;
         self.parameters.update(cx, |input, cx| input.clear(cx));
         self.primary_text.update(cx, |input, cx| input.clear(cx));
         self.secondary_text.update(cx, |input, cx| input.clear(cx));
+    }
+
+    fn check_script(&mut self, cx: &mut Context<Self>) {
+        let draft = self.draft_operation(cx);
+        self.status = None;
+        self.syntax_feedback = Some(SyntaxFeedback {
+            checked_json: Zeroizing::new(self.parameters.read(cx).value().to_owned()),
+            result: match draft.as_ref() {
+                Some(Operation::Script { source, .. }) => Some(check_syntax(source)),
+                _ => None,
+            },
+        });
+        cx.notify();
     }
 
     fn apply(&mut self, cx: &mut Context<Self>) {
@@ -368,7 +430,7 @@ impl PipelineEditor {
         cx.spawn(async move |weak, cx| {
             let result = match prompt.await {
                 Ok(Ok(Some(path))) => executor.spawn(async move {
-                    if !crate::gui::templates::safe_export_destination(&path, None) {
+                    if !crate::desktop::template_paths::safe_export_destination(&path, None) {
                         return Err(());
                     }
                     crate::vault::write_private(&path, &bytes, false).map(|_| Some(())).map_err(|_| ())
@@ -660,6 +722,7 @@ impl Render for PipelineEditor {
                 "ファイルの選択を待っています…",
             )));
         } else if let Some(step) = self.steps.iter().find(|step| Some(step.id) == self.editing) {
+            let editing_script = matches!(&step.operation, Operation::Script { .. });
             let parameters = if let Some(form) = self.form {
                 self.form_fields(form, palette, cx)
             } else {
@@ -687,6 +750,15 @@ impl Render for PipelineEditor {
                             .child(text(self.language, operation_label(&step.operation))),
                     )
                     .child(parameters)
+                    .when(editing_script, |card| {
+                        card.child(description(
+                            text(self.language, Text::OperationScriptHelp),
+                            palette,
+                        ))
+                    })
+                    .when_some(self.syntax_feedback.as_ref(), |card, result| {
+                        card.child(description(result.message(self.language), palette))
+                    })
                     .child(
                         row()
                             .child(self.action(
@@ -709,6 +781,16 @@ impl Render for PipelineEditor {
                                     cx.notify();
                                 },
                             ))
+                            .when(editing_script, |row| {
+                                row.child(self.action(
+                                    "pipeline-check-script",
+                                    text(self.language, Text::OperationScriptCheck),
+                                    palette,
+                                    false,
+                                    cx,
+                                    Self::check_script,
+                                ))
+                            })
                             .when(self.form.is_some(), |row| {
                                 row.child(self.action(
                                     "pipeline-advanced-json",

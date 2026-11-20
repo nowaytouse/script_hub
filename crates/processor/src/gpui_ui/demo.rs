@@ -1,7 +1,7 @@
 //! An isolated native demo backed exclusively by the bundled synthetic relay fixtures.
 
 use super::{NextControl, Palette, PreviousControl, UiStyle, button, heading, panel};
-use crate::gui::i18n::{Text, text};
+use crate::desktop::i18n::{Text, text};
 use crate::relay::{
     self, RelayConfig, RelayError, RunMode,
     demo::{self, DemoReport},

@@ -1,14 +1,14 @@
 //! Offline help, build information and bundled legal documents.
 
 use super::{Palette, button, heading, input::TextInput, localized, panel};
-use crate::gui::{
+use crate::desktop::{
     i18n::{Text, text},
-    support_resources::{
-        DEPENDENCIES, LICENSE, NOTICE_RESULT_LIMIT, REPOSITORY, build_details, build_source_url,
-        localized_documents, matching_notices,
+    support::{
+        DEPENDENCIES, Diagnostics, LICENSE, NOTICE_RESULT_LIMIT, REPOSITORY, build_details,
+        build_source_url, localized_documents, matching_notices,
     },
 };
-use crate::runtime::settings::Language;
+use crate::runtime::settings::{Language, Preferences};
 use gpui::{
     AppContext as _, ClipboardItem, Context, Div, ElementId, Entity, FontWeight, SharedString,
     Stateful, Window, div, prelude::*, px,
@@ -43,6 +43,7 @@ pub(super) struct Support {
     language: Language,
     tab: Tab,
     search: Entity<TextInput>,
+    diagnostics: Diagnostics,
     open_license: Option<License>,
     copied: bool,
 }
@@ -62,6 +63,7 @@ impl Support {
             language,
             tab: Tab::Help,
             search,
+            diagnostics: Diagnostics::new(None, false),
             open_license: None,
             copied: false,
         }
@@ -73,6 +75,19 @@ impl Support {
             self.search.update(cx, |input, cx| {
                 input.set_placeholder(text(language, Text::SearchDependencyLicenses), cx);
             });
+            cx.notify();
+        }
+    }
+
+    pub(super) fn set_diagnostics(
+        &mut self,
+        saved: Option<&Preferences>,
+        checker_selected: bool,
+        cx: &mut Context<Self>,
+    ) {
+        let diagnostics = Diagnostics::new(saved, checker_selected);
+        if self.diagnostics != diagnostics {
+            self.diagnostics = diagnostics;
             cx.notify();
         }
     }
@@ -102,9 +117,9 @@ impl Support {
                 Text::KeyboardShortcuts,
                 localized(
                     self.language,
-                    "Use Tab and Shift+Tab to move between controls. Search the modules and rule sets to narrow the list before selecting or copying an item.",
-                    "用 Tab 和 Shift+Tab 在控件间切换。选择或复制条目前，可以先搜索模块和规则集来缩小范围。",
-                    "Tab と Shift+Tab で操作項目を移動します。モジュールやルールセットを検索すると、選択やコピーの対象を絞り込めます。",
+                    "Press Ctrl+K on Windows or Command+K on macOS to search pages. Use Tab and Shift+Tab to move between controls.",
+                    "在 Windows 按 Ctrl+K，在 macOS 按 Command+K 搜索页面。用 Tab 和 Shift+Tab 在控件间切换。",
+                    "Windows では Ctrl+K、macOS では Command+K でページを検索します。Tab と Shift+Tab で操作項目を移動します。",
                 ),
             ),
         ];
@@ -160,7 +175,7 @@ impl Support {
             ),
             (Text::BuildMode, self.tr(mode).to_owned()),
         ];
-        panel(palette)
+        let build = panel(palette)
             .p_5()
             .gap_4()
             .child(
@@ -215,6 +230,41 @@ impl Support {
                         build_source_url(),
                         palette,
                     )),
+            );
+        column()
+            .child(build)
+            .child(self.diagnostics_card(palette, cx))
+    }
+
+    fn diagnostics_card(&self, palette: Palette, cx: &Context<Self>) -> Div {
+        let statuses = [
+            (Text::History, self.diagnostics.history()),
+            (Text::DiagnosticLogs, self.diagnostics.logs()),
+        ];
+        panel(palette)
+            .p_5()
+            .gap_3()
+            .child(label(self.tr(Text::DataAndDiagnostics)))
+            .children(statuses.into_iter().map(|(key, value)| {
+                row()
+                    .justify_between()
+                    .child(description(self.tr(key), palette))
+                    .child(label(self.tr(value)))
+            }))
+            .child(description(self.tr(self.diagnostics.checker()), palette))
+            .child(description(self.tr(Text::SupportDiagnosticsSafe), palette))
+            .child(
+                row().child(
+                    button(
+                        "support-copy-diagnostics",
+                        self.tr(Text::SupportCopyDiagnostics),
+                        palette,
+                        false,
+                    )
+                    .on_click(
+                        cx.listener(|view, _, _, cx| view.copy(view.diagnostics.summary(), cx)),
+                    ),
+                ),
             )
     }
 
@@ -317,7 +367,7 @@ impl Support {
                         row().child(
                             button(
                                 "support-copy-notices",
-                                self.tr(Text::CopyLicenseText),
+                                self.tr(Text::CopyLicense),
                                 palette,
                                 false,
                             )

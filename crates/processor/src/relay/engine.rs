@@ -556,6 +556,14 @@ pub fn discover_engine() -> Option<PathBuf> {
     None
 }
 
+/// Resolve an explicitly selected local checker without running it.
+pub fn resolve_selected_engine(path: &Path) -> Result<PathBuf, EngineError> {
+    if !path.is_absolute() {
+        return Err(EngineError::Unavailable);
+    }
+    executable(path)
+}
+
 fn agent(proxy: Option<ureq::Proxy>, timeout: Duration) -> ureq::Agent {
     ureq::Agent::config_builder()
         .timeout_global(Some(timeout))

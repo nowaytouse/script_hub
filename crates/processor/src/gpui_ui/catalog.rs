@@ -1,5 +1,5 @@
 use super::{Hub, Palette, button, heading, panel};
-use crate::gui::i18n::Text;
+use crate::desktop::i18n::Text;
 use crate::runtime::catalog::{
     Catalog, ModuleItem, ModulePlatform, selected_module_urls, selected_rule_urls,
     selected_surge_rule_set_snippets,

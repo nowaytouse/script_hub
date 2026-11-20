@@ -24,13 +24,6 @@ const ROOT_FILES: &[&str] = &[
     "THIRD_PARTY_NOTICES.md",
     "THIRD_PARTY_NOTICES.zh-CN.md",
 ];
-const FONTS: &[&str] = &[
-    "Hack-Regular.txt",
-    "OFL.txt",
-    "UFL.txt",
-    "egui-icons.txt",
-    "emoji-icon-font-mit-license.txt",
-];
 const UPSTREAM_NOTICES: &[&str] = &[
     "AdGuard-CNAME-MIT.txt",
     "README.md",
@@ -298,13 +291,6 @@ fn resource_files(root: &Path, platform: Platform) -> Vec<(PathBuf, PathBuf)> {
         files.push((
             root.join("crates/processor/assets/ScriptHub.icns"),
             PathBuf::from("ScriptHub.icns"),
-        ));
-    }
-    for name in FONTS {
-        files.push((
-            root.join("crates/processor/licenses/epaint_default_fonts")
-                .join(name),
-            PathBuf::from("licenses/epaint_default_fonts").join(name),
         ));
     }
     for name in UPSTREAM_NOTICES {

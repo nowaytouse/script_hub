@@ -1,10 +1,11 @@
-use super::super::{Palette, button, heading, input::TextInput, panel};
+use super::super::{Palette, button, heading, input::TextInput, localized, panel};
 use super::{FileMode, Item, Source, Subscriptions, clear};
-use crate::gui::i18n::{Text, text};
-use crate::relay::{RelayStage, export::OutputFormat};
-use gpui::{
-    ClipboardItem, Div, ElementId, Entity, SharedString, Stateful, Window, div, prelude::*, px,
+use crate::desktop::{
+    i18n::{Text, text},
+    operations::operation_label,
 };
+use crate::relay::RelayStage;
+use gpui::{Div, ElementId, Entity, SharedString, Stateful, Window, div, prelude::*, px};
 use std::sync::atomic::Ordering;
 use zeroize::Zeroizing;
 
@@ -107,7 +108,7 @@ impl Subscriptions {
             ))
             .child(self.messages(palette))
             .children(self.schedule_panel(palette, cx));
-        if self.store.is_none() {
+        if !self.library.is_open() {
             let title = if self.storage_exists {
                 self.tr("Unlock library", "解锁资料库")
             } else {
@@ -131,19 +132,44 @@ impl Subscriptions {
                     palette,
                 ));
             }
-            return body.child(form.child(row().child(self.action(
-                "unlock-subscriptions",
-                title,
-                palette,
-                true,
-                cx,
-                Self::open_store,
-            ))));
+            return body.child(
+                form.child(
+                    row()
+                        .child(self.action(
+                            "unlock-subscriptions",
+                            title,
+                            palette,
+                            true,
+                            cx,
+                            Self::open_store,
+                        ))
+                        .child(self.action(
+                            "start-temporary-library",
+                            super::super::localized(
+                                self.language,
+                                "Use a temporary library",
+                                "使用临时订阅库",
+                                "一時ライブラリを使う",
+                            ),
+                            palette,
+                            false,
+                            cx,
+                            Self::start_temporary_library,
+                        )),
+                ),
+            );
         }
         if let Some(item) = self.editor {
             return body.child(self.library_editor(item, palette, cx));
         }
+        if self.confirm_session_discard || self.session_password_form {
+            return body.children(self.session_banner(palette, cx));
+        }
+        if let Some(review) = self.migration_review(palette, cx) {
+            return body.child(review);
+        }
 
+        let body = body.children(self.session_banner(palette, cx));
         let actions = row()
             .child(self.action(
                 "new-subscription",
@@ -161,21 +187,23 @@ impl Subscriptions {
                 cx,
                 |this, cx| this.edit(Item::Collection(0), cx),
             ))
-            .child(self.action(
-                "import-backup",
-                self.tr("Import backup", "导入备份"),
-                palette,
-                false,
-                cx,
-                |this, cx| this.select_file(FileMode::Backup, cx),
-            ))
+            .child(self.migration_button(palette, cx))
             .child(self.action(
                 "lock-subscriptions",
-                self.tr("Lock library", "锁定资料库"),
+                if matches!(self.library, super::session::Library::Temporary) {
+                    super::super::localized(
+                        self.language,
+                        "End temporary session",
+                        "结束临时会话",
+                        "一時セッションを終了",
+                    )
+                } else {
+                    self.tr("Lock library", "锁定资料库")
+                },
                 palette,
                 false,
                 cx,
-                Self::lock,
+                Self::request_library_lock,
             ));
         if self.workspace.subscriptions.is_empty() && self.workspace.collections.is_empty() {
             return body.child(actions).child(
@@ -340,6 +368,14 @@ impl Subscriptions {
                             move |this, cx| this.edit(item, cx),
                         ))
                         .child(self.action(
+                            ("duplicate-subscription", id),
+                            text(self.language, Text::WorkspaceDuplicate),
+                            palette,
+                            false,
+                            cx,
+                            move |this, cx| this.duplicate_saved(item, cx),
+                        ))
+                        .child(self.action(
                             ("delete-subscription", id),
                             self.tr("Remove", "移除"),
                             palette,
@@ -396,31 +432,7 @@ impl Subscriptions {
                     );
             }
             Item::Collection(_) => {
-                form = form.child(section(
-                    self.tr("Include subscriptions", "加入订阅"),
-                    palette,
-                ));
-                let mut members = row();
-                for entry in &self.workspace.subscriptions {
-                    let id = entry.id;
-                    let selected = self.members.contains(&id);
-                    members = members.child(self.action(
-                        ("collection-member", id),
-                        entry.name.clone(),
-                        palette,
-                        selected,
-                        cx,
-                        move |this, cx| {
-                            if selected {
-                                this.members.retain(|member| *member != id);
-                            } else {
-                                this.members.push(id);
-                            }
-                            cx.notify();
-                        },
-                    ));
-                }
-                form = form.child(members);
+                form = form.child(self.collection_members_editor(palette, cx));
             }
         }
         panel(palette).w_full().p_5().child(
@@ -476,6 +488,9 @@ impl Subscriptions {
                 )
                 .on_click(cx.listener(|this, _, _, cx| this.cancel_run(cx))),
             );
+        }
+        if let Some(review) = self.node_review_panel(palette, cx) {
+            return body.child(review);
         }
         let source_title = match self.source {
             Source::Saved(Item::Entry(id)) => self.entry(id).map(|entry| entry.name.as_str()),
@@ -541,39 +556,24 @@ impl Subscriptions {
                 palette,
             ));
         }
-        let mut formats = row();
-        for (label, format) in [
-            (self.tr("Original", "原始格式"), OutputFormat::Original),
-            ("Surge", OutputFormat::Surge),
-            ("Mihomo", OutputFormat::Mihomo),
-            ("sing-box", OutputFormat::SingBox),
-        ] {
-            formats = formats.child(self.action(
-                label,
-                label,
-                palette,
-                self.format == format,
-                cx,
-                move |this, cx| {
-                    if this.format != format {
-                        this.format = format;
-                        this.preview = None;
-                        this.conceal_preview(cx);
-                        cx.notify();
-                    }
-                },
-            ));
-        }
         let preview_title = if self.needs_source_review(cx) {
             self.tr("Review remote source", "检查远程来源")
         } else {
             self.tr("Run preview", "运行预览")
         };
         source = source
-            .child(section(self.tr("Output format", "输出格式"), palette))
-            .child(formats)
+            .children(self.cache_refresh_controls(palette, cx))
             .when(!self.schedule_active(), |source| {
-                source.child(description(
+                source.child(self.gist_format_controls(palette, cx)).child(row()
+                    .child(self.action("relay-auto-name", text(self.language, Text::RelayRename), palette, self.rename, cx, |this, cx| {
+                        this.rename = !this.rename;
+                        this.invalidate_preview(cx);
+                    }))
+                    .child(self.action("relay-auto-order", text(self.language, Text::RelaySort), palette, self.sort, cx, |this, cx| {
+                        this.sort = !this.sort;
+                        this.invalidate_preview(cx);
+                    })))
+                .child(description(
                     self.tr(
                         "Edits here apply to this relay session. Edit a library item to save its steps.",
                         "此处编辑仅用于当前中继。要保存步骤，请编辑资料库中的项目。",
@@ -617,8 +617,21 @@ impl Subscriptions {
                 true,
                 cx,
                 Self::preview,
-            ));
+            ))
+            .when(!self.schedule_active(), |source| {
+                source.child(row().child(self.action(
+                    "relay-edit-input-nodes",
+                    self.tr("Edit source nodes", "编辑来源节点"),
+                    palette,
+                    false,
+                    cx,
+                    Self::edit_source_nodes,
+                )))
+            });
         body = body.child(panel(palette).w_full().p_5().child(source));
+        if !self.schedule_active() {
+            body = body.child(self.health_panel(palette, cx));
+        }
         if !self.schedule_active()
             && let Some(preview) = self.current_preview(cx)
         {
@@ -636,6 +649,10 @@ impl Subscriptions {
                     ),
                     palette,
                 ))
+                .child(self.health_summary(&preview.result, palette, cx))
+                .when(!preview.result.content.is_empty(), |summary| {
+                    summary.child(self.local_format_controls(palette, cx))
+                })
                 .when(!preview.result.stages.is_empty(), |summary| {
                     summary
                         .child(section(self.tr("Step results", "步骤结果"), palette))
@@ -650,10 +667,7 @@ impl Subscriptions {
                             Some(description(
                                 format!(
                                     "{} · {} → {} · {} {} · {} {} · {} {}",
-                                    crate::gui::i18n::text(
-                                        self.language,
-                                        crate::gui::operation_label(&step.operation)
-                                    ),
+                                    text(self.language, operation_label(&step.operation)),
                                     stage.before,
                                     stage.after,
                                     self.tr("renamed", "已重命名"),
@@ -669,119 +683,142 @@ impl Subscriptions {
                 })
                 .child(
                     row()
-                        .when(self.allow_plaintext, |row| {
+                        .when(
+                            self.allow_plaintext && self.output.local_format_valid(),
+                            |row| {
+                                row.child(self.action(
+                                    "relay-copy-output",
+                                    self.tr("Copy nodes", "复制节点"),
+                                    palette,
+                                    false,
+                                    cx,
+                                    Self::copy_result,
+                                ))
+                                .child(self.action(
+                                    "relay-export",
+                                    self.tr("Export file", "导出文件"),
+                                    palette,
+                                    true,
+                                    cx,
+                                    Self::export_result,
+                                ))
+                            },
+                        )
+                        .when(
+                            !self.allow_plaintext && !preview.result.content.is_empty(),
+                            |row| {
+                                row.child(self.action(
+                                    "relay-allow-plaintext",
+                                    self.tr("Allow plaintext output", "允许明文输出"),
+                                    palette,
+                                    false,
+                                    cx,
+                                    |this, cx| {
+                                        this.allow_plaintext = true;
+                                        cx.notify();
+                                    },
+                                ))
+                            },
+                        )
+                        .when(!preview.result.content.is_empty(), |row| {
                             row.child(self.action(
-                                "relay-copy-output",
-                                self.tr("Copy nodes", "复制节点"),
-                                palette,
-                                false,
-                                cx,
-                                Self::copy_result,
-                            ))
-                            .child(self.action(
-                                "relay-export",
-                                self.tr("Export file", "导出文件"),
-                                palette,
-                                true,
-                                cx,
-                                Self::export_result,
-                            ))
-                        })
-                        .when(!self.allow_plaintext, |row| {
-                            row.child(self.action(
-                                "relay-allow-plaintext",
-                                self.tr("Allow plaintext output", "允许明文输出"),
-                                palette,
-                                false,
-                                cx,
-                                |this, cx| {
-                                    this.allow_plaintext = true;
-                                    cx.notify();
+                                "relay-prepared-details",
+                                if preview.details.is_hidden() {
+                                    text(self.language, Text::RelayReviewRevealOutput)
+                                } else {
+                                    localized(
+                                        self.language,
+                                        "Hide node details",
+                                        "隐藏节点详情",
+                                        "ノード詳細を隠す",
+                                    )
                                 },
+                                palette,
+                                false,
+                                cx,
+                                Self::toggle_preview_details,
                             ))
                         })
-                        .child(self.action(
-                            "relay-node-names",
-                            if self.showing_node_names {
-                                self.tr("Hide node names", "隐藏节点名称")
-                            } else {
-                                self.tr("Show node names", "查看节点名称")
+                        .when(
+                            !preview.result.content.is_empty()
+                                && (!preview.result.tested || preview.result.healthy > 0),
+                            |row| {
+                                row.child(self.action(
+                                    "relay-review-gist",
+                                    self.tr("Review Gist publication", "审核 Gist 发布"),
+                                    palette,
+                                    false,
+                                    cx,
+                                    |this, cx| {
+                                        this.reviewing_publish = true;
+                                        cx.notify();
+                                    },
+                                ))
                             },
-                            palette,
-                            false,
-                            cx,
-                            |this, cx| {
-                                this.showing_node_names = !this.showing_node_names;
-                                cx.notify();
-                            },
-                        ))
-                        .child(self.action(
-                            "relay-review-gist",
-                            self.tr("Review Gist publication", "审核 Gist 发布"),
-                            palette,
-                            false,
-                            cx,
-                            |this, cx| {
-                                this.reviewing_publish = true;
-                                cx.notify();
-                            },
-                        )),
-                );
-            if self.showing_node_names {
-                let count = preview.names.len();
-                let mut names = column().gap(px(5.)).child(description(
-                    format!(
-                        "{} {count}",
-                        self.tr("Prepared node names shown", "显示的节点名称数")
-                    ),
-                    palette,
-                ));
-                for name in &preview.names {
-                    names = names.child(description(name.to_string(), palette));
-                }
-                summary = summary.child(names);
+                        ),
+                )
+                .when(!preview.result.content.is_empty(), |summary| {
+                    summary.child(self.portable_backup_controls(palette, cx))
+                });
+            if let Some(details) = self.preview_details_panel(preview, palette, cx) {
+                summary = summary.child(details);
             }
             if self.reviewing_publish {
                 summary = summary
-                    .child(description(self.tr(
-                        "This sends the reviewed nodes to GitHub. Anyone with the Gist link can read them. Leave the destination empty to create a secret Gist.",
-                        "节点将发送到 GitHub，持有 Gist 链接的人可以读取。留空目标可新建不公开列出的 Gist。",
-                    ), palette))
-                    .child(field(self.tr("Gist destination", "Gist 目标"), &self.output_url, palette))
-                    .child(field(self.tr("Output filename", "输出文件名"), &self.output_name, palette))
-                    .child(field(text(self.language, Text::RelayTitle), &self.output_title, palette))
-                    .child(field(self.tr("GitHub token", "GitHub 令牌"), &self.token, palette))
-                    .child(row()
-                        .child(self.action("relay-confirm-gist", self.tr("Publish to secret Gist", "发布到私密 Gist"), palette, true, cx, Self::publish))
-                        .child(self.action("relay-cancel-gist", self.tr("Cancel publication", "取消发布"), palette, false, cx, |this, cx| {
-                            clear(&this.token, cx);
-                            this.reviewing_publish = false;
-                            cx.notify();
-                        })))
+                    .child(section(
+                        text(self.language, Text::RelayGistPublication),
+                        palette,
+                    ))
+                    .child(description(
+                        text(self.language, Text::RelayGistPublicationHelp),
+                        palette,
+                    ))
+                    .child(field(
+                        self.tr("Gist destination", "Gist 目标"),
+                        &self.output_url,
+                        palette,
+                    ))
+                    .child(field(
+                        self.tr("Output filename", "输出文件名"),
+                        &self.output_name,
+                        palette,
+                    ))
+                    .child(field(
+                        text(self.language, Text::RelayTitle),
+                        &self.output_title,
+                        palette,
+                    ))
+                    .children(self.saved_output_controls(palette, cx))
+                    .children(self.public_gist_controls(preview, palette, cx))
+                    .child(field(
+                        self.tr("GitHub token", "GitHub 令牌"),
+                        &self.token,
+                        palette,
+                    ))
+                    .child(
+                        row()
+                            .child(self.action(
+                                "relay-confirm-gist",
+                                self.publish_button_text(preview, cx),
+                                palette,
+                                true,
+                                cx,
+                                Self::publish,
+                            ))
+                            .child(self.action(
+                                "relay-cancel-gist",
+                                self.tr("Cancel publication", "取消发布"),
+                                palette,
+                                false,
+                                cx,
+                                Self::cancel_publication_review,
+                            )),
+                    )
                     .child(self.schedule_setup(palette, cx));
             }
             body = body.child(panel(palette).w_full().p_5().child(summary));
         }
-        if let Some(url) = self
-            .last_publication
-            .as_ref()
-            .and_then(|result| result.created.as_ref())
-            .map(|gist| &gist.url)
-        {
-            let url = Zeroizing::new(url.clone());
-            body = body.child(row().child(self.action(
-                "relay-copy-gist",
-                self.tr("Copy secret Gist link", "复制私密 Gist 链接"),
-                palette,
-                false,
-                cx,
-                move |this, cx| {
-                    cx.write_to_clipboard(ClipboardItem::new_string(url.to_string()));
-                    this.feedback(true, this.tr("Secret link copied", "已复制私密链接"), cx);
-                },
-            )));
-        }
-        body
+        body.children(self.publication_receipt(palette, cx))
     }
 }
 

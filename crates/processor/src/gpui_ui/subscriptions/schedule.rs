@@ -1,9 +1,9 @@
 use super::super::{Palette, button, input::TextInput, panel};
 use super::view::{column, description, field, row, section};
 use super::{Item, Source, Subscriptions, clear, set};
-use crate::gui::{
+use crate::desktop::{
     i18n::{Text, text},
-    operation_failure_message,
+    relay_feedback::operation_failure_message,
 };
 use crate::relay::{
     RelayError, RelayStage,
@@ -12,7 +12,7 @@ use crate::relay::{
     schedule::{DEFAULT_INTERVAL, MAX_INTERVAL, MIN_INTERVAL, RetryDeadline},
     session_schedule::{State, Status},
 };
-use gpui::{Context, Div, Entity, prelude::*, px};
+use gpui::{App, Context, Div, Entity, prelude::*, px};
 use std::time::{Duration, Instant};
 use zeroize::Zeroizing;
 
@@ -21,6 +21,7 @@ pub(super) struct Controls {
     interval: Entity<TextInput>,
     polling: bool,
     project_busy: bool,
+    approved_probes: bool,
 }
 
 impl Controls {
@@ -36,7 +37,12 @@ impl Controls {
             interval,
             polling: false,
             project_busy: false,
+            approved_probes: false,
         }
+    }
+
+    pub(super) fn clear_probe_consent(&mut self) {
+        self.approved_probes = false;
     }
 }
 
@@ -60,6 +66,19 @@ impl Subscriptions {
 
     pub(super) fn set_schedule_interval(&mut self, minutes: u64, cx: &mut Context<Self>) {
         set(&self.schedule.interval, &minutes.to_string(), cx);
+    }
+
+    pub(super) fn schedule_interval_input(&self, cx: &App) -> Option<u64> {
+        let min = MIN_INTERVAL.as_secs() / 60;
+        let max = MAX_INTERVAL.as_secs() / 60;
+        self.schedule
+            .interval
+            .read(cx)
+            .value()
+            .trim()
+            .parse::<u64>()
+            .ok()
+            .filter(|minutes| (min..=max).contains(minutes))
     }
 
     pub(super) fn check_schedule_cooldown(&mut self, cx: &mut Context<Self>) -> bool {
@@ -102,8 +121,28 @@ impl Subscriptions {
             self.feedback(false, text(self.language, Text::ScheduleNeedsPreview), cx);
             return;
         };
+        if preview.result.content.is_empty() {
+            self.feedback(false, text(self.language, Text::RelayReviewEmptyResult), cx);
+            return;
+        }
         if preview.result.tested && preview.result.healthy == 0 {
             self.feedback(false, text(self.language, Text::RelayNoHealthyHelp), cx);
+            return;
+        }
+        if !self.output.gist_format_valid() {
+            self.feedback(
+                false,
+                text(self.language, Text::RelayExportFormatMismatch),
+                cx,
+            );
+            return;
+        }
+        if preview.result.tested && !self.schedule.approved_probes {
+            self.feedback(
+                false,
+                text(self.language, Text::ScheduleProbeConsentRequired),
+                cx,
+            );
             return;
         }
         let mut config = self.publication_config(preview, cx);
@@ -113,18 +152,10 @@ impl Subscriptions {
         }
         config.0.allow_public_output = false;
         config.0.test_nodes = preview.result.tested;
+        config.0.compatibility = false;
         let min = MIN_INTERVAL.as_secs() / 60;
         let max = MAX_INTERVAL.as_secs() / 60;
-        let Some(minutes) = self
-            .schedule
-            .interval
-            .read(cx)
-            .value()
-            .trim()
-            .parse::<u64>()
-            .ok()
-            .filter(|minutes| (min..=max).contains(minutes))
-        else {
+        let Some(minutes) = self.schedule_interval_input(cx) else {
             self.feedback(
                 false,
                 format!(
@@ -252,9 +283,11 @@ impl Subscriptions {
 
     pub(super) fn schedule_setup(&self, palette: Palette, cx: &Context<Self>) -> Div {
         let tr = |key| text(self.language, key);
-        let requires_resolution = self
-            .current_preview(cx)
+        let preview = self.current_preview(cx);
+        let requires_resolution = preview
             .is_some_and(|preview| pipeline::has_resolution(&preview.config.0.processing.pipeline));
+        let requires_probes = preview.is_some_and(|preview| preview.result.tested);
+        let uses_probe_doh = preview.is_some_and(|preview| preview.config.0.doh);
         column()
             .mt_2()
             .pt_4()
@@ -265,6 +298,32 @@ impl Subscriptions {
             .child(description(tr(Text::ScheduleSessionOnly), palette))
             .when(requires_resolution, |group| {
                 group.child(description(tr(Text::ScheduleResolutionHelp), palette))
+            })
+            .when(requires_probes, |group| {
+                group
+                    .child(description(tr(Text::ScheduleProbeHelp), palette))
+                    .when(uses_probe_doh, |group| {
+                        group.child(description(tr(Text::ScheduleProbeDohHelp), palette))
+                    })
+                    .child(self.action(
+                        "relay-approve-scheduled-checks",
+                        format!(
+                            "{} {}",
+                            if self.schedule.approved_probes {
+                                "☑"
+                            } else {
+                                "☐"
+                            },
+                            tr(Text::ScheduleProbeConsent),
+                        ),
+                        palette,
+                        self.schedule.approved_probes,
+                        cx,
+                        |this, cx| {
+                            this.schedule.approved_probes = !this.schedule.approved_probes;
+                            cx.notify();
+                        },
+                    ))
             })
             .child(
                 field(tr(Text::ScheduleInterval), &self.schedule.interval, palette).max_w(px(200.)),

@@ -4,7 +4,11 @@
 
 ## Unreleased
 
-- Start Script Hub in a GPUI window on Windows and macOS. Browse the shared module and ruleset catalogs, manage encrypted templates and subscriptions, and preview or export relay results in the redesigned workspace. The classic workspace remains available from Settings or with `--classic`.
+- Use GPUI for the Script Hub desktop application on Windows and macOS. Retire the classic renderer, its launch switch, and its renderer-only dependencies.
+
+- Review and edit original relay nodes individually, inspect prepared names and endpoints, test connectivity with explicit approval, and check local and Gist formats independently. Manual publishing can update an existing public Gist with one-time approval. Use an encrypted or session-only subscription library, review Hub and Sub-Store imports, exchange age-encrypted backups, duplicate items, order collection members, refresh caches, and save publication preferences.
+
+- Search pages with Ctrl+K or Command+K, see workspace and task status in the overview, and filter task logs by search terms or warnings. Review settings and temporary library edits before closing the application.
 
 - Manage custom rule sources and local task history in GPUI. Edit and reorder subscription processing steps, review imports and exports of operation plans, and schedule synchronization to an existing secret Gist after reviewing a preview. The native Help page includes privacy and licensing information, and `--demo` opens the native offline demonstration with bundled sample data.
 

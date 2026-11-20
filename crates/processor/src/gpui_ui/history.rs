@@ -1,7 +1,7 @@
 //! Local task history, backed by the same store as the maintenance worker.
 
 use super::{Palette, button, heading, input::TextInput, panel};
-use crate::gui::i18n::{Text, text};
+use crate::desktop::i18n::{Text, text};
 use crate::runtime::history::{HistoryRecord, HistoryStore};
 use crate::runtime::settings::Language;
 use gpui::{

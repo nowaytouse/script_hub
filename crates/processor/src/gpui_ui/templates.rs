@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 use zeroize::{Zeroize, Zeroizing};
 
 use super::{Palette, button, heading, input::TextInput, panel};
-use crate::gui::i18n::{Text, text};
-use crate::gui::templates::{
+use crate::desktop::i18n::{Text, text};
+use crate::desktop::template_paths::{
     configuration_export_path, inferred_client, safe_export_destination,
     writable_template_destination,
 };
@@ -38,6 +38,7 @@ const CLIENTS: [Client; 5] = [
 enum Source {
     Bundled,
     Disk(PathBuf),
+    External(PathBuf),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -75,6 +76,7 @@ pub(super) struct Templates {
     source: Source,
     mode: Mode,
     preparation: Preparation,
+    queued_imports: Vec<PathBuf>,
     password: Entity<TextInput>,
     confirmation: Entity<TextInput>,
     vault: Option<UnlockedVault>,
@@ -125,6 +127,7 @@ impl Templates {
                 inputs: Vec::new(),
                 outputs: None,
             },
+            queued_imports: Vec::new(),
             password: cx.new(|cx| TextInput::new("", true, cx)),
             confirmation: cx.new(|cx| TextInput::new("", true, cx)),
             vault: None,
@@ -165,6 +168,7 @@ impl Templates {
     pub(super) fn set_workspace(&mut self, root: Option<PathBuf>, cx: &mut Context<Self>) {
         if self.vault.is_some() || self.busy || self.picking {
             self.next_workspace = (self.workspace != root).then_some(root);
+            self.visit(cx);
             return;
         }
         if self.workspace != root {
@@ -180,11 +184,14 @@ impl Templates {
                 .ok()
                 .filter(|store| writable_template_destination(&store.library(false)))
         });
-        self.refresh_managed();
-        self.source = Source::Bundled;
+        self.managed = None;
+        if !matches!(self.source, Source::External(_)) {
+            self.source = Source::Bundled;
+        }
         if self.preparation.outputs.is_none() {
             self.mode = Mode::Unlock;
         }
+        self.visit(cx);
         cx.notify();
     }
 
@@ -206,11 +213,41 @@ impl Templates {
         };
     }
 
-    fn refresh_managed(&mut self) {
-        self.managed = self
-            .store
-            .as_ref()
-            .and_then(|store| store.restore().ok().flatten());
+    pub(super) fn visit(&mut self, cx: &mut Context<Self>) {
+        let Some(store) = &self.store else {
+            return;
+        };
+        let active = self.vault.is_some() || self.busy || self.picking;
+        let managed = if active {
+            let Some(path) = &self.managed else {
+                return;
+            };
+            if std::fs::symlink_metadata(path)
+                .is_ok_and(|metadata| metadata.is_file() && !vault::is_link(&metadata))
+            {
+                return;
+            }
+            store.prune_missing()
+        } else {
+            store.restore()
+        };
+        match managed {
+            Ok(managed) => {
+                if !active
+                    && managed.is_none()
+                    && matches!(&self.source, Source::Disk(path) if *path == store.library(false))
+                {
+                    self.source = Source::Bundled;
+                    self.clear_passwords(cx);
+                    cx.notify();
+                }
+                if self.managed != managed {
+                    self.managed = managed;
+                    cx.notify();
+                }
+            }
+            Err(error) => self.display_error(error, cx),
+        }
     }
 
     fn t(&self, key: Text) -> &'static str {
@@ -242,6 +279,7 @@ impl Templates {
         let discard = self.dirty || self.editing;
         self.generation.fetch_add(1, Ordering::AcqRel);
         self.vault = None;
+        self.queued_imports.clear();
         self.clear_passwords(cx);
         self.select(0, cx);
         self.dirty = false;
@@ -255,6 +293,8 @@ impl Templates {
         });
         if let Some(workspace) = self.next_workspace.take() {
             self.change_workspace(workspace, cx);
+        } else {
+            self.visit(cx);
         }
         cx.notify();
     }
@@ -262,6 +302,7 @@ impl Templates {
     fn has_session_data(&self, cx: &App) -> bool {
         self.vault.is_some()
             || self.busy
+            || !self.queued_imports.is_empty()
             || !self.password.read(cx).value().is_empty()
             || !self.confirmation.read(cx).value().is_empty()
     }
@@ -435,6 +476,7 @@ impl Templates {
         let source = self.source.clone();
         let mode = self.mode;
         let store = self.store.clone();
+        let import_external = self.managed.is_none();
         let inputs = self.preparation.inputs.clone();
         let outputs = self.preparation.outputs.clone();
         let client = self.client;
@@ -452,16 +494,13 @@ impl Templates {
                 let saved_path = store.publish(&bytes, false)?;
                 Ok(Completed::Opened(vault, Some(saved_path)))
             }
-            Mode::Unlock => {
-                let vault = match &source {
-                    Source::Bundled => vault::template::unlock_for_display(BUNDLED, &password)?,
-                    Source::Disk(path) => {
-                        let bytes = vault::read_bounded(path)?;
-                        vault::template::unlock_for_display(&bytes, &password)?
-                    }
-                };
-                Ok(Completed::Opened(vault, None))
-            }
+            Mode::Unlock => unlock_source(
+                &source,
+                &password,
+                store.as_ref().filter(|_| import_external),
+                generation,
+                expected,
+            ),
             Mode::Prepare => {
                 let sources = inputs
                     .into_iter()
@@ -555,8 +594,57 @@ impl Templates {
                 cx.notify();
             }
         } else if let [path] = paths.as_slice() {
-            self.choose_source(Source::Disk(path.clone()), cx);
+            self.choose_source(Source::External(path.clone()), cx);
         }
+    }
+
+    fn drop_paths(&mut self, paths: &[PathBuf], cx: &mut Context<Self>) {
+        if paths.is_empty() || self.busy || self.picking || self.editing {
+            return;
+        }
+        if self.vault.is_some() || (self.mode != Mode::Prepare && dropped_vault(paths)) {
+            self.receive_paths(paths.to_vec(), cx);
+            return;
+        }
+        let queue = if self.mode == Mode::Prepare {
+            &mut self.preparation.inputs
+        } else {
+            &mut self.queued_imports
+        };
+        if queue.len().saturating_add(paths.len()) > vault::MAX_TEMPLATES {
+            self.display_error(VaultError::TooLarge, cx);
+            return;
+        }
+        queue.extend_from_slice(paths);
+        self.error = None;
+        cx.notify();
+    }
+
+    fn import_queued(&mut self, cx: &mut Context<Self>) {
+        if self.busy || self.picking || self.editing || self.queued_imports.is_empty() {
+            return;
+        }
+        let Some(vault) = &self.vault else {
+            return;
+        };
+        let total = self
+            .queued_imports
+            .len()
+            .saturating_add(vault.library().templates.len());
+        if total > vault::MAX_TEMPLATES {
+            self.display_error(VaultError::TooLarge, cx);
+            return;
+        }
+        let paths = std::mem::take(&mut self.queued_imports);
+        self.import_paths(paths, cx);
+    }
+
+    fn queued_imports_label(&self) -> String {
+        format!(
+            "{} · {}",
+            self.t(Text::VaultQueuedImports),
+            self.queued_imports.len()
+        )
     }
 
     fn import_paths(&mut self, paths: Vec<PathBuf>, cx: &mut Context<Self>) {
@@ -766,13 +854,13 @@ impl Templates {
         };
         let same_vault = match &self.source {
             Source::Bundled => false,
-            Source::Disk(source) => source
+            Source::Disk(source) | Source::External(source) => source
                 .canonicalize()
                 .ok()
                 .is_some_and(|source| path.canonicalize().ok().as_ref() == Some(&source)),
         };
         if same_vault || !safe_export_destination(&path, self.workspace.as_deref()) {
-            self.display_error(self.t(Text::VaultExportHint), cx);
+            self.display_error(self.t(export_destination_hint(client)), cx);
             return;
         }
         let output = match self.rendered(cx) {
@@ -788,6 +876,44 @@ impl Templates {
             vault::write_private(&path, output.as_bytes(), overwrite)?;
             Ok(Completed::Exported)
         });
+    }
+}
+
+fn dropped_vault(paths: &[PathBuf]) -> bool {
+    matches!(paths, [path] if path.extension().and_then(|ext| ext.to_str()).is_some_and(|ext| ext.eq_ignore_ascii_case("vault")))
+}
+
+fn export_destination_hint(client: Client) -> Text {
+    match client {
+        Client::FlClash => Text::VaultExportYamlHint,
+        Client::SingBox => Text::VaultExportJsonHint,
+        _ => Text::VaultExportHint,
+    }
+}
+
+fn unlock_source(
+    source: &Source,
+    password: &str,
+    store: Option<&ManagedStore>,
+    generation: &AtomicU64,
+    expected: u64,
+) -> Result<Completed, VaultError> {
+    match source {
+        Source::Bundled => {
+            let vault = vault::template::unlock_for_display(BUNDLED, password)?;
+            Ok(Completed::Opened(vault, None))
+        }
+        Source::Disk(path) | Source::External(path) => {
+            let bytes = vault::read_bounded(path)?;
+            let vault = vault::template::unlock_for_display(&bytes, password)?;
+            let saved = if let (Source::External(_), Some(store)) = (source, store) {
+                require_current(generation, expected)?;
+                Some(store.import_authenticated(path, &bytes)?)
+            } else {
+                None
+            };
+            Ok(Completed::Opened(vault, saved))
+        }
     }
 }
 
@@ -913,7 +1039,7 @@ impl Templates {
         } else if unlocking {
             let source = match &self.source {
                 Source::Bundled => self.t(Text::VaultLibraryBundled).to_owned(),
-                Source::Disk(path) => path
+                Source::Disk(path) | Source::External(path) => path
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
@@ -963,6 +1089,12 @@ impl Templates {
                 .when(matches!(self.source, Source::Bundled), |node| {
                     node.child(detail(p, self.t(Text::VaultPublicGateHelp)))
                 })
+                .when(
+                    matches!(self.source, Source::External(_))
+                        && self.store.is_some()
+                        && self.managed.is_none(),
+                    |node| node.child(detail(p, self.t(Text::VaultImportEncryptedHint))),
+                )
         } else {
             detail(p, self.t(Text::VaultPasswordHelp))
         };
@@ -1004,6 +1136,9 @@ impl Templates {
                     )),
             )
             .child(source_row)
+            .when(!preparing && !self.queued_imports.is_empty(), |node| {
+                node.child(detail(p, self.queued_imports_label()))
+            })
             .when(!enabled, |node| {
                 node.child(detail(p, self.t(Text::VaultWorking)))
             })
@@ -1250,20 +1385,24 @@ impl Templates {
             })
             .child(detail(p, self.t(Text::VaultClipboardWarning)))
             .when(self.plaintext, |node| {
-                node.child(
-                    actions().child(
-                        button(
-                            "vault-overwrite-export",
-                            toggle_label(self.replace_export, self.t(Text::VaultOverwrite)),
-                            p,
-                            false,
-                        )
-                        .on_click(cx.listener(|view, _, _, cx| {
-                            view.replace_export = !view.replace_export;
-                            cx.notify();
-                        })),
-                    ),
-                )
+                node.child(detail(p, self.t(export_destination_hint(client))))
+                    .when(client == Client::FlClash, |node| {
+                        node.child(detail(p, self.t(Text::VaultFlClashExportHelp)))
+                    })
+                    .child(
+                        actions().child(
+                            button(
+                                "vault-overwrite-export",
+                                toggle_label(self.replace_export, self.t(Text::VaultOverwrite)),
+                                p,
+                                false,
+                            )
+                            .on_click(cx.listener(|view, _, _, cx| {
+                                view.replace_export = !view.replace_export;
+                                cx.notify();
+                            })),
+                        ),
+                    )
             })
             .child(
                 actions().child(
@@ -1371,7 +1510,8 @@ impl Render for Templates {
                 }
             }))
             .on_drop(cx.listener(|view, paths: &ExternalPaths, _, cx| {
-                view.receive_paths(paths.paths().to_vec(), cx);
+                view.activity(cx);
+                view.drop_paths(paths.paths(), cx);
             }))
             .child(heading(
                 self.t(Text::Templates),
@@ -1438,6 +1578,19 @@ impl Render for Templates {
             card(p, self.t(Text::VaultAddTemplate))
                 .child(detail(p, self.t(Text::VaultImportHelp)))
                 .child(self.clients(false, p, cx))
+                .when(!self.queued_imports.is_empty(), |node| {
+                    let label = match self.language {
+                        Language::ZhCn => "导入已选文件",
+                        Language::Ja => "選択したファイルをインポート",
+                        _ => "Import selected files",
+                    };
+                    node.child(detail(p, self.queued_imports_label())).child(
+                        actions().child(
+                            button("vault-import-queued", label, p, true)
+                                .on_click(cx.listener(|view, _, _, cx| view.import_queued(cx))),
+                        ),
+                    )
+                })
                 .child(actions().child(
                     button("vault-import-files", self.t(Text::VaultImport), p, false).on_click(
                         cx.listener(|view, _, window, cx| view.choose_files(true, window, cx)),
@@ -1446,5 +1599,87 @@ impl Render for Templates {
         )
         .child(self.library(p, cx))
         .child(self.use_template(p, cx))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct WorkspaceFixture(PathBuf);
+
+    impl WorkspaceFixture {
+        fn new() -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
+                "script-hub-template-{}-{nonce}",
+                std::process::id()
+            ));
+            std::fs::create_dir(&root).unwrap();
+            Self(root)
+        }
+    }
+
+    impl Drop for WorkspaceFixture {
+        fn drop(&mut self) {
+            std::fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn only_a_single_vault_drop_selects_an_encrypted_source() {
+        assert!(dropped_vault(&[PathBuf::from("example.VaUlT")]));
+        assert!(!dropped_vault(&[PathBuf::from("example.yaml")]));
+        assert!(!dropped_vault(&[
+            PathBuf::from("example.vault"),
+            PathBuf::from("other.vault"),
+        ]));
+    }
+
+    #[test]
+    fn external_open_imports_only_after_authentication_in_the_current_session() {
+        const PASSWORD: &str = "synthetic external template test password";
+        let workspace = WorkspaceFixture::new();
+        let source_path = workspace.0.join("external.vault");
+        let original = vault::create(Library { templates: vec![] }, PASSWORD)
+            .unwrap()
+            .seal()
+            .unwrap();
+        vault::write_private(&source_path, &original, false).unwrap();
+        let source = Source::External(source_path.clone());
+        let store = ManagedStore::new(&workspace.0).unwrap();
+        let generation = AtomicU64::new(1);
+        assert!(matches!(
+            unlock_source(
+                &source,
+                "incorrect synthetic password",
+                Some(&store),
+                &generation,
+                1,
+            ),
+            Err(VaultError::Authentication)
+        ));
+        assert!(!store.library(false).exists());
+        assert!(matches!(
+            unlock_source(&source, PASSWORD, Some(&store), &generation, 0),
+            Err(VaultError::Io)
+        ));
+        assert!(!store.library(false).exists());
+        assert!(matches!(
+            unlock_source(&source, PASSWORD, Some(&store), &generation, 1),
+            Ok(Completed::Opened(_, Some(path))) if path == store.library(false)
+        ));
+        assert_eq!(vault::read_bounded(&source_path).unwrap(), original);
+        assert_eq!(
+            vault::read_bounded(&store.library(false)).unwrap(),
+            original
+        );
+        assert!(matches!(
+            unlock_source(&source, PASSWORD, None, &generation, 1),
+            Ok(Completed::Opened(_, None))
+        ));
     }
 }

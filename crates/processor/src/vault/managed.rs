@@ -265,6 +265,22 @@ mod tests {
     }
 
     #[test]
+    fn pruning_a_missing_working_library_keeps_both_encrypted_backups() {
+        let fixture = Fixture::new();
+        let store = ManagedStore::new(&fixture.0).unwrap();
+        let bytes = fixture.bytes();
+        let path = store.publish(&bytes, false).unwrap();
+        write_private(&store.library(true), &bytes, false).unwrap();
+        let moved_path = fixture.0.join("moved-working-library.vault");
+        fs::rename(path, &moved_path).unwrap();
+
+        assert!(store.prune_missing().unwrap().is_none());
+        assert!(store.read_record().unwrap().library.is_none());
+        assert_eq!(read_bounded(&moved_path).unwrap(), bytes);
+        assert_eq!(read_bounded(&store.library(true)).unwrap(), bytes);
+    }
+
+    #[test]
     fn malformed_registry_fails_closed_before_publishing_ciphertext() {
         let fixture = Fixture::new();
         let store = ManagedStore::new(&fixture.0).unwrap();

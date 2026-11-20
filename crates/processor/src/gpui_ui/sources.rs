@@ -6,7 +6,7 @@ use gpui::{
 };
 
 use super::{Palette, button, heading, input::TextInput, localized, panel};
-use crate::gui::i18n::{Text, text};
+use crate::desktop::i18n::{Text, text};
 use crate::pipeline::custom_sources::{self, CustomSource, SourceCategory};
 use crate::runtime::{job::acquire_write_lock, settings::Language};
 

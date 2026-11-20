@@ -7,9 +7,9 @@ mod rulesets;
 
 pub mod app;
 #[cfg(all(feature = "gui", any(target_os = "windows", target_os = "macos")))]
-pub mod gpui_ui;
+mod desktop;
 #[cfg(all(feature = "gui", any(target_os = "windows", target_os = "macos")))]
-pub mod gui;
+pub mod gpui_ui;
 pub mod pipeline;
 pub mod promax;
 #[cfg(feature = "gui")]

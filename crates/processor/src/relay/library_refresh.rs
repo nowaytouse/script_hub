@@ -2,7 +2,11 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use zeroize::{Zeroize, Zeroizing};
 
-use super::{Progress, RelayConfig, RelayError, RunMode, library::Workspace, model};
+use super::{
+    Progress, RelayConfig, RelayError, RunMode,
+    library::{Entry, Workspace},
+    model,
+};
 
 pub fn refresh(
     workspace: &Workspace,
@@ -12,36 +16,66 @@ pub fn refresh(
     progress: &(dyn Fn(Progress) + Sync),
 ) -> Result<Workspace, RelayError> {
     refresh_with(workspace, id, cancel, |entry| {
-        let mut config = RelayConfig {
-            source: entry.source.clone(),
-            source_file: entry.source_file.clone(),
-            test_nodes: false,
-            rename: false,
-            sort: false,
-            ..RelayConfig::default()
-        };
-        let result = super::run(&config, token, RunMode::Import, cancel, progress)
-            .map(|result| result.content);
-        config.source.zeroize();
-        config.source_file.zeroize();
-        result
+        fetch(entry, token, cancel, progress)
     })
+}
+
+pub fn refresh_entry(
+    workspace: &Workspace,
+    id: u64,
+    token: &str,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+) -> Result<Workspace, RelayError> {
+    refresh_entries(workspace, &[id], cancel, |entry| {
+        fetch(entry, token, cancel, progress)
+    })
+}
+
+fn fetch(
+    entry: &Entry,
+    token: &str,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(Progress) + Sync),
+) -> Result<Zeroizing<String>, RelayError> {
+    let mut config = RelayConfig {
+        source: entry.source.clone(),
+        source_file: entry.source_file.clone(),
+        test_nodes: false,
+        rename: false,
+        sort: false,
+        ..RelayConfig::default()
+    };
+    let result =
+        super::run(&config, token, RunMode::Import, cancel, progress).map(|result| result.content);
+    config.source.zeroize();
+    config.source_file.zeroize();
+    result
 }
 
 pub(super) fn refresh_with(
     workspace: &Workspace,
     id: u64,
     cancel: &AtomicBool,
-    mut fetch: impl FnMut(&super::library::Entry) -> Result<Zeroizing<String>, RelayError>,
+    fetch: impl FnMut(&Entry) -> Result<Zeroizing<String>, RelayError>,
 ) -> Result<Workspace, RelayError> {
-    workspace.validate().map_err(|_| RelayError::InvalidInput)?;
     let collection = workspace
         .collections
         .iter()
         .find(|c| c.id == id)
         .ok_or(RelayError::InvalidInput)?;
+    refresh_entries(workspace, &collection.members, cancel, fetch)
+}
+
+fn refresh_entries(
+    workspace: &Workspace,
+    ids: &[u64],
+    cancel: &AtomicBool,
+    mut fetch: impl FnMut(&Entry) -> Result<Zeroizing<String>, RelayError>,
+) -> Result<Workspace, RelayError> {
+    workspace.validate().map_err(|_| RelayError::InvalidInput)?;
     let mut candidate = workspace.clone();
-    for id in &collection.members {
+    for id in ids {
         if cancel.load(Ordering::Relaxed) {
             return Err(RelayError::Cancelled);
         }
@@ -78,7 +112,7 @@ pub(super) fn refresh_with(
 
 #[cfg(test)]
 mod tests {
-    use super::super::library::{Collection, Entry};
+    use super::super::library::Collection;
     use super::*;
 
     fn workspace() -> Workspace {
@@ -143,6 +177,21 @@ mod tests {
         .unwrap();
         assert!(result.subscriptions.iter().all(|e| e.content == "new"));
         assert!(workspace.subscriptions.iter().all(|e| e.content == "old"));
+    }
+
+    #[test]
+    fn one_entry_refresh_revalidates_its_collection_references_without_fetching_other_entries() {
+        let workspace = workspace_with_shared_member_edits();
+        let id = workspace.subscriptions[0].id;
+        let mut requests = Vec::new();
+        let result = refresh_entries(&workspace, &[id], &AtomicBool::new(false), |entry| {
+            requests.push(entry.id);
+            Ok(Zeroizing::new(
+                "B = socks5, b.example.invalid, 1080\nA = socks5, a.example.invalid, 1080\n".into(),
+            ))
+        });
+        assert_eq!(requests, [id]);
+        assert!(matches!(result, Err(RelayError::SourceChanged)));
     }
 
     #[test]

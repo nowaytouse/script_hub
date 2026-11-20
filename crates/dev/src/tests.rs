@@ -17,13 +17,6 @@ const ROOT_FILES: &[&str] = &[
     "THIRD_PARTY_NOTICES.md",
     "THIRD_PARTY_NOTICES.zh-CN.md",
 ];
-const FONTS: &[&str] = &[
-    "Hack-Regular.txt",
-    "OFL.txt",
-    "UFL.txt",
-    "egui-icons.txt",
-    "emoji-icon-font-mit-license.txt",
-];
 const COMMIT: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const MAC_HOST: &str = "aarch64-apple-darwin";
 const WINDOWS_HOST: &str = "x86_64-pc-windows-msvc";
@@ -63,12 +56,6 @@ impl Fixture {
         );
         for name in ROOT_FILES {
             fixture.write(name, format!("synthetic {name}").as_bytes());
-        }
-        for name in FONTS {
-            fixture.write(
-                &format!("crates/processor/licenses/epaint_default_fonts/{name}"),
-                b"synthetic font notice",
-            );
         }
         for name in [
             "AdGuard-CNAME-MIT.txt",
@@ -243,7 +230,7 @@ fn windows_stage_keeps_sidecars_in_one_resources_directory() {
     assert!(
         fixture
             .stage()
-            .join("ScriptHub.resources/licenses/epaint_default_fonts/OFL.txt")
+            .join("ScriptHub.resources/THIRD_PARTY_LICENSES.txt")
             .is_file()
     );
     assert!(!fixture.stage().join("templates.vault").exists());

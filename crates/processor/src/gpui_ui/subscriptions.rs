@@ -1,12 +1,21 @@
+mod health;
+mod library_edit;
+mod library_sync;
+mod migration;
+mod nodes;
+mod output;
 mod pipeline;
+mod preview_details;
 mod schedule;
+mod session;
 mod view;
 
 use super::input::TextInput;
+use crate::desktop::i18n::{Text, text};
 use crate::relay::{
     self, Progress, RelayConfig, RelayResult, RunMode,
     export::{OutputFormat, export_subscription},
-    library::{Collection, Entry, PublishSettings, Workspace},
+    library::{Collection, Entry, Workspace},
     library_store::Store,
     model::Subscription,
     session_schedule::PrivateConfig,
@@ -18,6 +27,7 @@ use gpui::{
 };
 use pipeline::{PipelineChanged, PipelineEditor};
 use std::{
+    borrow::Cow,
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
@@ -45,16 +55,17 @@ enum Source {
 enum FileMode {
     Nodes,
     LibraryNodes,
-    Backup,
 }
 
 struct Preview {
     config: PrivateConfig,
     result: RelayResult,
     source_revision: SourceRevision,
-    names: Vec<Zeroizing<String>>,
+    details: preview_details::Details,
+    public_gist_consent: output::PublicGistConsent,
 }
 
+#[derive(Clone)]
 enum SourceRevision {
     Link(Zeroizing<String>, Zeroizing<String>),
     Bound,
@@ -85,13 +96,16 @@ struct Run {
 enum Completed {
     Unlocked(Arc<Store>, Option<Workspace>),
     Saved(Workspace, &'static str),
+    RefreshedCache(Workspace, &'static str),
+    SavedOutput(Workspace, &'static str),
     Preview(Box<Preview>),
     ReviewedSource(ReviewedSource),
     SourceChanged,
     Loaded(Zeroizing<String>, bool),
     Copied(Zeroizing<String>),
     Notice(&'static str),
-    Published(Box<RelayResult>),
+    Published(Box<RelayResult>, Option<output::Receipt>),
+    FormatChecked(output::FormatCheck),
     RelayFailed(relay::RelayError),
     Cancelled,
 }
@@ -101,7 +115,10 @@ pub(super) struct Subscriptions {
     showing_relay: bool,
     storage_exists: bool,
     workspace: Workspace,
-    store: Option<Arc<Store>>,
+    library: session::Library,
+    session_password_form: bool,
+    confirm_session_discard: bool,
+    session_quit: bool,
     editor: Option<Item>,
     deleting: Option<Item>,
     members: Vec<u64>,
@@ -121,6 +138,10 @@ pub(super) struct Subscriptions {
     token: Entity<TextInput>,
     library_pipeline: Entity<PipelineEditor>,
     relay_pipeline: Entity<PipelineEditor>,
+    node_editor: nodes::Editor,
+    migration: migration::Migration,
+    health: health::Controls,
+    output: output::Controls,
     reviewed_source: Option<ReviewedSource>,
     allow_resolution: bool,
     schedule: schedule::Controls,
@@ -129,9 +150,10 @@ pub(super) struct Subscriptions {
     source: Source,
     preview: Option<Preview>,
     format: OutputFormat,
+    rename: bool,
+    sort: bool,
     allow_plaintext: bool,
     reviewing_publish: bool,
-    showing_node_names: bool,
     last_publication: Option<RelayResult>,
     notice: Option<String>,
     error: bool,
@@ -139,20 +161,27 @@ pub(super) struct Subscriptions {
 }
 
 pub(super) struct OpenRelay;
+pub(super) struct QuitAfterLibraryReview;
 
 impl EventEmitter<OpenRelay> for Subscriptions {}
+impl EventEmitter<QuitAfterLibraryReview> for Subscriptions {}
 
 impl Subscriptions {
     pub(super) fn new(cx: &mut Context<Self>) -> Self {
         let storage = Store::exists();
         let schedule = schedule::Controls::new(cx);
+        let health = health::Controls::new(cx);
+        let output = output::Controls::new(cx);
         let mut input = |hint, private| cx.new(|cx| TextInput::new(hint, private, cx));
         let state = Self {
             language: Language::En,
             showing_relay: false,
             storage_exists: storage.as_ref().is_ok_and(|exists| *exists),
             workspace: Workspace::default(),
-            store: None,
+            library: session::Library::default(),
+            session_password_form: false,
+            confirm_session_discard: false,
+            session_quit: false,
             editor: None,
             deleting: None,
             members: Vec::new(),
@@ -165,13 +194,17 @@ impl Subscriptions {
             entry_file: input("Optional source filename", false),
             relay_url: input("https://…", true),
             relay_file: input("Optional source filename", false),
-            output_url: input("Existing secret Gist URL, or leave empty", true),
+            output_url: input("Existing Gist URL, or leave empty", true),
             output_name: input("nodes.list", false),
             output_title: input("Script Hub Relay", false),
             source_token: input("Optional GitHub token", true),
             token: input("GitHub token", true),
             library_pipeline: cx.new(PipelineEditor::new),
             relay_pipeline: cx.new(PipelineEditor::new),
+            node_editor: nodes::Editor::new(cx),
+            migration: migration::Migration::default(),
+            health,
+            output,
             reviewed_source: None,
             allow_resolution: false,
             schedule,
@@ -180,9 +213,10 @@ impl Subscriptions {
             source: Source::Link,
             preview: None,
             format: OutputFormat::Original,
+            rename: false,
+            sort: false,
             allow_plaintext: false,
             reviewing_publish: false,
-            showing_node_names: false,
             last_publication: None,
             error: storage.is_err(),
             notice: storage.err().map(|error| error.to_string()),
@@ -193,10 +227,7 @@ impl Subscriptions {
             if this.schedule_active() {
                 this.stop_schedule(cx);
             }
-            this.preview = None;
-            this.last_publication = None;
-            this.conceal_preview(cx);
-            cx.notify();
+            this.invalidate_preview(cx);
         })
         .detach();
         cx.observe(&state.library_pipeline, |_, _, cx| cx.notify())
@@ -205,6 +236,14 @@ impl Subscriptions {
             .detach();
         for field in [&state.relay_url, &state.relay_file] {
             cx.observe(field, |this, _, cx| {
+                if this.node_editor.binding.as_ref().is_some_and(|binding| {
+                    !binding.revision.matches(
+                        this.relay_url.read(cx).value(),
+                        this.relay_file.read(cx).value(),
+                    )
+                }) {
+                    this.node_editor.clear(cx);
+                }
                 if matches!(this.source, Source::Link)
                     && this.reviewed_source.as_ref().is_some_and(|review| {
                         !review.revision.matches(
@@ -219,10 +258,15 @@ impl Subscriptions {
                     if this.schedule_active() {
                         this.stop_schedule(cx);
                     }
-                    this.preview = None;
-                    this.last_publication = None;
-                    this.conceal_preview(cx);
+                    this.invalidate_preview(cx);
                 }
+                cx.notify();
+            })
+            .detach();
+        }
+        for field in [&state.output_url, &state.output_name] {
+            cx.observe(field, |this, _, cx| {
+                this.revoke_public_gist_if_changed(cx);
                 cx.notify();
             })
             .detach();
@@ -233,6 +277,7 @@ impl Subscriptions {
     pub(super) fn show_relay(&mut self, showing: bool, cx: &mut Context<Self>) {
         if self.showing_relay != showing {
             self.showing_relay = showing;
+            self.clear_library_passwords(cx);
             self.conceal_preview(cx);
             cx.notify();
         }
@@ -257,11 +302,27 @@ impl Subscriptions {
     }
 
     fn conceal_preview(&mut self, cx: &mut Context<Self>) {
+        self.node_editor.hide(cx);
+        self.health.clear_transient();
+        self.schedule.clear_probe_consent();
+        self.clear_backup_recipient(cx);
         self.allow_resolution = false;
         self.allow_plaintext = false;
-        self.showing_node_names = false;
+        if let Some(preview) = self.preview.as_mut() {
+            preview.details = preview_details::Details::Hidden;
+            preview.public_gist_consent.clear();
+        }
         self.reviewing_publish = false;
         clear(&self.token, cx);
+    }
+
+    fn invalidate_preview(&mut self, cx: &mut Context<Self>) {
+        self.preview = None;
+        self.last_publication = None;
+        self.output.clear_checks();
+        self.output.clear_receipt(cx);
+        self.conceal_preview(cx);
+        cx.notify();
     }
 
     fn tr(&self, english: &'static str, chinese: &'static str) -> &'static str {
@@ -338,12 +399,20 @@ impl Subscriptions {
             Err(error) => self.feedback(false, error, cx),
             Ok(Completed::RelayFailed(error)) => self.relay_failure(error, cx),
             Ok(Completed::Unlocked(store, data)) => {
+                let notice = if data.is_some() {
+                    Text::WorkspaceUnlocked
+                } else {
+                    Text::WorkspaceSaved
+                };
                 if let Some(data) = data {
                     self.workspace = data;
                 }
                 self.storage_exists = true;
-                self.store = Some(store);
-                self.feedback(true, self.tr("Library unlocked", "资料库已解锁"), cx);
+                self.library = session::Library::Encrypted(store);
+                self.session_password_form = false;
+                self.confirm_session_discard = false;
+                self.feedback(true, text(self.language, notice), cx);
+                self.finish_session_quit(cx);
             }
             Ok(Completed::Saved(data, notice)) => {
                 self.workspace = data;
@@ -362,6 +431,10 @@ impl Subscriptions {
                 }
                 self.feedback(true, notice, cx);
             }
+            Ok(Completed::RefreshedCache(data, notice)) => {
+                self.finish_cache_refresh(data, notice, cx)
+            }
+            Ok(Completed::SavedOutput(data, notice)) => self.finish_output_save(data, notice, cx),
             Ok(Completed::Preview(preview)) => {
                 self.preview = Some(*preview);
                 if self.current_preview(cx).is_some() {
@@ -407,6 +480,7 @@ impl Subscriptions {
             }
             Ok(Completed::SourceChanged) => {
                 self.reviewed_source = None;
+                self.node_editor.clear(cx);
                 self.feedback(
                     false,
                     self.tr(
@@ -427,36 +501,49 @@ impl Subscriptions {
             }
             Ok(Completed::Copied(_)) => cx.notify(),
             Ok(Completed::Notice(notice)) => self.feedback(true, notice, cx),
-            Ok(Completed::Published(result)) => {
+            Ok(Completed::FormatChecked(check)) => self.finish_format_check(check, cx),
+            Ok(Completed::Published(result, receipt)) => {
+                let verification = if result.unchanged {
+                    Text::RelayUnchanged
+                } else {
+                    Text::RelayPublished
+                };
                 self.preview = None;
+                self.remember_publication(receipt, &result, cx);
                 self.last_publication = Some(*result);
-                self.feedback(
-                    true,
-                    self.tr("Secret Gist verified", "私密 Gist 已核验"),
-                    cx,
-                );
+                self.feedback(true, text(self.language, verification), cx);
             }
             Ok(Completed::Cancelled) => cx.notify(),
         }
     }
 
     fn open_store(&mut self, cx: &mut Context<Self>) {
-        let password = Zeroizing::new(self.password.read(cx).value().to_owned());
-        if !self.storage_exists && password.as_str() != self.confirmation.read(cx).value() {
-            self.feedback(false, self.tr("Passwords differ", "两次输入的密码不同"), cx);
+        if matches!(self.library, session::Library::Encrypted(_))
+            || (matches!(self.library, session::Library::Temporary)
+                && (self.storage_exists || !self.session_password_form))
+        {
             return;
         }
-        clear(&self.password, cx);
-        clear(&self.confirmation, cx);
+        let password = Zeroizing::new(self.password.read(cx).value().to_owned());
+        if !self.storage_exists && password.as_str() != self.confirmation.read(cx).value() {
+            self.feedback(
+                false,
+                text(self.language, Text::WorkspacePasswordMismatch),
+                cx,
+            );
+            return;
+        }
+        self.clear_library_passwords(cx);
         let exists = self.storage_exists;
+        let data = (!exists).then(|| self.workspace.clone());
         self.start(
             move || {
-                if exists {
+                if let Some(data) = data {
+                    let store = Store::create(&data, &password).map_err(message)?;
+                    Ok(Completed::Unlocked(Arc::new(store), None))
+                } else {
                     let (store, data) = Store::open(&password).map_err(message)?;
                     Ok(Completed::Unlocked(Arc::new(store), Some(data)))
-                } else {
-                    let store = Store::create(&Workspace::default(), &password).map_err(message)?;
-                    Ok(Completed::Unlocked(Arc::new(store), None))
                 }
             },
             cx,
@@ -464,7 +551,11 @@ impl Subscriptions {
     }
 
     fn lock(&mut self, cx: &mut Context<Self>) {
-        self.store = None;
+        self.migration.clear();
+        self.library = session::Library::Locked;
+        self.session_password_form = false;
+        self.confirm_session_discard = false;
+        self.clear_library_passwords(cx);
         self.workspace = Workspace::default();
         self.reset_editor(cx);
         self.set_source(Source::Link, cx);
@@ -482,6 +573,7 @@ impl Subscriptions {
             clear(field, cx);
         }
         self.feedback(true, self.tr("Library locked", "资料库已锁定"), cx);
+        self.finish_session_quit(cx);
     }
 
     fn reset_editor(&mut self, cx: &mut Context<Self>) {
@@ -538,7 +630,7 @@ impl Subscriptions {
     }
 
     fn save(&mut self, cx: &mut Context<Self>) {
-        let (Some(store), Some(item)) = (self.store.clone(), self.editor) else {
+        let (Some(library), Some(item)) = (self.library.writer(), self.editor) else {
             return;
         };
         let mut workspace = self.workspace.clone();
@@ -560,7 +652,14 @@ impl Subscriptions {
             return;
         }
         let steps = pipeline.steps().to_vec();
-        let notice = self.tr("Library saved", "资料库已保存");
+        let notice = text(
+            self.language,
+            if matches!(library, session::Library::Temporary) {
+                Text::WorkspaceDraftSaved
+            } else {
+                Text::WorkspaceSaved
+            },
+        );
         self.start(
             move || {
                 match item {
@@ -626,6 +725,9 @@ impl Subscriptions {
                             });
                         collection.name = name;
                         collection.processing.pipeline = steps;
+                        if collection.members != members {
+                            collection.processing.nodes.clear();
+                        }
                         collection.members = members;
                         if id == 0 {
                             workspace.add_collection(collection).map_err(message)?;
@@ -634,7 +736,7 @@ impl Subscriptions {
                         }
                     }
                 }
-                store.save(&workspace).map_err(message)?;
+                library.save(&workspace)?;
                 Ok(Completed::Saved(workspace, notice))
             },
             cx,
@@ -642,7 +744,7 @@ impl Subscriptions {
     }
 
     fn delete(&mut self, cx: &mut Context<Self>) {
-        let (Some(store), Some(item)) = (self.store.clone(), self.deleting.take()) else {
+        let (Some(library), Some(item)) = (self.library.writer(), self.deleting.take()) else {
             return;
         };
         let mut workspace = self.workspace.clone();
@@ -654,7 +756,7 @@ impl Subscriptions {
                     Item::Collection(id) => workspace.remove_collection(id),
                 }
                 .map_err(message)?;
-                store.save(&workspace).map_err(message)?;
+                library.save(&workspace)?;
                 Ok(Completed::Saved(workspace, notice))
             },
             cx,
@@ -663,6 +765,7 @@ impl Subscriptions {
 
     fn set_source(&mut self, source: Source, cx: &mut Context<Self>) {
         self.reset_schedule(cx);
+        self.node_editor.clear(cx);
         let steps = match &source {
             Source::Saved(Item::Entry(id)) => {
                 self.entry(*id).map(|entry| &entry.processing.pipeline)
@@ -678,9 +781,7 @@ impl Subscriptions {
             .update(cx, |editor, cx| editor.replace(steps, cx));
         self.source = source;
         self.reviewed_source = None;
-        self.preview = None;
-        self.last_publication = None;
-        self.conceal_preview(cx);
+        self.invalidate_preview(cx);
     }
 
     fn set_pipeline_busy(&self, busy: bool, cx: &mut Context<Self>) {
@@ -731,8 +832,6 @@ impl Subscriptions {
         if self.pending {
             return;
         }
-        let store = self.store.clone();
-        let mut workspace = self.workspace.clone();
         self.pending = true;
         self.set_pipeline_busy(true, cx);
         self.notice = None;
@@ -743,63 +842,23 @@ impl Subscriptions {
             prompt: Some(self.tr("Open subscription file", "打开订阅文件").into()),
         });
         let executor = cx.background_executor().clone();
-        let notice = self.tr(
-            "Backup stored in the encrypted library",
-            "备份已存入加密资料库",
-        );
         cx.spawn(async move |weak, cx| {
             let result = match pick.await {
                 Ok(Ok(Some(files))) => {
                     executor
                         .spawn(async move {
                             let path = files.first().ok_or("Choose a regular file.")?;
-                            match mode {
-                                FileMode::Nodes | FileMode::LibraryNodes => {
-                                    let bytes = read_limited(path, MAX_INPUT)?;
-                                    let content = Zeroizing::new(
-                                        std::str::from_utf8(&bytes)
-                                            .map_err(|_| "The subscription is not UTF-8 text.")?
-                                            .to_owned(),
-                                    );
-                                    validate_nodes(&content)?;
-                                    Ok(Completed::Loaded(
-                                        content,
-                                        matches!(mode, FileMode::LibraryNodes),
-                                    ))
-                                }
-                                FileMode::Backup => {
-                                    let store = store.ok_or("Unlock the library first.")?;
-                                    let bytes = read_limited(path, MAX_BACKUP)?;
-                                    let backup = relay::backup::decode(&bytes).map_err(message)?;
-                                    let cfg = &backup.config;
-                                    let name = cfg.title.trim();
-                                    let name =
-                                        if workspace.subscriptions.iter().any(|e| e.name == name) {
-                                            format!("Backup {}", workspace.next_id)
-                                        } else {
-                                            name.to_owned()
-                                        };
-                                    workspace
-                                        .add_entry(Entry {
-                                            id: 0,
-                                            name,
-                                            source: cfg.source.clone(),
-                                            source_file: cfg.source_file.clone(),
-                                            content: backup.content.to_string(),
-                                            processing: cfg.processing.clone(),
-                                            publish: PublishSettings {
-                                                output: cfg.output.clone(),
-                                                output_file: cfg.output_file.clone(),
-                                                format: cfg.output_format,
-                                                title: cfg.title.clone(),
-                                                ..Default::default()
-                                            },
-                                        })
-                                        .map_err(message)?;
-                                    store.save(&workspace).map_err(message)?;
-                                    Ok(Completed::Saved(workspace, notice))
-                                }
-                            }
+                            let bytes = read_limited(path, MAX_INPUT)?;
+                            let content = Zeroizing::new(
+                                std::str::from_utf8(&bytes)
+                                    .map_err(|_| "The subscription is not UTF-8 text.")?
+                                    .to_owned(),
+                            );
+                            validate_nodes(&content)?;
+                            Ok(Completed::Loaded(
+                                content,
+                                matches!(mode, FileMode::LibraryNodes),
+                            ))
                         })
                         .await
                 }
@@ -825,6 +884,7 @@ impl Subscriptions {
     fn needs_source_review(&self, cx: &App) -> bool {
         self.is_remote_source()
             && self.reviewed_source.is_none()
+            && self.node_editor.binding.is_none()
             && (!self.relay_pipeline.read(cx).steps().is_empty()
                 || matches!(self.source, Source::Saved(Item::Entry(id))
                     if self.entry(id).is_some_and(|entry| entry.processing.is_active())))
@@ -836,6 +896,15 @@ impl Subscriptions {
     }
 
     fn preview(&mut self, cx: &mut Context<Self>) {
+        self.preview_inner(false, None, cx);
+    }
+
+    fn preview_inner(
+        &mut self,
+        review_only: bool,
+        probe: Option<relay::engine::ProbeOptions>,
+        cx: &mut Context<Self>,
+    ) {
         if self.check_schedule_cooldown(cx) {
             return;
         }
@@ -852,9 +921,9 @@ impl Subscriptions {
             return;
         }
         let steps = pipeline.steps().to_vec();
-        let review_source = self.needs_source_review(cx);
+        let review_source = review_only || self.needs_source_review(cx);
         let allow_resolution = self.allow_resolution;
-        if self.needs_resolution(cx) && !allow_resolution {
+        if !review_source && self.needs_resolution(cx) && !allow_resolution {
             self.feedback(
                 false,
                 self.tr(
@@ -865,15 +934,23 @@ impl Subscriptions {
             );
             return;
         }
-        self.preview = None;
-        self.last_publication = None;
-        self.conceal_preview(cx);
+        self.invalidate_preview(cx);
         let format = self.format;
         let mut config = PrivateConfig(RelayConfig {
             output_format: format,
             allow_resolution,
+            rename: self.rename,
+            sort: self.sort,
             ..Default::default()
         });
+        if let Some(options) = probe {
+            config.0.test_nodes = true;
+            config.0.engine = options.engine;
+            config.0.concurrency = options.concurrency;
+            config.0.timeout_seconds = options.timeout.as_secs();
+            config.0.compatibility = options.compatibility;
+            config.0.doh = options.doh;
+        }
         let mut collection = None;
         let source_revision = match &self.source {
             Source::Link => {
@@ -908,7 +985,20 @@ impl Subscriptions {
             }
         };
         config.0.processing.pipeline = steps;
-        if config.0.local_content.is_none() && config.0.processing.is_active() {
+        let node_edits = self
+            .node_editor
+            .binding
+            .as_ref()
+            .filter(|binding| {
+                binding.revision.matches(
+                    self.relay_url.read(cx).value(),
+                    self.relay_file.read(cx).value(),
+                )
+            })
+            .map(|binding| (binding.source.clone(), binding.edits()));
+        if config.0.local_content.is_none()
+            && (config.0.processing.is_active() || config.0.test_nodes)
+        {
             config.0.expected_source = self
                 .reviewed_source
                 .as_ref()
@@ -919,18 +1009,6 @@ impl Subscriptions {
         let (cancel, progress) = self.begin_run();
         self.start(
             move || {
-                if review_source {
-                    let result =
-                        match relay::run(&config.0, &token, RunMode::Import, &cancel, &progress) {
-                            Ok(result) => result,
-                            Err(error) => return Ok(Completed::RelayFailed(error)),
-                        };
-                    return Ok(Completed::ReviewedSource(ReviewedSource {
-                        revision: source_revision,
-                        content: result.content,
-                        nodes: result.total,
-                    }));
-                }
                 if let Some((workspace, id)) = collection {
                     let collection = workspace
                         .collections
@@ -947,6 +1025,25 @@ impl Subscriptions {
                     config.0.script_source.label =
                         RelayConfig::script_source_label(&collection.name);
                 }
+                if review_source {
+                    let result =
+                        match relay::run(&config.0, &token, RunMode::Import, &cancel, &progress) {
+                            Ok(result) => result,
+                            Err(error) => return Ok(Completed::RelayFailed(error)),
+                        };
+                    return Ok(Completed::ReviewedSource(ReviewedSource {
+                        revision: source_revision,
+                        content: result.content,
+                        nodes: result.total,
+                    }));
+                }
+                if let Some((source, edits)) = node_edits {
+                    config.0.expected_source = Some(source);
+                    config.0.processing.nodes = edits;
+                }
+                if config.0.test_nodes && config.0.expected_source.is_none() {
+                    return Ok(Completed::RelayFailed(relay::RelayError::InvalidInput));
+                }
                 let result =
                     match relay::run(&config.0, &token, RunMode::Preview, &cancel, &progress) {
                         Ok(result) => result,
@@ -955,18 +1052,12 @@ impl Subscriptions {
                         }
                         Err(error) => return Ok(Completed::RelayFailed(error)),
                     };
-                let parsed = Subscription::parse(&result.content).map_err(message)?;
-                let names = parsed
-                    .nodes()
-                    .iter()
-                    .take(24)
-                    .map(|node| Zeroizing::new(node.name().chars().take(120).collect()))
-                    .collect();
                 Ok(Completed::Preview(Box::new(Preview {
                     config,
                     result,
                     source_revision,
-                    names,
+                    details: preview_details::Details::Hidden,
+                    public_gist_consent: output::PublicGistConsent::default(),
                 })))
             },
             cx,
@@ -988,7 +1079,7 @@ impl Subscriptions {
     }
 
     fn current_preview(&self, cx: &App) -> Option<&Preview> {
-        if !self.relay_pipeline.read(cx).can_submit() {
+        if self.node_editor.open || !self.relay_pipeline.read(cx).can_submit() {
             return None;
         }
         let preview = self.preview.as_ref()?;
@@ -1002,7 +1093,10 @@ impl Subscriptions {
     }
 
     fn with_preview(&mut self, cx: &mut Context<Self>) -> Option<&Preview> {
-        if self.current_preview(cx).is_none() {
+        if self
+            .current_preview(cx)
+            .is_none_or(|preview| preview.result.content.is_empty())
+        {
             self.feedback(
                 false,
                 self.tr("Preview the current source first", "请先预览当前来源"),
@@ -1040,14 +1134,14 @@ impl Subscriptions {
     }
 
     fn copy_result(&mut self, cx: &mut Context<Self>) {
-        if !self.allow_plaintext {
+        if !self.allow_plaintext || !self.output.local_format_valid() {
             return;
         }
         let Some(preview) = self.with_preview(cx) else {
             return;
         };
         let content = preview.result.content.clone();
-        let format = self.format;
+        let format = self.output.local_format();
         self.start(
             move || {
                 export_subscription(&content, format)
@@ -1059,7 +1153,7 @@ impl Subscriptions {
     }
 
     fn export_result(&mut self, cx: &mut Context<Self>) {
-        if !self.allow_plaintext {
+        if !self.allow_plaintext || !self.output.local_format_valid() {
             return;
         }
         let Some(preview) = self.with_preview(cx) else {
@@ -1067,7 +1161,7 @@ impl Subscriptions {
         };
         let content = preview.result.content.clone();
         self.allow_plaintext = false;
-        let format = self.format;
+        let format = self.output.local_format();
         let directory = documents_directory();
         let suggested_name = format!("scripthub-nodes.{}", format.extension());
         let prompt = cx.prompt_for_new_path(&directory, Some(&suggested_name));
@@ -1081,7 +1175,7 @@ impl Subscriptions {
                 Ok(Ok(Some(path))) => {
                     executor
                         .spawn(async move {
-                            if !crate::gui::templates::safe_export_destination(&path, None) {
+                            if !crate::desktop::template_paths::safe_export_destination(&path, None) {
                                 return Err("Choose an export file outside Git working trees and vault folders.".into());
                             }
                             let output = export_subscription(&content, format).map_err(message)?;
@@ -1101,10 +1195,16 @@ impl Subscriptions {
     }
 
     fn publish(&mut self, cx: &mut Context<Self>) {
-        if !self.reviewing_publish || self.check_schedule_cooldown(cx) {
+        if !self.reviewing_publish
+            || !self.output.gist_format_valid()
+            || self.check_schedule_cooldown(cx)
+        {
             return;
         }
-        let Some(preview) = self.current_preview(cx) else {
+        let Some(preview) = self.current_preview(cx).filter(|preview| {
+            !preview.result.content.is_empty()
+                && (!preview.result.tested || preview.result.healthy > 0)
+        }) else {
             self.feedback(
                 false,
                 self.tr("Preview the current source first", "请先预览当前来源"),
@@ -1112,7 +1212,8 @@ impl Subscriptions {
             );
             return;
         };
-        let config = self.publication_config(preview, cx);
+        let mut config = self.publication_config(preview, cx);
+        config.0.allow_public_output = self.allows_public_gist(preview, cx);
         let result = preview.result.clone();
         let token = Zeroizing::new(self.token.read(cx).value().to_owned());
         if token.trim().is_empty() {
@@ -1123,14 +1224,16 @@ impl Subscriptions {
             );
             return;
         }
-        clear(&self.token, cx);
-        self.reviewing_publish = false;
+        self.cancel_publication_review(cx);
         let (cancel, progress) = self.begin_run();
         self.start(
             move || {
                 Ok(
                     match relay::upload_prepared(&config.0, &token, result, &cancel, &progress) {
-                        Ok(result) => Completed::Published(Box::new(result)),
+                        Ok(result) => {
+                            let receipt = output::Receipt::from_result(&config.0, &result);
+                            Completed::Published(Box::new(result), receipt)
+                        }
                         Err(error) => Completed::RelayFailed(error),
                     },
                 )
@@ -1139,20 +1242,37 @@ impl Subscriptions {
         );
     }
 
+    fn cancel_publication_review(&mut self, cx: &mut Context<Self>) {
+        if let Some(preview) = self.preview.as_mut() {
+            preview.public_gist_consent.clear();
+        }
+        clear(&self.token, cx);
+        self.schedule.clear_probe_consent();
+        self.reviewing_publish = false;
+        cx.notify();
+    }
+
     fn publication_config(&self, preview: &Preview, cx: &App) -> PrivateConfig {
         let mut config = PrivateConfig(preview.config.0.clone());
+        config.0.output_format = self.format;
         config.0.output = self.output_url.read(cx).value().trim().to_owned();
-        let filename = self.output_name.read(cx).value().trim();
-        config.0.output_file = if filename.is_empty() {
-            format!("nodes.{}", self.format.extension())
-        } else {
-            filename.to_owned()
-        };
+        config.0.output_file =
+            gist_filename(self.output_name.read(cx).value(), self.format).into_owned();
+        config.0.allow_public_output = false;
         let title = self.output_title.read(cx).value().trim();
         if !title.is_empty() {
             config.0.title = title.to_owned();
         }
         config
+    }
+}
+
+fn gist_filename(filename: &str, format: OutputFormat) -> Cow<'_, str> {
+    let filename = filename.trim();
+    if filename.is_empty() {
+        Cow::Owned(format!("nodes.{}", format.extension()))
+    } else {
+        Cow::Borrowed(filename)
     }
 }
 
