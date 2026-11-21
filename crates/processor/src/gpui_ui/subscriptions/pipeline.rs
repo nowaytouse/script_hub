@@ -7,7 +7,7 @@ use crate::desktop::operations::{
 };
 use crate::relay::{
     model::{
-        pipeline::{self, Operation, RegexSortUnmatched, Step},
+        pipeline::{self, Operation, RegexSortUnmatched, SortKey, Step},
         script::{SyntaxError, check_syntax},
     },
     plan,
@@ -54,30 +54,180 @@ impl SyntaxFeedback {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Forms {
-    NameFilter,
-    MemberNameFilter,
-    HostFilter,
-    ReplaceName,
+    NameFilter {
+        keep: bool,
+    },
+    MemberNameFilter {
+        keep: bool,
+    },
+    HostFilter {
+        keep: bool,
+    },
+    ProtocolFilter {
+        keep: bool,
+    },
+    RegionFilter {
+        keep: bool,
+        keep_unknown: bool,
+    },
+    ReplaceName {
+        regex: bool,
+    },
     FormatName,
+    Sort {
+        key: SortKey,
+        descending: bool,
+    },
+    RegexSort {
+        unmatched: RegexSortUnmatched,
+        member: bool,
+    },
+    Limit,
+    Slice,
 }
 
 impl Forms {
-    fn fields(operation: &Operation) -> Option<(Self, &str, &str, bool)> {
+    fn fields(operation: &Operation) -> Option<(Self, String, String)> {
+        let empty = String::new;
         Some(match operation {
-            Operation::NameFilter { pattern, keep } => (Self::NameFilter, pattern, "", *keep),
-            Operation::MemberNameFilter { pattern, keep } => {
-                (Self::MemberNameFilter, pattern, "", *keep)
+            Operation::NameFilter { pattern, keep } => {
+                (Self::NameFilter { keep: *keep }, pattern.clone(), empty())
             }
-            Operation::HostFilter { pattern, keep } => (Self::HostFilter, pattern, "", *keep),
+            Operation::MemberNameFilter { pattern, keep } => (
+                Self::MemberNameFilter { keep: *keep },
+                pattern.clone(),
+                empty(),
+            ),
+            Operation::HostFilter { pattern, keep } => {
+                (Self::HostFilter { keep: *keep }, pattern.clone(), empty())
+            }
+            Operation::ProtocolFilter { protocols, keep } => (
+                Self::ProtocolFilter { keep: *keep },
+                Self::list_value(protocols)?,
+                empty(),
+            ),
+            Operation::RegionFilter {
+                regions,
+                keep,
+                keep_unknown,
+            } => (
+                Self::RegionFilter {
+                    keep: *keep,
+                    keep_unknown: *keep_unknown,
+                },
+                Self::list_value(regions)?,
+                empty(),
+            ),
             Operation::ReplaceName {
                 pattern,
                 replacement,
                 regex,
-            } => (Self::ReplaceName, pattern, replacement, *regex),
-            Operation::FormatName { template } => (Self::FormatName, template, "", false),
+            } => (
+                Self::ReplaceName { regex: *regex },
+                pattern.clone(),
+                replacement.clone(),
+            ),
+            Operation::FormatName { template } => (Self::FormatName, template.clone(), empty()),
+            Operation::Sort { key, descending } => (
+                Self::Sort {
+                    key: *key,
+                    descending: *descending,
+                },
+                empty(),
+                empty(),
+            ),
+            Operation::RegexSort {
+                patterns,
+                unmatched,
+            }
+            | Operation::MemberRegexSort {
+                patterns,
+                unmatched,
+            } => (
+                Self::RegexSort {
+                    unmatched: *unmatched,
+                    member: matches!(operation, Operation::MemberRegexSort { .. }),
+                },
+                Self::list_value(patterns)?,
+                empty(),
+            ),
+            Operation::Limit { count } => (Self::Limit, count.to_string(), empty()),
+            Operation::Slice { skip, count } => (Self::Slice, skip.to_string(), count.to_string()),
             _ => return None,
+        })
+    }
+
+    fn list_value(entries: &[String]) -> Option<String> {
+        // Disabled steps may contain empty entries. Keep these editable losslessly in JSON.
+        entries
+            .iter()
+            .all(|entry| !entry.is_empty() && !entry.contains(['\r', '\n']))
+            .then(|| entries.join("\n"))
+    }
+
+    fn uses_list(self) -> bool {
+        matches!(
+            self,
+            Self::ProtocolFilter { .. } | Self::RegionFilter { .. } | Self::RegexSort { .. }
+        )
+    }
+
+    fn operation(self, primary: &str, secondary: &str) -> Option<Operation> {
+        let entries = || primary.lines().map(str::to_owned).collect();
+        Some(match self {
+            Self::NameFilter { keep } => Operation::NameFilter {
+                pattern: primary.into(),
+                keep,
+            },
+            Self::MemberNameFilter { keep } => Operation::MemberNameFilter {
+                pattern: primary.into(),
+                keep,
+            },
+            Self::HostFilter { keep } => Operation::HostFilter {
+                pattern: primary.into(),
+                keep,
+            },
+            Self::ProtocolFilter { keep } => Operation::ProtocolFilter {
+                protocols: entries(),
+                keep,
+            },
+            Self::RegionFilter { keep, keep_unknown } => Operation::RegionFilter {
+                regions: entries(),
+                keep,
+                keep_unknown,
+            },
+            Self::ReplaceName { regex } => Operation::ReplaceName {
+                pattern: primary.into(),
+                replacement: secondary.into(),
+                regex,
+            },
+            Self::FormatName => Operation::FormatName {
+                template: primary.into(),
+            },
+            Self::Sort { key, descending } => Operation::Sort { key, descending },
+            Self::RegexSort {
+                unmatched,
+                member: false,
+            } => Operation::RegexSort {
+                patterns: entries(),
+                unmatched,
+            },
+            Self::RegexSort {
+                unmatched,
+                member: true,
+            } => Operation::MemberRegexSort {
+                patterns: entries(),
+                unmatched,
+            },
+            Self::Limit => Operation::Limit {
+                count: primary.trim().parse().ok()?,
+            },
+            Self::Slice => Operation::Slice {
+                skip: primary.trim().parse().ok()?,
+                count: secondary.trim().parse().ok()?,
+            },
         })
     }
 }
@@ -88,8 +238,8 @@ pub(super) struct PipelineEditor {
     parameters: Entity<TextInput>,
     primary_text: Entity<TextInput>,
     secondary_text: Entity<TextInput>,
+    list_text: Entity<TextInput>,
     form: Option<Forms>,
-    form_option: bool,
     editing: Option<u64>,
     picking: bool,
     busy: bool,
@@ -120,8 +270,8 @@ impl PipelineEditor {
             parameters,
             primary_text: cx.new(|cx| TextInput::new("", false, cx)),
             secondary_text: cx.new(|cx| TextInput::new("", false, cx)),
+            list_text: cx.new(|cx| TextInput::multiline("", 4, cx)),
             form: None,
-            form_option: false,
             editing: None,
             picking: false,
             busy: false,
@@ -218,9 +368,8 @@ impl PipelineEditor {
 
     fn edit(&mut self, index: usize, cx: &mut Context<Self>) {
         let step = &self.steps[index];
-        if let Some((form, option)) = self.populate_form(&step.operation, cx) {
+        if let Some(form) = self.populate_form(&step.operation, cx) {
             self.form = Some(form);
-            self.form_option = option;
         } else if let Ok(json) = serde_json::to_string_pretty(&step.operation) {
             self.parameters
                 .update(cx, |input, cx| input.set_value(json, cx));
@@ -232,17 +381,21 @@ impl PipelineEditor {
         cx.notify();
     }
 
-    fn populate_form(
-        &self,
-        operation: &Operation,
-        cx: &mut Context<Self>,
-    ) -> Option<(Forms, bool)> {
-        let (form, primary, secondary, option) = Forms::fields(operation)?;
-        self.primary_text
+    fn populate_form(&self, operation: &Operation, cx: &mut Context<Self>) -> Option<Forms> {
+        let (form, primary, secondary) = Forms::fields(operation)?;
+        self.form_input(form)
             .update(cx, |input, cx| input.set_value(primary, cx));
         self.secondary_text
             .update(cx, |input, cx| input.set_value(secondary, cx));
-        Some((form, option))
+        Some(form)
+    }
+
+    fn form_input(&self, form: Forms) -> &Entity<TextInput> {
+        if form.uses_list() {
+            &self.list_text
+        } else {
+            &self.primary_text
+        }
     }
 
     fn draft_operation(&self, cx: &App) -> Option<Operation> {
@@ -252,40 +405,23 @@ impl PipelineEditor {
                 .then(|| serde_json::from_str::<Operation>(draft).ok())
                 .flatten();
         };
-        let primary = self.primary_text.read(cx).value().to_owned();
-        let option = self.form_option;
-        Some(match form {
-            Forms::NameFilter => Operation::NameFilter {
-                pattern: primary,
-                keep: option,
-            },
-            Forms::MemberNameFilter => Operation::MemberNameFilter {
-                pattern: primary,
-                keep: option,
-            },
-            Forms::HostFilter => Operation::HostFilter {
-                pattern: primary,
-                keep: option,
-            },
-            Forms::ReplaceName => Operation::ReplaceName {
-                pattern: primary,
-                replacement: self.secondary_text.read(cx).value().to_owned(),
-                regex: option,
-            },
-            Forms::FormatName => Operation::FormatName { template: primary },
-        })
+        form.operation(
+            self.form_input(form).read(cx).value(),
+            self.secondary_text.read(cx).value(),
+        )
     }
 
     fn show_json(&mut self, cx: &mut Context<Self>) {
         let Some(operation) = self.draft_operation(cx) else {
+            self.status = Some(text(self.language, Text::OperationInvalid));
+            cx.notify();
             return;
         };
         if let Ok(json) = serde_json::to_string_pretty(&operation) {
             self.parameters
                 .update(cx, |input, cx| input.set_value(json, cx));
             self.form = None;
-            self.primary_text.update(cx, |input, cx| input.clear(cx));
-            self.secondary_text.update(cx, |input, cx| input.clear(cx));
+            self.clear_form(cx);
             self.status = None;
             cx.notify();
         }
@@ -293,17 +429,16 @@ impl PipelineEditor {
 
     fn show_fields(&mut self, cx: &mut Context<Self>) {
         if let Some(operation) = self.draft_operation(cx)
-            && let Some((form, option)) = self.populate_form(&operation, cx)
+            && let Some(form) = self.populate_form(&operation, cx)
         {
             self.form = Some(form);
-            self.form_option = option;
             self.parameters.update(cx, |input, cx| input.clear(cx));
             self.status = None;
         } else {
             self.status = Some(self.tr(
-                "Check the JSON and choose a supported filter or rename operation.",
-                "请检查 JSON，并选择支持字段编辑的筛选或改名操作。",
-                "JSON を確認し、対応するフィルターまたは名前変更を選択してください。",
+                "Check the JSON and whether these parameters can be edited in fields.",
+                "请检查 JSON，并确认这些参数支持字段编辑。",
+                "JSON を確認し、入力欄で編集できるパラメーターか確認してください。",
             ));
         }
         cx.notify();
@@ -314,8 +449,13 @@ impl PipelineEditor {
         self.form = None;
         self.syntax_feedback = None;
         self.parameters.update(cx, |input, cx| input.clear(cx));
+        self.clear_form(cx);
+    }
+
+    fn clear_form(&self, cx: &mut Context<Self>) {
         self.primary_text.update(cx, |input, cx| input.clear(cx));
         self.secondary_text.update(cx, |input, cx| input.clear(cx));
+        self.list_text.update(cx, |input, cx| input.clear(cx));
     }
 
     fn check_script(&mut self, cx: &mut Context<Self>) {
@@ -472,55 +612,161 @@ impl PipelineEditor {
     }
 
     fn form_fields(&self, form: Forms, palette: Palette, cx: &Context<Self>) -> Div {
-        let key = match form {
-            Forms::FormatName => Text::OperationTemplate,
-            Forms::HostFilter => Text::OperationHostPattern,
-            _ => Text::OperationPattern,
+        let fields = div().flex().flex_col().gap_2();
+        let primary = |label| field(label, self.form_input(form), palette);
+        let secondary = |label| field(label, &self.secondary_text, palette);
+        let pattern = || primary(text(self.language, Text::OperationPattern));
+        let help = |label| description(label, palette);
+        let filter = |choices: [Forms; 2]| {
+            self.form_choices(
+                "pipeline-filter-mode",
+                form,
+                choices.into_iter().zip([
+                    self.tr("Exclude matches", "排除匹配项", "一致する項目を除外"),
+                    self.tr("Keep matches", "保留匹配项", "一致する項目を保持"),
+                ]),
+                palette,
+                cx,
+            )
         };
-        let mut fields = div().flex().flex_col().gap_2().child(field(
-            text(self.language, key),
-            &self.primary_text,
-            palette,
-        ));
-
-        let options = match form {
-            Forms::FormatName => {
-                return fields.child(description(
-                    text(self.language, Text::OperationTemplateHelp),
+        let directions = [
+            self.tr("Ascending", "升序", "昇順"),
+            self.tr("Descending", "降序", "降順"),
+        ];
+        let count = self.tr("Target node count", "目标节点数", "目標ノード数");
+        match form {
+            Forms::NameFilter { .. } => fields
+                .child(pattern())
+                .child(filter([false, true].map(|keep| Forms::NameFilter { keep }))),
+            Forms::MemberNameFilter { .. } => fields.child(pattern()).child(filter(
+                [false, true].map(|keep| Forms::MemberNameFilter { keep }),
+            )),
+            Forms::HostFilter { .. } => fields
+                .child(primary(text(self.language, Text::OperationHostPattern)))
+                .child(filter([false, true].map(|keep| Forms::HostFilter { keep }))),
+            Forms::ProtocolFilter { .. } => fields
+                .child(primary(self.tr("Protocols", "协议", "プロトコル")))
+                .child(help(self.tr(
+                    "Enter one protocol per line, such as ss, vless, or hysteria2.",
+                    "每行填写一个协议，例如 ss、vless 或 hysteria2。",
+                    "1 行に 1 つのプロトコルを入力します。例: ss、vless、hysteria2。",
+                )))
+                .child(filter([false, true].map(|keep| Forms::ProtocolFilter { keep }))),
+            Forms::RegionFilter { keep, keep_unknown } => fields
+                .child(primary(self.tr("Region codes", "地区代码", "地域コード")))
+                .child(help(self.tr(
+                    "Matches regions identified from node names. Enter one two-letter code per line, such as JP or US.",
+                    "根据节点名称识别地区。每行填写一个两字母地区代码，例如 JP 或 US。",
+                    "ノード名から地域を判定します。1 行に 1 つの 2 文字コードを入力します。例: JP、US。",
+                )))
+                .child(filter([false, true].map(|keep| Forms::RegionFilter { keep, keep_unknown })))
+                .child(self.form_choices(
+                    "pipeline-region-unknown",
+                    form,
+                    [false, true].map(|keep_unknown| Forms::RegionFilter { keep, keep_unknown }).into_iter().zip([
+                        self.tr("Exclude unknown region", "排除未知地区", "地域不明を除外"),
+                        self.tr("Keep unknown region", "保留未知地区", "地域不明を保持"),
+                    ]),
                     palette,
-                ));
-            }
-            Forms::ReplaceName => {
-                fields = fields.child(field(
-                    text(self.language, Text::OperationReplacement),
-                    &self.secondary_text,
-                    palette,
-                ));
-                [
-                    self.tr("Literal text", "普通文本", "リテラル文字列"),
-                    text(self.language, Text::OperationUseRegex),
-                ]
-            }
-            Forms::NameFilter | Forms::MemberNameFilter | Forms::HostFilter => [
-                self.tr("Exclude matches", "排除匹配项", "一致する項目を除外"),
-                self.tr("Keep matches", "保留匹配项", "一致する項目を保持"),
-            ],
-        };
-        fields.child(
-            row().children(options.into_iter().enumerate().map(|(index, label)| {
-                let selected = index == 1;
-                self.action(
-                    ("pipeline-form-option", index),
-                    label,
-                    palette,
-                    self.form_option == selected,
                     cx,
-                    move |this, cx| {
-                        this.form_option = selected;
-                        cx.notify();
-                    },
-                )
-            })),
+                )),
+            Forms::FormatName => fields
+                .child(primary(text(self.language, Text::OperationTemplate)))
+                .child(help(
+                    text(self.language, Text::OperationTemplateHelp),
+                )),
+            Forms::ReplaceName { .. } => fields
+                .child(pattern())
+                .child(secondary(text(self.language, Text::OperationReplacement)))
+                .child(self.form_choices(
+                    "pipeline-replacement-mode",
+                    form,
+                    [false, true].map(|regex| Forms::ReplaceName { regex }).into_iter().zip([
+                        self.tr("Literal text", "普通文本", "リテラル文字列"),
+                        text(self.language, Text::OperationUseRegex),
+                    ]),
+                    palette,
+                    cx,
+                )),
+            Forms::Sort { key, descending } => fields
+                .child(help(self.tr("Sort by", "排序字段", "並べ替えの項目")))
+                .child(self.form_choices(
+                    "pipeline-sort-key",
+                    form,
+                    [
+                        (SortKey::Name, self.tr("Node name", "节点名称", "ノード名")),
+                        (SortKey::NameUtf16, self.tr("Node name (UTF-16)", "节点名称（UTF-16）", "ノード名（UTF-16）")),
+                        (SortKey::MemberNameUtf16, self.tr("Collection member (UTF-16)", "集合成员名称（UTF-16）", "コレクションのメンバー名（UTF-16）")),
+                        (SortKey::NaturalName, self.tr("Natural name order", "名称自然排序", "名前の自然順")),
+                        (SortKey::Protocol, self.tr("Protocol", "协议", "プロトコル")),
+                        (SortKey::Region, self.tr("Region", "地区", "地域")),
+                        (SortKey::Server, self.tr("Server", "服务器", "サーバー")),
+                        (SortKey::Port, self.tr("Port", "端口", "ポート")),
+                    ].map(|(key, label)| (Forms::Sort { key, descending }, label)),
+                    palette,
+                    cx,
+                ))
+                .child(self.form_choices(
+                    "pipeline-sort-direction",
+                    form,
+                    [false, true].map(|descending| Forms::Sort { key, descending }).into_iter().zip(directions),
+                    palette,
+                    cx,
+                )),
+            Forms::RegexSort { member, .. } => fields
+                .child(primary(self.tr("Regex patterns", "正则表达式", "正規表現")))
+                .child(help(self.tr(
+                    "Enter one pattern per line. Earlier matches are placed first.",
+                    "每行填写一个正则表达式，匹配靠前表达式的节点优先排列。",
+                    "1 行に 1 つ入力します。上の正規表現に一致するノードが先になります。",
+                )))
+                .child(help(self.tr("Order for unmatched nodes", "未匹配节点的顺序", "一致しないノードの順序")))
+                .child(self.form_choices(
+                    "pipeline-regex-unmatched",
+                    form,
+                    [RegexSortUnmatched::Original, RegexSortUnmatched::Ascending, RegexSortUnmatched::Descending]
+                        .map(|unmatched| Forms::RegexSort { unmatched, member })
+                        .into_iter()
+                        .zip([
+                            self.tr("Original order", "原始顺序", "元の順序"),
+                            directions[0],
+                            directions[1],
+                        ]),
+                    palette,
+                    cx,
+                )),
+            Forms::Limit => fields.child(primary(count)),
+            Forms::Slice => fields
+                .child(primary(self.tr("Nodes to skip", "开头跳过的节点数", "先頭から飛ばすノード数")))
+                .child(secondary(count)),
+        }
+    }
+
+    fn form_choices(
+        &self,
+        id: &'static str,
+        current: Forms,
+        choices: impl IntoIterator<Item = (Forms, &'static str)>,
+        palette: Palette,
+        cx: &Context<Self>,
+    ) -> Div {
+        row().children(
+            choices
+                .into_iter()
+                .enumerate()
+                .map(|(index, (form, label))| {
+                    self.action(
+                        (id, index),
+                        label,
+                        palette,
+                        current == form,
+                        cx,
+                        move |this, cx| {
+                            this.form = Some(form);
+                            cx.notify();
+                        },
+                    )
+                }),
         )
     }
 
@@ -905,4 +1151,77 @@ impl Render for PipelineEditor {
 
 fn row() -> Div {
     div().flex().flex_wrap().items_center().gap_2()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn structured_fields_preserve_operations() {
+        for operation in [
+            Operation::ProtocolFilter {
+                protocols: vec!["ss".into(), "vless".into()],
+                keep: false,
+            },
+            Operation::RegionFilter {
+                regions: vec!["jp".into(), "US".into()],
+                keep: true,
+                keep_unknown: false,
+            },
+            Operation::Sort {
+                key: SortKey::NaturalName,
+                descending: true,
+            },
+            Operation::RegexSort {
+                patterns: vec![r" edge,\d+ ".into(), r"^a{1,2}$".into()],
+                unmatched: RegexSortUnmatched::Ascending,
+            },
+            Operation::MemberRegexSort {
+                patterns: vec!["^member".into()],
+                unmatched: RegexSortUnmatched::Descending,
+            },
+            Operation::Limit { count: 0 },
+            Operation::Slice { skip: 3, count: 4 },
+        ] {
+            let (form, first, second) = Forms::fields(&operation).unwrap();
+            let rebuilt = form.operation(&first, &second).unwrap();
+            assert_eq!(
+                serde_json::to_value(rebuilt).unwrap(),
+                serde_json::to_value(operation).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn list_fields_accept_windows_line_endings_and_preserve_regex_spaces() {
+        let parsed = Forms::RegexSort {
+            member: false,
+            unmatched: RegexSortUnmatched::Original,
+        }
+        .operation(" ip, \\d+ \r\n^JP$\r\n", "")
+        .unwrap();
+        assert!(
+            matches!(parsed, Operation::RegexSort { ref patterns, .. } if patterns == &[r" ip, \d+ ", "^JP$"])
+        );
+    }
+
+    #[test]
+    fn ambiguous_lists_stay_in_json_and_invalid_counts_cannot_be_applied() {
+        let disabled_draft = Operation::ProtocolFilter {
+            protocols: vec![String::new()],
+            keep: true,
+        };
+        assert!(Forms::fields(&disabled_draft).is_none());
+        let (form, first, second) = Forms::fields(&Operation::RegexSort {
+            patterns: Vec::new(),
+            unmatched: RegexSortUnmatched::Original,
+        })
+        .unwrap();
+        assert!(
+            matches!(form.operation(&first, &second), Some(Operation::RegexSort { ref patterns, .. }) if patterns.is_empty())
+        );
+        assert!(Forms::Limit.operation("-1", "").is_none());
+        assert!(Forms::Slice.operation("1", "text").is_none());
+    }
 }

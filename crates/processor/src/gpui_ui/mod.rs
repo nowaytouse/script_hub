@@ -363,6 +363,13 @@ impl Hub {
             |hub, _, _: &subscriptions::OpenRelay, cx| hub.navigate(Page::Relay, cx),
         )
         .detach();
+        cx.subscribe(
+            &subscriptions,
+            |hub, _, _: &subscriptions::OpenSubscriptions, cx| {
+                hub.navigate(Page::Subscriptions, cx);
+            },
+        )
+        .detach();
         templates.update(cx, |state, cx| state.set_language(language, cx));
         subscriptions.update(cx, |state, cx| state.set_language(language, cx));
         Self {
@@ -459,8 +466,15 @@ impl Hub {
         self.confirm_quit = false;
         self.pending_job = None;
         self.message = None;
-        self.subscriptions
-            .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
+        self.subscriptions.update(cx, |state, cx| {
+            state.show_relay(page == Page::Relay, cx);
+            if page != Page::Subscriptions {
+                state.clear_bulk_sources(cx);
+            }
+            if !matches!(page, Page::Subscriptions | Page::Relay) {
+                state.leave_relay_save(cx);
+            }
+        });
         if page == Page::Tasks && self.repository_open && self.repository.is_none() {
             self.read_repository(cx);
         }
@@ -539,8 +553,10 @@ impl Hub {
         }
         if self.subscriptions.read(cx).has_unsaved_session() {
             self.navigate(Page::Subscriptions, cx);
-            self.subscriptions
-                .update(cx, |view, cx| view.confirm_end_session(cx));
+            self.subscriptions.update(cx, |view, cx| {
+                view.clear_bulk_sources(cx);
+                view.confirm_end_session(cx);
+            });
             return false;
         }
         if self.settings_dirty(cx) {

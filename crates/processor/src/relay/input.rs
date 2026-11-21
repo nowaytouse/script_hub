@@ -52,6 +52,17 @@ pub(super) enum Target {
     Https(Url),
 }
 
+pub(super) fn script_source_kind(input: &str, filename: &str) -> &'static str {
+    if input.is_empty() {
+        return "local";
+    }
+    match target(input, filename) {
+        Ok(Target::Gist(_)) => "gist",
+        Ok(Target::Https(_)) => "https",
+        Err(_) => "unknown",
+    }
+}
+
 pub(super) fn target(input: &str, filename: &str) -> Result<Target, RelayError> {
     let gist_error = match gist::GistFile::parse_source(input, filename) {
         Ok(file) => return Ok(Target::Gist(file)),

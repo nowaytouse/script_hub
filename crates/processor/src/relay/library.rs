@@ -39,14 +39,7 @@ pub struct Entry {
 
 impl Entry {
     fn script_source_kind(&self) -> &'static str {
-        if self.source.trim().is_empty() {
-            return "local";
-        }
-        match super::input::target(self.source.trim(), &self.source_file) {
-            Ok(super::input::Target::Gist(_)) => "gist",
-            Ok(super::input::Target::Https(_)) => "https",
-            Err(_) => "unknown",
-        }
+        super::input::script_source_kind(self.source.trim(), &self.source_file)
     }
 }
 

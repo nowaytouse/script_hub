@@ -165,11 +165,16 @@ impl Subscriptions {
         if self.confirm_session_discard || self.session_password_form {
             return body.children(self.session_banner(palette, cx));
         }
+        if let Some(bulk) = self.bulk_sources_panel(palette, cx) {
+            return body.child(bulk);
+        }
         if let Some(review) = self.migration_review(palette, cx) {
             return body.child(review);
         }
 
-        let body = body.children(self.session_banner(palette, cx));
+        let body = body
+            .children(self.session_banner(palette, cx))
+            .children(self.resume_relay_save_control(palette, cx));
         let actions = row()
             .child(self.action(
                 "new-subscription",
@@ -179,6 +184,7 @@ impl Subscriptions {
                 cx,
                 |this, cx| this.edit(Item::Entry(0), cx),
             ))
+            .child(self.bulk_sources_button(palette, cx))
             .child(self.action(
                 "new-collection",
                 self.tr("New collection", "新建合集"),
@@ -575,8 +581,8 @@ impl Subscriptions {
                     })))
                 .child(description(
                     self.tr(
-                        "Edits here apply to this relay session. Edit a library item to save its steps.",
-                        "此处编辑仅用于当前中继。要保存步骤，请编辑资料库中的项目。",
+                        "Save a new subscription from the preview, or edit an existing item in Subscriptions.",
+                        "可以从预览保存新订阅，也可以在订阅页编辑已有条目。",
                     ),
                     palette,
                 )).child(self.relay_pipeline.clone())
@@ -760,6 +766,7 @@ impl Subscriptions {
                 .when(!preview.result.content.is_empty(), |summary| {
                     summary.child(self.portable_backup_controls(palette, cx))
                 });
+            summary = summary.children(self.relay_save_controls(palette, cx));
             if let Some(details) = self.preview_details_panel(preview, palette, cx) {
                 summary = summary.child(details);
             }

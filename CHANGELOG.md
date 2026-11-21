@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Add subscriptions in batches with an optional ordered collection. Save a relay preview's reviewed source and processing steps to the subscription library. Configure protocol and region filters, sorting, and result limits with native forms.
+
 - Open desktop panels directly. Detect local project files in the background, remove the project picker and startup switch, and keep Git tools under Tasks. Hide Windows console windows for Git, the task worker, and sing-box.
 
 - Browse and copy rule sets from the bundled public catalog. Opening a project page automatically loads an available workspace, while the Workspace page lets you switch projects manually.

@@ -939,6 +939,45 @@ fn script_uses_planned_format_and_stale_preview_cannot_publish() {
 }
 
 #[test]
+fn cached_remote_preview_preserves_script_source_kind() {
+    use model::pipeline::{Operation, Step};
+
+    let mut cfg = config();
+    cfg.output.clear();
+    cfg.test_nodes = false;
+    cfg.local_content = Some(Zeroizing::new(SOURCE.into()));
+    cfg.expected_source = cfg.local_content.clone();
+    cfg.processing.pipeline = vec![Step {
+        id: 1,
+        enabled: true,
+        operation: Operation::Script {
+            source: "fn transform(node, context) { node.name = context.source_kind; node }".into(),
+            arguments: Default::default(),
+        },
+    }];
+    let fixture = Fixture::new(vec![]);
+    for (url, filename, expected_kind) in [
+        (INPUT_ID, "nodes.txt", "gist"),
+        ("https://subscription.example.invalid/nodes", "", "https"),
+    ] {
+        cfg.source = url.into();
+        cfg.source_file = filename.into();
+        let preview = run_with(
+            &cfg,
+            &fixture.client(),
+            RunMode::Preview,
+            &AtomicBool::new(false),
+            &|_| {},
+            &|_, _, _, _| panic!("must not check nodes"),
+        )
+        .unwrap();
+        let nodes = model::Subscription::parse(&preview.content).unwrap();
+        assert_eq!(nodes.nodes()[0].name(), expected_kind);
+    }
+    assert!(fixture.request_methods().is_empty());
+}
+
+#[test]
 fn surge_gist_receipt_follows_verified_creation_update_and_unchanged_output() {
     let source = "A = socks5, a.example.invalid, 1080\n";
     let mut config = config();

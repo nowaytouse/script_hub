@@ -1,3 +1,4 @@
+mod bulk_sources;
 mod health;
 mod library_edit;
 mod library_sync;
@@ -6,6 +7,7 @@ mod nodes;
 mod output;
 mod pipeline;
 mod preview_details;
+mod relay_save;
 mod schedule;
 mod session;
 mod view;
@@ -96,6 +98,8 @@ struct Run {
 enum Completed {
     Unlocked(Arc<Store>, Option<Workspace>),
     Saved(Workspace, &'static str),
+    SavedBulk(Workspace, &'static str),
+    SavedRelay(Workspace, &'static str),
     RefreshedCache(Workspace, &'static str),
     SavedOutput(Workspace, &'static str),
     Preview(Box<Preview>),
@@ -120,6 +124,7 @@ pub(super) struct Subscriptions {
     confirm_session_discard: bool,
     session_quit: bool,
     editor: Option<Item>,
+    bulk_sources: Option<bulk_sources::Form>,
     deleting: Option<Item>,
     members: Vec<u64>,
     added_content: Option<Zeroizing<String>>,
@@ -131,6 +136,7 @@ pub(super) struct Subscriptions {
     entry_file: Entity<TextInput>,
     relay_url: Entity<TextInput>,
     relay_file: Entity<TextInput>,
+    relay_save_name: Entity<TextInput>,
     output_url: Entity<TextInput>,
     output_name: Entity<TextInput>,
     output_title: Entity<TextInput>,
@@ -149,6 +155,8 @@ pub(super) struct Subscriptions {
     running: Option<Run>,
     source: Source,
     preview: Option<Preview>,
+    reviewing_relay_save: bool,
+    resume_relay_save: bool,
     format: OutputFormat,
     rename: bool,
     sort: bool,
@@ -161,9 +169,11 @@ pub(super) struct Subscriptions {
 }
 
 pub(super) struct OpenRelay;
+pub(super) struct OpenSubscriptions;
 pub(super) struct QuitAfterLibraryReview;
 
 impl EventEmitter<OpenRelay> for Subscriptions {}
+impl EventEmitter<OpenSubscriptions> for Subscriptions {}
 impl EventEmitter<QuitAfterLibraryReview> for Subscriptions {}
 
 impl Subscriptions {
@@ -183,6 +193,7 @@ impl Subscriptions {
             confirm_session_discard: false,
             session_quit: false,
             editor: None,
+            bulk_sources: None,
             deleting: None,
             members: Vec::new(),
             added_content: None,
@@ -194,6 +205,7 @@ impl Subscriptions {
             entry_file: input("Optional source filename", false),
             relay_url: input("https://…", true),
             relay_file: input("Optional source filename", false),
+            relay_save_name: input("", false),
             output_url: input("Existing Gist URL, or leave empty", true),
             output_name: input("nodes.list", false),
             output_title: input("Script Hub Relay", false),
@@ -212,6 +224,8 @@ impl Subscriptions {
             running: None,
             source: Source::Link,
             preview: None,
+            reviewing_relay_save: false,
+            resume_relay_save: false,
             format: OutputFormat::Original,
             rename: false,
             sort: false,
@@ -278,7 +292,11 @@ impl Subscriptions {
         if self.showing_relay != showing {
             self.showing_relay = showing;
             self.clear_library_passwords(cx);
+            self.clear_relay_save(cx);
             self.conceal_preview(cx);
+            if showing && self.library.is_open() && std::mem::take(&mut self.resume_relay_save) {
+                self.reviewing_relay_save = self.current_preview(cx).is_some();
+            }
             cx.notify();
         }
     }
@@ -318,6 +336,8 @@ impl Subscriptions {
 
     fn invalidate_preview(&mut self, cx: &mut Context<Self>) {
         self.preview = None;
+        self.resume_relay_save = false;
+        self.clear_relay_save(cx);
         self.last_publication = None;
         self.output.clear_checks();
         self.output.clear_receipt(cx);
@@ -430,6 +450,19 @@ impl Subscriptions {
                     self.set_source(source, cx);
                 }
                 self.feedback(true, notice, cx);
+            }
+            Ok(Completed::SavedBulk(data, notice)) => {
+                self.workspace = data;
+                self.clear_bulk_sources(cx);
+                self.feedback(true, notice, cx);
+            }
+            Ok(Completed::SavedRelay(data, notice)) => {
+                self.workspace = data;
+                self.clear_relay_save(cx);
+                self.feedback(true, notice, cx);
+                if self.showing_relay {
+                    cx.emit(OpenSubscriptions);
+                }
             }
             Ok(Completed::RefreshedCache(data, notice)) => {
                 self.finish_cache_refresh(data, notice, cx)
@@ -551,6 +584,7 @@ impl Subscriptions {
     }
 
     fn lock(&mut self, cx: &mut Context<Self>) {
+        self.clear_bulk_sources(cx);
         self.migration.clear();
         self.library = session::Library::Locked;
         self.session_password_form = false;

@@ -417,7 +417,7 @@ fn execute(
         Some(input::Source::Gist(_)) => "gist",
         Some(input::Source::Https { .. }) => "https",
         None if script_source.kind == "collection" => "collection",
-        None => "local",
+        None => input::script_source_kind(config.source.trim(), &config.source_file),
     };
     let prepared = if model::pipeline::has_resolution(&config.processing.pipeline) {
         let session = resolve::Session::new(cancel);
