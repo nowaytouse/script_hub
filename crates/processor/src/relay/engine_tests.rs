@@ -251,7 +251,10 @@ fn zero_or_excessive_concurrency_is_rejected_before_network() {
 #[cfg(unix)]
 #[test]
 fn child_is_reaped_when_checking_is_cancelled() {
-    let child = background_command("/bin/sleep").arg("30").spawn().unwrap();
+    let child = crate::process::background_command("/bin/sleep")
+        .arg("30")
+        .spawn()
+        .unwrap();
     let mut process = Process {
         child,
         writer: None,
