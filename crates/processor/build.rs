@@ -63,6 +63,7 @@ fn write_template_artifacts(output: &Path) -> io::Result<()> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=build/catalog.rs");
     println!("cargo:rerun-if-changed=src/module_header.rs");
+    println!("cargo:rerun-if-changed=src/rule_catalog.rs");
     println!("cargo:rerun-if-changed=build/locales.rs");
     let mut sources = Vec::new();
     for locale in locales::LOCALES {
@@ -80,6 +81,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         write_template_artifacts(&output)?;
     }
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    for relative in [
+        "rulesets/AdBlock/catalog.json",
+        "rulesets/AdBlock/github",
+        "rulesets/RULE-SET",
+    ] {
+        println!("cargo:rerun-if-changed={}", root.join(relative).display());
+    }
+    fs::write(output.join("rules.json"), catalog::rules(&root)?)?;
     for (platform, extension) in [("surge", "sgmodule"), ("shadowrocket", "module")] {
         println!(
             "cargo:rerun-if-changed={}",

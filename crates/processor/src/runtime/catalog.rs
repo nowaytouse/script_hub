@@ -3,6 +3,10 @@
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+#[path = "../rule_catalog.rs"]
+mod rule_catalog;
+use rule_catalog::load_rules;
+pub use rule_catalog::{RuleItem, subscription_url};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ModulePlatform {
@@ -34,15 +38,6 @@ impl ModuleItem {
                 .iter()
                 .any(|value| value.to_lowercase().contains(query))
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct RuleItem {
-    pub name: String,
-    pub category: String,
-    pub cdn: String,
-    pub github: String,
-    pub count: Option<u64>,
 }
 
 #[derive(Default)]
@@ -164,7 +159,8 @@ impl Catalog {
             } else {
                 ModulePlatform::Surge
             }),
-            rules: Vec::new(),
+            rules: serde_json::from_str(include_str!(concat!(env!("OUT_DIR"), "/rules.json")))
+                .expect("build-generated public ruleset inventory"),
         }
     }
 
@@ -228,81 +224,31 @@ mod bundled_tests {
             }
         }
     }
-}
 
-pub fn subscription_url(path: &str, github: bool) -> String {
-    let path = path
-        .split('/')
-        .map(|part| {
-            percent_encoding::utf8_percent_encode(part, percent_encoding::NON_ALPHANUMERIC)
-                .to_string()
-        })
-        .collect::<Vec<_>>()
-        .join("/");
-    let prefix = if github {
-        "https://raw.githubusercontent.com/nowaytouse/script_hub/master/"
-    } else {
-        "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/"
-    };
-    format!("{prefix}{path}")
-}
-
-fn load_rules(root: &Path) -> Result<Vec<RuleItem>, String> {
-    let path = root.join("rulesets").join("AdBlock").join("catalog.json");
-    let content = std::fs::read_to_string(&path)
-        .map_err(|error| format!("Cannot read {}: {error}", path.display()))?;
-    let catalog: serde_json::Value =
-        serde_json::from_str(&content).map_err(|error| format!("Invalid rule catalog: {error}"))?;
-    let shards = catalog["shards"]
-        .as_array()
-        .ok_or("Rule catalog has no shards array")?;
-    let mut rules = Vec::new();
-    for shard in shards {
-        rules.push(RuleItem {
-            name: shard["file"]
-                .as_str()
-                .or_else(|| shard["filename"].as_str())
-                .ok_or("Shard has no filename")?
-                .to_string(),
-            category: shard["category"].as_str().unwrap_or("AdBlock").to_string(),
-            cdn: shard["cdn_url"]
-                .as_str()
-                .ok_or("Shard has no CDN URL")?
-                .to_string(),
-            github: shard["github_url"]
-                .as_str()
-                .ok_or("Shard has no GitHub URL")?
-                .to_string(),
-            count: shard["rule_count"].as_u64(),
-        });
-    }
-    let directory = root.join("rulesets").join("RULE-SET");
-    for entry in std::fs::read_dir(&directory)
-        .map_err(|error| format!("Cannot read {}: {error}", directory.display()))?
-    {
-        let entry = entry.map_err(|error| format!("Cannot read ruleset entry: {error}"))?;
-        if entry
-            .file_type()
-            .map_err(|error| error.to_string())?
-            .is_file()
-            && entry
-                .path()
-                .extension()
-                .is_some_and(|extension| extension == "list")
-        {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            let relative = format!("rulesets/RULE-SET/{name}");
-            rules.push(RuleItem {
-                name,
-                category: "Routing".into(),
-                cdn: subscription_url(&relative, false),
-                github: subscription_url(&relative, true),
-                count: None,
-            });
+    #[test]
+    fn bundled_rules_are_browsable_and_copyable_without_a_workspace() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let catalog = Catalog::bundled(ModulePlatform::Surge);
+        let live = Catalog::load_platform(&root, ModulePlatform::Surge).unwrap();
+        for name in ["AI.list", "rulesets/AdBlock/AdBlock_Local.list"] {
+            let (index, rule) = catalog
+                .rules
+                .iter()
+                .enumerate()
+                .find(|(_, rule)| rule.name == name)
+                .expect("public ruleset is present");
+            assert!(live.rules.contains(rule));
+            let selected = BTreeSet::from([index]);
+            for (github, url) in [(true, &rule.github), (false, &rule.cdn)] {
+                assert!(safe_https_single_field_url(url));
+                assert_eq!(selected_rule_urls(&catalog.rules, &selected, github), *url);
+                assert_eq!(
+                    selected_surge_rule_set_snippets(&catalog.rules, &selected, github, "DIRECT"),
+                    Some(format!("RULE-SET,{url},DIRECT,no-resolve"))
+                );
+            }
         }
     }
-    rules.sort_by(|left, right| left.name.cmp(&right.name));
-    Ok(rules)
 }
 
 pub fn discover_root() -> PathBuf {

@@ -3,6 +3,28 @@ use serde_json::{Value, json};
 use std::{collections::BTreeMap, fs, path::Path};
 #[path = "../src/module_header.rs"]
 mod module_header;
+#[path = "../src/rule_catalog.rs"]
+mod rule_catalog;
+
+pub fn rules(root: &Path) -> std::io::Result<Vec<u8>> {
+    let mut rules = rule_catalog::load_rules(root).map_err(std::io::Error::other)?;
+    rules.retain(|rule| {
+        let (directory, name) = match rule.name.strip_prefix("rulesets/AdBlock/") {
+            Some(name) => ("rulesets/AdBlock", name),
+            None => ("rulesets/RULE-SET", rule.name.as_str()),
+        };
+        if name.contains(['/', '\\']) || !name.ends_with(".list") {
+            return false;
+        }
+        let relative = format!("{directory}/{name}");
+        let mirror = root.join(directory).join("github").join(name);
+        // The publication mirrors distinguish available rules from local-only lists.
+        fs::symlink_metadata(mirror).is_ok_and(|metadata| metadata.is_file())
+            && rule.cdn.replace("%2F", "/") == rule_catalog::subscription_url(&relative, false)
+            && rule.github.replace("%2F", "/") == rule_catalog::subscription_url(&relative, true)
+    });
+    serde_json::to_vec(&rules).map_err(std::io::Error::other)
+}
 
 pub fn modules(root: &Path, platform: &str, extension: &str) -> std::io::Result<Value> {
     let mut modules = Vec::new();

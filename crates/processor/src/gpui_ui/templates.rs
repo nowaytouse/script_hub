@@ -177,6 +177,14 @@ impl Templates {
         }
     }
 
+    pub(super) fn visit_project(&mut self, root: Option<PathBuf>, cx: &mut Context<Self>) {
+        if root.is_some() && self.workspace != root {
+            self.set_workspace(root, cx);
+        } else {
+            self.visit(cx);
+        }
+    }
+
     pub(super) fn detach_workspace(&mut self, cx: &mut Context<Self>) {
         if self.can_close() {
             self.next_workspace = Some(None);

@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Browse and copy rule sets from the bundled public catalog. Opening a project page automatically loads an available workspace, while the Workspace page lets you switch projects manually.
+
 - Use GPUI for the Script Hub desktop application on Windows and macOS. Retire the classic renderer, its launch switch, and its renderer-only dependencies.
 
 - Clear the previous project's task, source, and template context when choosing another workspace. A failed selection leaves project actions unavailable until a valid workspace is opened. Select or clear all changed files in the repository view before reviewing a commit.

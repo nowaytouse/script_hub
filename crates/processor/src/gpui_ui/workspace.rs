@@ -1,6 +1,7 @@
 use super::{Hub, Page, Palette, UiStyle, button, heading, panel};
 use crate::desktop::i18n::Text;
 use crate::desktop::tasks::{is_problem, stage_text};
+use crate::desktop::template_paths::discover_workspace_root;
 use crate::runtime::catalog::{Catalog, ModulePlatform};
 use crate::runtime::history::HistoryOptions;
 use crate::runtime::job::{Job, JobKind, JobOptions, JobOutcome, validate_root};
@@ -21,11 +22,45 @@ impl Hub {
         self.queue_job(JobKind::Validate, cx);
     }
 
+    pub(super) fn open_detected_workspace(&mut self, cx: &mut Context<Self>) {
+        if self.workspace_discovery_attempted
+            || self.root.is_some()
+            || self.requested_root.is_some()
+            || self.working(cx)
+        {
+            return;
+        }
+        self.workspace_discovery_attempted = true;
+        self.loading = true;
+        let remembered = PathBuf::from(&self.saved_preferences.root);
+        let detect = cx.background_executor().spawn(async move {
+            discover_workspace_root(
+                Some(&remembered),
+                std::env::current_exe().ok().as_deref(),
+                std::env::current_dir().ok().as_deref(),
+            )
+        });
+        cx.spawn(async move |this, cx| {
+            let root = detect.await;
+            let _ = this.update(cx, |hub, cx| {
+                hub.loading = false;
+                if let Some(root) = root {
+                    hub.read_workspace(root, cx);
+                } else {
+                    cx.notify();
+                }
+            });
+        })
+        .detach();
+        cx.notify();
+    }
+
     pub(super) fn load_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
         if self.working(cx) || !self.templates.read(cx).can_close() {
             return;
         }
         self.clear_workspace(path.clone(), cx);
+        self.message = None;
         self.read_workspace(path, cx);
     }
 
@@ -54,7 +89,6 @@ impl Hub {
     fn read_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
         self.loading = true;
         self.pending_job = None;
-        self.message = None;
         let requested = path.clone();
         let task = cx.background_executor().spawn(async move {
             let root = validate_root(&path)?;
@@ -70,9 +104,11 @@ impl Hub {
                 match result {
                     Ok((root, surge, shadowrocket, repository)) => {
                         hub.root = Some(root.clone());
-                        hub.templates.update(cx, |templates, cx| {
-                            templates.set_workspace(Some(root.clone()), cx);
-                        });
+                        if hub.page == Page::Templates {
+                            hub.templates.update(cx, |templates, cx| {
+                                templates.visit_project(Some(root.clone()), cx);
+                            });
+                        }
                         hub.sources
                             .update(cx, |sources, cx| sources.set_workspace(Some(root), cx));
                         let mut warnings = Vec::new();
@@ -86,7 +122,9 @@ impl Hub {
                         });
                         hub.repository = repository.map_err(|error| warnings.push(error)).ok();
                         hub.reset_workspace_selections();
-                        hub.message = (!warnings.is_empty()).then(|| warnings.join("\n"));
+                        if !warnings.is_empty() {
+                            hub.message = Some(warnings.join("\n"));
+                        }
                     }
                     Err(error) => {
                         if hub.root.is_some() {
@@ -109,6 +147,7 @@ impl Hub {
         let Some(root) = self.root.clone() else {
             return;
         };
+        self.message = None;
         self.read_workspace(root, cx);
     }
 
@@ -255,10 +294,25 @@ impl Hub {
                     "ワークスペースを読み込み中…",
                 ));
         }
-        panel(palette).p_5().gap_3()
-            .child(self.local("Choose the Script Hub repository to manage local files and run tasks.", "选择 Script Hub 仓库，管理本地文件并运行任务。", "ローカルファイルを管理してタスクを実行するには、Script Hub のリポジトリを選択します。"))
-            .child(div().flex().child(button("workspace-start", self.local("Open workspace", "打开工作区", "ワークスペースを開く"), palette, true)
-                .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx)))))
+        panel(palette)
+            .p_5()
+            .gap_3()
+            .child(self.local(
+                "Choose a Script Hub repository to use this page.",
+                "选择一个 Script Hub 仓库后即可使用此页面。",
+                "このページを使うには Script Hub のリポジトリを選びます。",
+            ))
+            .child(
+                div().flex().child(
+                    button(
+                        "workspace-start",
+                        self.workspace_picker_label(),
+                        palette,
+                        true,
+                    )
+                    .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
+                ),
+            )
     }
 
     pub(super) fn workspace_page(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
@@ -956,9 +1010,9 @@ impl Hub {
             (
                 "setting-reopen",
                 self.local(
-                    "Reopen workspace",
-                    "启动时重开工作区",
-                    "ワークスペースを再度開く",
+                    "Open workspace at startup",
+                    "启动时打开工作区",
+                    "起動時にワークスペースを開く",
                 ),
                 self.preferences.reopen_workspace,
             ),

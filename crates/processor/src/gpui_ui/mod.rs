@@ -223,6 +223,19 @@ enum Page {
 }
 
 impl Page {
+    fn uses_workspace(self) -> bool {
+        matches!(
+            self,
+            Self::Overview
+                | Self::Modules
+                | Self::Rules
+                | Self::Templates
+                | Self::Workspace
+                | Self::Sources
+                | Self::Tasks
+        )
+    }
+
     fn label(self, language: Language) -> &'static str {
         match self {
             Self::Overview => text(language, Text::Overview),
@@ -265,6 +278,7 @@ struct Hub {
     main_focus: FocusHandle,
     root: Option<PathBuf>,
     requested_root: Option<PathBuf>,
+    workspace_discovery_attempted: bool,
     repository: Option<RepositoryStatus>,
     loading: bool,
     preferences: Preferences,
@@ -373,6 +387,7 @@ impl Hub {
             main_focus: cx.focus_handle().tab_stop(false),
             root: None,
             requested_root: None,
+            workspace_discovery_attempted: false,
             repository: None,
             loading: false,
             saved_preferences: preferences.clone(),
@@ -463,11 +478,13 @@ impl Hub {
         self.message = None;
         self.subscriptions
             .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
+        if page.uses_workspace() {
+            self.open_detected_workspace(cx);
+        }
         if page == Page::Templates {
-            self.templates.update(cx, |state, cx| state.visit(cx));
-            if self.root.is_none() && self.requested_root.is_none() && !self.loading {
-                self.find_template_store(cx);
-            }
+            let root = self.root.clone();
+            self.templates
+                .update(cx, |state, cx| state.visit_project(root, cx));
         }
         if page == Page::History {
             self.history.update(cx, |view, cx| view.refresh(cx));
@@ -476,27 +493,6 @@ impl Hub {
                 .update(cx, |view, _| view.dismiss_confirmation());
         }
         cx.notify();
-    }
-
-    fn find_template_store(&self, cx: &mut Context<Self>) {
-        let remembered = PathBuf::from(self.saved_preferences.root.as_str());
-        let task = cx.background_executor().spawn(async move {
-            crate::desktop::template_paths::template_storage_root(
-                None,
-                (!remembered.as_os_str().is_empty()).then_some(remembered.as_path()),
-                std::env::current_exe().ok().as_deref(),
-            )
-        });
-        cx.spawn(async move |this, cx| {
-            let root = task.await;
-            let _ = this.update(cx, |hub, cx| {
-                if hub.root.is_none() && hub.requested_root.is_none() && !hub.loading {
-                    hub.templates
-                        .update(cx, |state, cx| state.set_workspace(root, cx));
-                }
-            });
-        })
-        .detach();
     }
 
     fn workspace_busy(&self) -> bool {
@@ -626,6 +622,18 @@ impl Hub {
         .detach();
     }
 
+    fn workspace_picker_label(&self) -> &'static str {
+        if self.root.is_some() {
+            self.local(
+                "Switch workspace…",
+                "切换工作区…",
+                "ワークスペースを切り替える…",
+            )
+        } else {
+            self.local("Choose workspace…", "选择工作区…", "ワークスペースを選ぶ…")
+        }
+    }
+
     fn sidebar(&self, window: &Window, palette: Palette, cx: &mut Context<Self>) -> Div {
         let compact = window.viewport_size().width < px(910.);
         let link = |page: Page| {
@@ -749,12 +757,26 @@ impl Hub {
     }
 
     fn header(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
-        let scope = self
+        let folder = self
             .root
             .as_ref()
             .and_then(|path| path.file_name())
-            .and_then(|name| name.to_str())
-            .unwrap_or(self.local("Bundled catalog", "内置目录", "内蔵カタログ"));
+            .and_then(|name| name.to_str());
+        let scope = match self.page {
+            Page::Modules | Page::Rules => folder.or(Some(self.local(
+                "Bundled catalog",
+                "内置目录",
+                "内蔵カタログ",
+            ))),
+            page if page.uses_workspace() => folder,
+            _ => None,
+        };
+        let show_workspace_picker = !self.loading
+            && match self.page {
+                Page::Workspace => self.root.is_some(),
+                Page::Sources => self.root.is_none(),
+                _ => false,
+            };
         div()
             .flex()
             .h(px(57.))
@@ -773,13 +795,16 @@ impl Hub {
                     .items_center()
                     .gap_3()
                     .text_sm()
-                    .child(
-                        div()
-                            .text_color(palette.muted)
-                            .truncate()
-                            .child(scope.to_owned()),
-                    )
-                    .child(div().text_color(palette.muted).child("/"))
+                    .when_some(scope, |breadcrumb, scope| {
+                        breadcrumb
+                            .child(
+                                div()
+                                    .text_color(palette.muted)
+                                    .truncate()
+                                    .child(scope.to_owned()),
+                            )
+                            .child(div().text_color(palette.muted).child("/"))
+                    })
                     .child(
                         div()
                             .text_color(palette.ink)
@@ -803,15 +828,17 @@ impl Hub {
                             cx.listener(|hub, _, window, cx| hub.toggle_page_search(window, cx)),
                         ),
                     )
-                    .child(
-                        button(
-                            "pick-workspace",
-                            self.local("Open workspace", "打开工作区", "ワークスペースを開く"),
-                            palette,
-                            false,
+                    .when(show_workspace_picker, |actions| {
+                        actions.child(
+                            button(
+                                "pick-workspace",
+                                self.workspace_picker_label(),
+                                palette,
+                                false,
+                            )
+                            .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
                         )
-                        .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
-                    ),
+                    }),
             )
     }
 }
@@ -994,10 +1021,7 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         Ok(preferences) => (preferences.unwrap_or_default(), None),
         Err(error) => (Preferences::default(), Some(error)),
     };
-    let root = root.or_else(|| {
-        (prepare.is_none() && preferences.reopen_workspace && !preferences.root.is_empty())
-            .then(|| PathBuf::from(&preferences.root))
-    });
+    let reopen_workspace = prepare.is_none() && preferences.reopen_workspace;
     let result = Rc::new(Cell::new(ExitCode::SUCCESS));
     let exit = result.clone();
     Application::new().run(move |cx| {
@@ -1035,6 +1059,8 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
                         .detach();
                     if let Some(path) = root {
                         hub.load_workspace(path, cx);
+                    } else if reopen_workspace {
+                        hub.open_detected_workspace(cx);
                     }
                     if let Some((sources, public, backup)) = prepare {
                         hub.page = Page::Templates;

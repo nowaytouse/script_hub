@@ -177,42 +177,55 @@ impl Hub {
                     .child(title(self.tr(Text::Workspace)))
                     .child(div().text_sm().text_color(palette.muted).child(
                         self.root.as_ref().map_or_else(
-                            || self.tr(Text::OpenWorkspaceHint).to_owned(),
+                            || {
+                                if self.loading {
+                                    self.local(
+                                        "Loading workspace…",
+                                        "正在加载工作区…",
+                                        "ワークスペースを読み込み中…",
+                                    )
+                                } else {
+                                    self.local(
+                                        "No workspace found",
+                                        "未找到工作区",
+                                        "ワークスペースが見つかりません",
+                                    )
+                                }
+                                .to_owned()
+                            },
                             |root| root.display().to_string(),
                         ),
                     ))
-                    .child(
-                        div()
-                            .flex()
-                            .flex_wrap()
-                            .gap_2()
-                            .child(
-                                button(
-                                    "overview-pick",
-                                    self.local(
-                                        "Open workspace",
-                                        "打开工作区",
-                                        "ワークスペースを開く",
-                                    ),
-                                    palette,
-                                    self.root.is_none(),
-                                )
-                                .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
-                            )
-                            .when(self.root.is_some(), |row| {
-                                row.child(
+                    .when(!self.loading, |card| {
+                        card.child(
+                            div()
+                                .flex()
+                                .flex_wrap()
+                                .gap_2()
+                                .child(
                                     button(
-                                        "overview-validate",
-                                        self.tr(Text::Validate),
+                                        "overview-pick",
+                                        self.workspace_picker_label(),
                                         palette,
-                                        true,
+                                        self.root.is_none(),
                                     )
-                                    .on_click(
-                                        cx.listener(|hub, _, _, cx| hub.validate_workspace(cx)),
-                                    ),
+                                    .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
                                 )
-                            }),
-                    )
+                                .when(self.root.is_some(), |row| {
+                                    row.child(
+                                        button(
+                                            "overview-validate",
+                                            self.tr(Text::Validate),
+                                            palette,
+                                            true,
+                                        )
+                                        .on_click(
+                                            cx.listener(|hub, _, _, cx| hub.validate_workspace(cx)),
+                                        ),
+                                    )
+                                }),
+                        )
+                    })
                     .when(self.root.is_some(), |card| {
                         card.child(
                             div()

@@ -1,34 +1,35 @@
-//! Desktop template selection, bounded client detection and protected destinations.
+//! Desktop workspace discovery, template selection and protected destinations.
 
 use crate::runtime::job::validate_root;
 use crate::vault::{self, Client};
 use std::path::{Path, PathBuf};
 use zeroize::Zeroizing;
 
-pub(crate) fn template_storage_root(
-    selected: Option<&Path>,
+pub(crate) fn discover_workspace_root(
     remembered: Option<&Path>,
     executable: Option<&Path>,
+    current_directory: Option<&Path>,
 ) -> Option<PathBuf> {
-    if let Some(selected) = selected {
-        if selected.as_os_str().is_empty() {
-            return None;
-        }
-        return validate_root(selected).ok();
-    }
-    if let Some(root) = remembered.and_then(|path| validate_root(path).ok()) {
+    if let Some(root) = remembered
+        .filter(|path| !path.as_os_str().is_empty())
+        .and_then(|path| validate_root(path).ok())
+    {
         return Some(root);
     }
-    let executable = executable.filter(|path| {
-        matches!(
-            path.file_name().and_then(|name| name.to_str()),
-            Some("script-hub-gui" | "script-hub-gui.exe")
-        )
-    })?;
     executable
-        .parent()?
-        .ancestors()
-        .find_map(|path| validate_root(path).ok())
+        .filter(|path| {
+            matches!(
+                path.file_name().and_then(|name| name.to_str()),
+                Some("script-hub-gui" | "script-hub-gui.exe")
+            )
+        })
+        .and_then(Path::parent)
+        .and_then(|directory| {
+            directory
+                .ancestors()
+                .find_map(|path| validate_root(path).ok())
+        })
+        .or_else(|| current_directory.and_then(|path| validate_root(path).ok()))
 }
 
 pub(crate) fn parse_template_setup(
@@ -446,38 +447,51 @@ mod tests {
     }
 
     #[test]
-    fn template_storage_uses_the_root_app_location_when_a_saved_project_has_expired() {
+    fn discovery_uses_the_app_location_when_a_saved_project_has_expired() {
         let workspace = Fixture::workspace();
+        let current_directory = Fixture::workspace();
         let executable = workspace
             .0
             .join("ScriptHub.app/Contents/MacOS/script-hub-gui");
         assert_eq!(
-            template_storage_root(None, Some(&workspace.0.join("missing")), Some(&executable)),
+            discover_workspace_root(
+                Some(&workspace.0.join("missing")),
+                Some(&executable),
+                Some(&current_directory.0),
+            ),
             Some(workspace.0.canonicalize().unwrap())
         );
-        assert!(template_storage_root(None, Some(&workspace.0.join("missing")), None).is_none());
+        assert!(discover_workspace_root(Some(&workspace.0.join("missing")), None, None).is_none());
     }
 
     #[test]
-    fn template_storage_prefers_the_selected_project_over_remembered_and_app_locations() {
-        let selected = Fixture::workspace();
+    fn discovery_prefers_the_remembered_project_over_app_and_current_locations() {
         let remembered = Fixture::workspace();
+        let executable = Fixture::workspace();
+        let current_directory = Fixture::workspace();
         assert_eq!(
-            template_storage_root(Some(&selected.0), Some(&remembered.0), None),
-            Some(selected.0.canonicalize().unwrap())
+            discover_workspace_root(
+                Some(&remembered.0),
+                Some(&executable.0.join("script-hub-gui.exe")),
+                Some(&current_directory.0),
+            ),
+            Some(remembered.0.canonicalize().unwrap())
         );
     }
 
     #[test]
-    fn template_storage_never_redirects_an_invalid_explicit_selection_to_another_project() {
+    fn discovery_only_uses_the_current_directory_if_it_is_a_project() {
         let workspace = Fixture::workspace();
-        assert!(
-            template_storage_root(Some(&workspace.0.join("missing")), Some(&workspace.0), None)
-                .is_none()
-        );
-        assert!(template_storage_root(Some(Path::new("")), Some(&workspace.0), None).is_none());
         let arbitrary = workspace.0.join("target/debug/unrelated-tool");
-        assert!(template_storage_root(None, None, Some(&arbitrary)).is_none());
+        assert_eq!(
+            discover_workspace_root(None, Some(&arbitrary), Some(&workspace.0)),
+            Some(workspace.0.canonicalize().unwrap())
+        );
+        assert!(
+            discover_workspace_root(None, Some(&arbitrary), Some(&workspace.0.join("modules")))
+                .is_none(),
+        );
+        assert!(discover_workspace_root(Some(Path::new("")), None, None).is_none());
     }
 
     #[test]

@@ -374,7 +374,6 @@
   "HelpIntro": "Choose a topic below. Templates and subscription relay do not require a workspace.",
   "HelpRelay": "1. Import a Gist/raw link or local file. Raw links are read directly; import never tests nodes.\n2. Review the detected format and counts. Optional real connectivity checks use automatically detected sing-box; choose the installed program if missing, never type a path.\n3. Save or upload the prepared result. Upload needs a GitHub token, not sing-box; it revalidates the source without repeating checks. Backups contain plaintext node credentials but no token. Secret Gists are not encrypted.",
   "HelpWorkspace": "The workspace is the project directory used by local tasks. Check the selected path before running a task.",
-  "OpenWorkspaceHint": "Open a workspace to browse resources. Startup does not request folder access automatically.",
   "HelpUpdates": "Updates may write generated files. Review the task and workspace before confirming.",
   "HelpSources": "Adding or removing a source saves its configuration locally. Run a full update to rebuild the affected bundle; quick update skips functional bundles. Browsing remains offline.",
   "HelpGit": "Repository actions are user-initiated. Review changed files and the selected branch before any write or remote operation.",

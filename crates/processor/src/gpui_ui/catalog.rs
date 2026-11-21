@@ -474,7 +474,7 @@ impl Hub {
     }
 
     pub(super) fn rules_page(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
-        let mut page = div().flex().flex_col().gap_5().child(heading(
+        let page = div().flex().flex_col().gap_5().child(heading(
             self.local("Rule sets", "规则集", "ルールセット"),
             self.local(
                 "Copy public rule set links or Surge RULE-SET entries.",
@@ -483,29 +483,6 @@ impl Hub {
             ),
             palette,
         ));
-        if self.surge.rules.is_empty() {
-            return page.child(
-                panel(palette)
-                    .p_5()
-                    .gap_3()
-                    .child(self.local(
-                        "Open a Script Hub workspace to list its rule sets.",
-                        "打开 Script Hub 工作区以查看规则集。",
-                        "Script Hub ワークスペースを開くとルールセットを表示できます。",
-                    ))
-                    .child(
-                        div().flex().child(
-                            button(
-                                "rules-workspace",
-                                self.local("Open workspace", "打开工作区", "ワークスペースを開く"),
-                                palette,
-                                true,
-                            )
-                            .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
-                        ),
-                    ),
-            );
-        }
         let query = self.rule_search.read(cx).value().trim().to_lowercase();
         let visible: Vec<_> = self
             .surge
@@ -518,7 +495,7 @@ impl Hub {
             })
             .collect();
         let shown: Vec<_> = visible.iter().map(|(index, _)| *index).collect();
-        page = page
+        let page = page
             .child(self.rule_search.clone())
             .child(
                 div()
