@@ -396,21 +396,15 @@ impl Render for SourceEditor {
                 palette,
             ));
         if self.workspace.is_none() {
-            return page.child(
-                panel(palette)
-                    .p_5()
-                    .gap_2()
-                    .child(title(self.tr(Text::WorkspaceMissing)))
-                    .child(muted(
-                        localized(
-                            self.language,
-                            "Open a Script Hub workspace to manage its custom sources.",
-                            "打开 Script Hub 工作区后可以管理自定义来源。",
-                            "Script Hub のワークスペースを開くと、カスタムソースを管理できます。",
-                        ),
-                        palette,
-                    )),
-            );
+            return page.child(panel(palette).p_5().child(muted(
+                localized(
+                    self.language,
+                    "Local source settings are unavailable.",
+                    "本地来源配置暂不可用。",
+                    "ローカルの取得元設定を利用できません。",
+                ),
+                palette,
+            )));
         }
         let page = page
             .when_some(self.notice, |page, notice| {
@@ -468,9 +462,9 @@ impl Render for SourceEditor {
                     page.child(muted(
                         localized(
                             self.language,
-                            "Source editing is paused while a workspace task is running.",
-                            "工作区任务运行期间暂停编辑来源。",
-                            "ワークスペースのタスク実行中はソースを編集できません。",
+                            "Source editing is paused while a task is running.",
+                            "任务运行期间暂停编辑来源。",
+                            "タスクの実行中は取得元を編集できません。",
                         ),
                         palette,
                     ))

@@ -2,9 +2,9 @@
 
 [English](PRIVACY.md) · [简体中文](PRIVACY.zh-CN.md)
 
-Workspaces, settings and SQLite task history are not automatically uploaded. Diagnostic logging is opt-in; check for sensitive information before sharing.
+Project files, settings, and SQLite task history stay local by default. Diagnostic logging is opt-in. Review diagnostic files for sensitive information before sharing.
 
-Workspaces are not scanned by default. Updates and Git run through explicit actions or CI schedules; builds, external scripts and clients may access the network.
+The desktop app reads the local files it needs to display each page. Updates and Git operations run through explicit actions or CI schedules. Builds, external scripts, and clients may access the network.
 
 System and diagnostic endpoint exemptions do not disable collection. Use app or system settings to opt out; exemptions do not guarantee anonymity.
 

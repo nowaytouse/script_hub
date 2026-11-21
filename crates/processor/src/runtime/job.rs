@@ -212,7 +212,7 @@ impl Job {
 
         let executable = std::env::current_exe()
             .map_err(|error| format!("cannot locate GUI worker executable: {error}"))?;
-        let mut command = Command::new(executable);
+        let mut command = crate::process::background_command(executable);
         command
             .arg("--worker")
             .arg(worker_name(kind))

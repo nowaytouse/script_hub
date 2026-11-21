@@ -5,11 +5,11 @@ mod demo;
 mod history;
 mod input;
 mod navigation;
+mod project;
 mod sources;
 mod subscriptions;
 mod support;
 mod templates;
-mod workspace;
 
 use crate::desktop::i18n::{Text, text};
 use crate::runtime::catalog::{Catalog, ModulePlatform};
@@ -18,9 +18,8 @@ use crate::runtime::repository::RepositoryStatus;
 use crate::runtime::settings::{self, Accent, Language, Preferences, Theme};
 use gpui::{
     App, Application, Bounds, ClipboardItem, Context, Div, ElementId, Entity, FocusHandle,
-    FontWeight, Global, Image, ImageFormat, PathPromptOptions, Rgba, SharedString, Stateful,
-    Window, WindowAppearance, WindowBounds, WindowHandle, WindowOptions, div, img, prelude::*, px,
-    rgb, size,
+    FontWeight, Global, Image, ImageFormat, Rgba, SharedString, Stateful, Window, WindowAppearance,
+    WindowBounds, WindowHandle, WindowOptions, div, img, prelude::*, px, rgb, size,
 };
 use history::TaskHistory;
 use input::TextInput;
@@ -214,7 +213,6 @@ enum Page {
     Templates,
     Subscriptions,
     Relay,
-    Workspace,
     Sources,
     Tasks,
     History,
@@ -223,19 +221,6 @@ enum Page {
 }
 
 impl Page {
-    fn uses_workspace(self) -> bool {
-        matches!(
-            self,
-            Self::Overview
-                | Self::Modules
-                | Self::Rules
-                | Self::Templates
-                | Self::Workspace
-                | Self::Sources
-                | Self::Tasks
-        )
-    }
-
     fn label(self, language: Language) -> &'static str {
         match self {
             Self::Overview => text(language, Text::Overview),
@@ -246,7 +231,6 @@ impl Page {
                 localized(language, "Subscriptions", "订阅", "サブスクリプション")
             }
             Self::Relay => localized(language, "Relay", "中转", "リレー"),
-            Self::Workspace => text(language, Text::Workspace),
             Self::Sources => text(language, Text::Sources),
             Self::Tasks => text(language, Text::Tasks),
             Self::History => text(language, Text::History),
@@ -263,7 +247,6 @@ impl Page {
             Self::Templates => "▤",
             Self::Subscriptions => "◎",
             Self::Relay => "⇄",
-            Self::Workspace => "⌘",
             Self::Sources => "↗",
             Self::Tasks => "◴",
             Self::History => "◷",
@@ -277,9 +260,9 @@ struct Hub {
     page: Page,
     main_focus: FocusHandle,
     root: Option<PathBuf>,
-    requested_root: Option<PathBuf>,
-    workspace_discovery_attempted: bool,
     repository: Option<RepositoryStatus>,
+    repository_open: bool,
+    repository_loading: bool,
     loading: bool,
     preferences: Preferences,
     saved_preferences: Preferences,
@@ -371,7 +354,7 @@ impl Hub {
         let support = cx.new(|cx| Support::new(language, cx));
         cx.subscribe(&sources, |hub, _, event: &SourcesChanged, cx| {
             if hub.root.as_ref() == Some(&event.0) {
-                hub.reload_repository(cx);
+                hub.reload_project(cx);
             }
         })
         .detach();
@@ -386,9 +369,9 @@ impl Hub {
             page: Page::Modules,
             main_focus: cx.focus_handle().tab_stop(false),
             root: None,
-            requested_root: None,
-            workspace_discovery_attempted: false,
             repository: None,
+            repository_open: false,
+            repository_loading: false,
             loading: false,
             saved_preferences: preferences.clone(),
             preferences,
@@ -478,8 +461,8 @@ impl Hub {
         self.message = None;
         self.subscriptions
             .update(cx, |state, cx| state.show_relay(page == Page::Relay, cx));
-        if page.uses_workspace() {
-            self.open_detected_workspace(cx);
+        if page == Page::Tasks && self.repository_open && self.repository.is_none() {
+            self.read_repository(cx);
         }
         if page == Page::Templates {
             let root = self.root.clone();
@@ -495,14 +478,14 @@ impl Hub {
         cx.notify();
     }
 
-    fn workspace_busy(&self) -> bool {
-        self.loading || self.job.as_ref().is_some_and(Job::is_running)
+    fn project_writes_pending(&self, cx: &App) -> bool {
+        self.job.as_ref().is_some_and(Job::is_running)
+            || self.sources.read(cx).is_writing()
+            || self.history.read(cx).is_writing()
     }
 
     fn project_busy(&self, cx: &App) -> bool {
-        self.workspace_busy()
-            || self.sources.read(cx).is_writing()
-            || self.history.read(cx).is_writing()
+        self.loading || self.repository_loading || self.project_writes_pending(cx)
     }
 
     fn working(&self, cx: &App) -> bool {
@@ -512,9 +495,9 @@ impl Hub {
     fn project_action_blocked(&mut self, cx: &mut Context<Self>) -> bool {
         let message = if self.subscriptions.read(cx).schedule_active() {
             self.local(
-                "Stop scheduled sync on the Relay page before changing the workspace or running a project task.",
-                "请先在中转页停止定时同步，再切换工作区或运行项目任务。",
-                "ワークスペースの変更やプロジェクトタスクの実行前に、リレーページで定期同期を停止してください。",
+                "Stop scheduled sync on the Relay page before running a maintenance task.",
+                "运行维护任务前，请先在中转页停止定时同步。",
+                "メンテナンスタスクの実行前に、リレーページで定期同期を停止してください。",
             )
         } else if self.project_busy(cx) {
             self.local(
@@ -531,7 +514,7 @@ impl Hub {
     }
 
     fn close_blocked(&self, cx: &App) -> bool {
-        self.project_busy(cx)
+        self.project_writes_pending(cx)
             || !self.templates.read(cx).can_close()
             || !self.subscriptions.read(cx).can_close(cx)
     }
@@ -599,38 +582,6 @@ impl Hub {
                 self.message = Some(error);
                 cx.notify();
             }
-        }
-    }
-
-    fn pick_workspace(&mut self, cx: &mut Context<Self>) {
-        if self.project_action_blocked(cx) {
-            return;
-        }
-        let paths = cx.prompt_for_paths(PathPromptOptions {
-            files: false,
-            directories: true,
-            multiple: false,
-            prompt: None,
-        });
-        cx.spawn(async move |this, cx| {
-            if let Ok(Ok(Some(paths))) = paths.await
-                && let Some(path) = paths.into_iter().next()
-            {
-                let _ = this.update(cx, |hub, cx| hub.load_workspace(path, cx));
-            }
-        })
-        .detach();
-    }
-
-    fn workspace_picker_label(&self) -> &'static str {
-        if self.root.is_some() {
-            self.local(
-                "Switch workspace…",
-                "切换工作区…",
-                "ワークスペースを切り替える…",
-            )
-        } else {
-            self.local("Choose workspace…", "选择工作区…", "ワークスペースを選ぶ…")
         }
     }
 
@@ -719,9 +670,7 @@ impl Hub {
                             .text_color(palette.muted)
                             .child(self.local("Project", "项目", "プロジェクト")),
                     )
-                    .children(
-                        [Page::Workspace, Page::Sources, Page::Tasks, Page::History].map(link),
-                    ),
+                    .children([Page::Sources, Page::Tasks, Page::History].map(link)),
             );
         div()
             .flex()
@@ -757,26 +706,6 @@ impl Hub {
     }
 
     fn header(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
-        let folder = self
-            .root
-            .as_ref()
-            .and_then(|path| path.file_name())
-            .and_then(|name| name.to_str());
-        let scope = match self.page {
-            Page::Modules | Page::Rules => folder.or(Some(self.local(
-                "Bundled catalog",
-                "内置目录",
-                "内蔵カタログ",
-            ))),
-            page if page.uses_workspace() => folder,
-            _ => None,
-        };
-        let show_workspace_picker = !self.loading
-            && match self.page {
-                Page::Workspace => self.root.is_some(),
-                Page::Sources => self.root.is_none(),
-                _ => false,
-            };
         div()
             .flex()
             .h(px(57.))
@@ -791,54 +720,19 @@ impl Hub {
             .child(
                 div()
                     .min_w_0()
-                    .flex()
-                    .items_center()
-                    .gap_3()
                     .text_sm()
-                    .when_some(scope, |breadcrumb, scope| {
-                        breadcrumb
-                            .child(
-                                div()
-                                    .text_color(palette.muted)
-                                    .truncate()
-                                    .child(scope.to_owned()),
-                            )
-                            .child(div().text_color(palette.muted).child("/"))
-                    })
-                    .child(
-                        div()
-                            .text_color(palette.ink)
-                            .font_weight(FontWeight::MEDIUM)
-                            .child(self.page.label(self.preferences.language)),
-                    ),
+                    .text_color(palette.ink)
+                    .font_weight(FontWeight::MEDIUM)
+                    .child(self.page.label(self.preferences.language)),
             )
             .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        button(
-                            "search-pages",
-                            self.local("Search pages", "搜索页面", "ページを検索"),
-                            palette,
-                            self.page_search_open,
-                        )
-                        .on_click(
-                            cx.listener(|hub, _, window, cx| hub.toggle_page_search(window, cx)),
-                        ),
-                    )
-                    .when(show_workspace_picker, |actions| {
-                        actions.child(
-                            button(
-                                "pick-workspace",
-                                self.workspace_picker_label(),
-                                palette,
-                                false,
-                            )
-                            .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
-                        )
-                    }),
+                button(
+                    "search-pages",
+                    self.local("Search pages", "搜索页面", "ページを検索"),
+                    palette,
+                    self.page_search_open,
+                )
+                .on_click(cx.listener(|hub, _, window, cx| hub.toggle_page_search(window, cx))),
             )
     }
 }
@@ -848,7 +742,7 @@ impl Render for Hub {
         let project_busy = self.project_busy(cx);
         self.subscriptions
             .update(cx, |view, _| view.set_schedule_project_busy(project_busy));
-        let source_busy = self.workspace_busy() || self.subscriptions.read(cx).schedule_active();
+        let source_busy = project_busy || self.subscriptions.read(cx).schedule_active();
         self.sources
             .update(cx, |view, cx| view.set_workspace_busy(source_busy, cx));
         let saved = self.preferences_ready.then_some(&self.saved_preferences);
@@ -870,7 +764,6 @@ impl Render for Hub {
             Page::Rules => self.rules_page(palette, cx).into_any_element(),
             Page::Templates => self.templates.clone().into_any_element(),
             Page::Subscriptions | Page::Relay => self.subscriptions.clone().into_any_element(),
-            Page::Workspace => self.workspace_page(palette, cx).into_any_element(),
             Page::Sources => self.sources.clone().into_any_element(),
             Page::Tasks => self.tasks_page(palette, cx).into_any_element(),
             Page::History => self.history.clone().into_any_element(),
@@ -1002,7 +895,7 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         },
         Some("--help" | "-h") => {
             println!(
-                "Usage: script-hub-gui [--root <workspace>]\n       script-hub-gui --demo | --prepare-templates <public.vault> <local-backup.vault> <config>..."
+                "Usage: script-hub-gui [--root <repository>]\n       script-hub-gui --demo | --prepare-templates <public.vault> <local-backup.vault> <config>..."
             );
             return ExitCode::SUCCESS;
         }
@@ -1021,7 +914,6 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
         Ok(preferences) => (preferences.unwrap_or_default(), None),
         Err(error) => (Preferences::default(), Some(error)),
     };
-    let reopen_workspace = prepare.is_none() && preferences.reopen_workspace;
     let result = Rc::new(Cell::new(ExitCode::SUCCESS));
     let exit = result.clone();
     Application::new().run(move |cx| {
@@ -1057,16 +949,13 @@ pub fn run(mut args: impl Iterator<Item = String>) -> ExitCode {
                     .detach();
                     cx.observe_window_appearance(window, |_, _, cx| cx.notify())
                         .detach();
-                    if let Some(path) = root {
-                        hub.load_workspace(path, cx);
-                    } else if reopen_workspace {
-                        hub.open_detected_workspace(cx);
-                    }
                     if let Some((sources, public, backup)) = prepare {
                         hub.page = Page::Templates;
                         hub.templates.update(cx, |templates, cx| {
                             templates.prepare(sources, public, backup, cx)
                         });
+                    } else {
+                        hub.load_project(root, cx);
                     }
                     hub
                 });

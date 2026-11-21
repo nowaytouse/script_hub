@@ -6,14 +6,13 @@ use gpui::{App, Context, Div, Focusable, FontWeight, Window, div, prelude::*};
 pub(super) const COMMAND_CONTEXT: &str = "HubPageSearch";
 pub(super) const HUB_CONTEXT: &str = "ScriptHub";
 
-const PAGES: [Page; 12] = [
+const PAGES: [Page; 11] = [
     Page::Overview,
     Page::Modules,
     Page::Rules,
     Page::Templates,
     Page::Subscriptions,
     Page::Relay,
-    Page::Workspace,
     Page::Sources,
     Page::Tasks,
     Page::History,
@@ -159,7 +158,13 @@ impl Hub {
                     .gap_3()
                     .child(title(self.tr(Text::QuickStart)))
                     .child(actions(
-                        &[Page::Modules, Page::Rules, Page::Templates, Page::Relay],
+                        &[
+                            Page::Modules,
+                            Page::Rules,
+                            Page::Templates,
+                            Page::Subscriptions,
+                            Page::Relay,
+                        ],
                         cx,
                     ))
                     .child(div().text_sm().text_color(palette.muted).child(format!(
@@ -174,80 +179,9 @@ impl Hub {
                 panel(palette)
                     .p_5()
                     .gap_3()
-                    .child(title(self.tr(Text::Workspace)))
-                    .child(div().text_sm().text_color(palette.muted).child(
-                        self.root.as_ref().map_or_else(
-                            || {
-                                if self.loading {
-                                    self.local(
-                                        "Loading workspace…",
-                                        "正在加载工作区…",
-                                        "ワークスペースを読み込み中…",
-                                    )
-                                } else {
-                                    self.local(
-                                        "No workspace found",
-                                        "未找到工作区",
-                                        "ワークスペースが見つかりません",
-                                    )
-                                }
-                                .to_owned()
-                            },
-                            |root| root.display().to_string(),
-                        ),
-                    ))
-                    .when(!self.loading, |card| {
-                        card.child(
-                            div()
-                                .flex()
-                                .flex_wrap()
-                                .gap_2()
-                                .child(
-                                    button(
-                                        "overview-pick",
-                                        self.workspace_picker_label(),
-                                        palette,
-                                        self.root.is_none(),
-                                    )
-                                    .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
-                                )
-                                .when(self.root.is_some(), |row| {
-                                    row.child(
-                                        button(
-                                            "overview-validate",
-                                            self.tr(Text::Validate),
-                                            palette,
-                                            true,
-                                        )
-                                        .on_click(
-                                            cx.listener(|hub, _, _, cx| hub.validate_workspace(cx)),
-                                        ),
-                                    )
-                                }),
-                        )
-                    })
-                    .when(self.root.is_some(), |card| {
-                        card.child(
-                            div()
-                                .text_sm()
-                                .text_color(palette.muted)
-                                .child(self.tr(Text::LocalOnly)),
-                        )
-                    }),
-            )
-            .child(
-                panel(palette)
-                    .p_5()
-                    .gap_3()
                     .child(title(self.tr(Text::LatestActivity)))
                     .child(div().text_sm().text_color(palette.muted).child(task_status))
-                    .child(actions(&[Page::Tasks, Page::History], cx))
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(palette.muted)
-                            .child(self.tr(Text::NoAutomaticGit)),
-                    ),
+                    .child(actions(&[Page::Tasks, Page::History], cx)),
             )
     }
 }

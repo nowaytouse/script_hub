@@ -1,22 +1,20 @@
-//! Desktop workspace discovery, template selection and protected destinations.
+//! Local project discovery, template selection and protected destinations.
 
 use crate::runtime::job::validate_root;
 use crate::vault::{self, Client};
 use std::path::{Path, PathBuf};
 use zeroize::Zeroizing;
 
-pub(crate) fn discover_workspace_root(
+pub(crate) fn resolve_project_root(
+    explicit: Option<&Path>,
     remembered: Option<&Path>,
     executable: Option<&Path>,
     current_directory: Option<&Path>,
-) -> Option<PathBuf> {
-    if let Some(root) = remembered
-        .filter(|path| !path.as_os_str().is_empty())
-        .and_then(|path| validate_root(path).ok())
-    {
-        return Some(root);
+) -> Result<Option<PathBuf>, String> {
+    if let Some(path) = explicit {
+        return validate_root(path).map(Some);
     }
-    executable
+    let installed = executable
         .filter(|path| {
             matches!(
                 path.file_name().and_then(|name| name.to_str()),
@@ -28,8 +26,14 @@ pub(crate) fn discover_workspace_root(
             directory
                 .ancestors()
                 .find_map(|path| validate_root(path).ok())
-        })
+        });
+    Ok(installed
         .or_else(|| current_directory.and_then(|path| validate_root(path).ok()))
+        .or_else(|| {
+            remembered
+                .filter(|path| path.is_absolute())
+                .and_then(|path| validate_root(path).ok())
+        }))
 }
 
 pub(crate) fn parse_template_setup(
@@ -447,35 +451,36 @@ mod tests {
     }
 
     #[test]
-    fn discovery_uses_the_app_location_when_a_saved_project_has_expired() {
+    fn discovery_prefers_the_apps_project_over_other_projects() {
         let workspace = Fixture::workspace();
         let current_directory = Fixture::workspace();
+        let remembered = Fixture::workspace();
         let executable = workspace
             .0
             .join("ScriptHub.app/Contents/MacOS/script-hub-gui");
         assert_eq!(
-            discover_workspace_root(
-                Some(&workspace.0.join("missing")),
+            resolve_project_root(
+                None,
+                Some(&remembered.0),
                 Some(&executable),
                 Some(&current_directory.0),
-            ),
+            )
+            .unwrap(),
             Some(workspace.0.canonicalize().unwrap())
         );
-        assert!(discover_workspace_root(Some(&workspace.0.join("missing")), None, None).is_none());
     }
 
     #[test]
-    fn discovery_prefers_the_remembered_project_over_app_and_current_locations() {
+    fn a_detached_app_can_use_a_previously_saved_directory() {
         let remembered = Fixture::workspace();
-        let executable = Fixture::workspace();
-        let current_directory = Fixture::workspace();
         assert_eq!(
-            discover_workspace_root(
-                Some(&remembered.0),
-                Some(&executable.0.join("script-hub-gui.exe")),
-                Some(&current_directory.0),
-            ),
+            resolve_project_root(None, Some(&remembered.0), None, None).unwrap(),
             Some(remembered.0.canonicalize().unwrap())
+        );
+        assert!(
+            resolve_project_root(None, Some(&remembered.0.join("missing")), None, None)
+                .unwrap()
+                .is_none()
         );
     }
 
@@ -484,14 +489,28 @@ mod tests {
         let workspace = Fixture::workspace();
         let arbitrary = workspace.0.join("target/debug/unrelated-tool");
         assert_eq!(
-            discover_workspace_root(None, Some(&arbitrary), Some(&workspace.0)),
+            resolve_project_root(None, None, Some(&arbitrary), Some(&workspace.0)).unwrap(),
             Some(workspace.0.canonicalize().unwrap())
         );
         assert!(
-            discover_workspace_root(None, Some(&arbitrary), Some(&workspace.0.join("modules")))
-                .is_none(),
+            resolve_project_root(
+                None,
+                None,
+                Some(&arbitrary),
+                Some(&workspace.0.join("modules"))
+            )
+            .unwrap()
+            .is_none(),
         );
-        assert!(discover_workspace_root(Some(Path::new("")), None, None).is_none());
+    }
+
+    #[test]
+    fn invalid_explicit_project_does_not_use_another_directory() {
+        let project = Fixture::workspace();
+        let invalid = project.0.join("missing");
+        assert!(
+            resolve_project_root(Some(&invalid), Some(&project.0), None, Some(&project.0)).is_err()
+        );
     }
 
     #[test]

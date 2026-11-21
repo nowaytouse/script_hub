@@ -3,6 +3,7 @@
 mod dns_name;
 mod filesystem;
 mod module_header;
+mod process;
 mod rulesets;
 
 pub mod app;

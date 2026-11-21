@@ -1,108 +1,40 @@
 use super::{Hub, Page, Palette, UiStyle, button, heading, panel};
 use crate::desktop::i18n::Text;
 use crate::desktop::tasks::{is_problem, stage_text};
-use crate::desktop::template_paths::discover_workspace_root;
+use crate::desktop::template_paths::resolve_project_root;
 use crate::runtime::catalog::{Catalog, ModulePlatform};
 use crate::runtime::history::HistoryOptions;
-use crate::runtime::job::{Job, JobKind, JobOptions, JobOutcome, validate_root};
+use crate::runtime::job::{Job, JobKind, JobOptions, JobOutcome};
 use crate::runtime::repository;
 use crate::runtime::settings::{self, Accent, Density, Language, Theme, WindowSize};
 use gpui::{Context, Div, FontWeight, Window, div, prelude::*, px};
 use std::path::PathBuf;
 use std::time::Duration;
 
-fn select_workspace(root: &mut Option<PathBuf>, requested: &mut Option<PathBuf>, path: PathBuf) {
-    // An explicit request replaces the active project even if validation fails.
-    *root = None;
-    *requested = Some(path);
-}
-
 impl Hub {
-    pub(super) fn validate_workspace(&mut self, cx: &mut Context<Self>) {
-        self.queue_job(JobKind::Validate, cx);
-    }
-
-    pub(super) fn open_detected_workspace(&mut self, cx: &mut Context<Self>) {
-        if self.workspace_discovery_attempted
-            || self.root.is_some()
-            || self.requested_root.is_some()
-            || self.working(cx)
-        {
-            return;
-        }
-        self.workspace_discovery_attempted = true;
+    pub(super) fn load_project(&mut self, explicit: Option<PathBuf>, cx: &mut Context<Self>) {
         self.loading = true;
+        self.pending_job = None;
         let remembered = PathBuf::from(&self.saved_preferences.root);
-        let detect = cx.background_executor().spawn(async move {
-            discover_workspace_root(
+        let task = cx.background_executor().spawn(async move {
+            let root = resolve_project_root(
+                explicit.as_deref(),
                 Some(&remembered),
                 std::env::current_exe().ok().as_deref(),
                 std::env::current_dir().ok().as_deref(),
-            )
-        });
-        cx.spawn(async move |this, cx| {
-            let root = detect.await;
-            let _ = this.update(cx, |hub, cx| {
-                hub.loading = false;
-                if let Some(root) = root {
-                    hub.read_workspace(root, cx);
-                } else {
-                    cx.notify();
-                }
-            });
-        })
-        .detach();
-        cx.notify();
-    }
-
-    pub(super) fn load_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
-        if self.working(cx) || !self.templates.read(cx).can_close() {
-            return;
-        }
-        self.clear_workspace(path.clone(), cx);
-        self.message = None;
-        self.read_workspace(path, cx);
-    }
-
-    fn clear_workspace(&mut self, requested: PathBuf, cx: &mut Context<Self>) {
-        select_workspace(&mut self.root, &mut self.requested_root, requested);
-        self.surge = Catalog::bundled(ModulePlatform::Surge);
-        self.shadowrocket = Catalog::bundled(ModulePlatform::Shadowrocket);
-        self.repository = None;
-        self.reset_workspace_selections();
-        self.commit.update(cx, super::input::TextInput::clear);
-        self.templates.update(cx, |templates, cx| {
-            templates.detach_workspace(cx);
-        });
-        self.sources
-            .update(cx, |sources, cx| sources.set_workspace(None, cx));
-    }
-
-    fn reset_workspace_selections(&mut self) {
-        self.checked_modules.clear();
-        self.checked_rules.clear();
-        self.selected_changes.clear();
-        self.inspect_module = None;
-        self.active_category = None;
-    }
-
-    fn read_workspace(&mut self, path: PathBuf, cx: &mut Context<Self>) {
-        self.loading = true;
-        self.pending_job = None;
-        let requested = path.clone();
-        let task = cx.background_executor().spawn(async move {
-            let root = validate_root(&path)?;
-            let surge = Catalog::load_platform(&root, ModulePlatform::Surge);
-            let shadowrocket = Catalog::load_platform(&root, ModulePlatform::Shadowrocket);
-            let repository = repository::snapshot(&root);
-            Ok::<_, String>((root, surge, shadowrocket, repository))
+            )?;
+            Ok::<_, String>(root.map(|root| {
+                let surge = Catalog::load_platform(&root, ModulePlatform::Surge);
+                let shadowrocket = Catalog::load_platform(&root, ModulePlatform::Shadowrocket);
+                (root, surge, shadowrocket)
+            }))
         });
         cx.spawn(async move |this, cx| {
             let result = task.await;
             let _ = this.update(cx, |hub, cx| {
                 hub.loading = false;
                 match result {
-                    Ok((root, surge, shadowrocket, repository)) => {
+                    Ok(Some((root, surge, shadowrocket))) => {
                         hub.root = Some(root.clone());
                         if hub.page == Page::Templates {
                             hub.templates.update(cx, |templates, cx| {
@@ -120,15 +52,30 @@ impl Hub {
                             warnings.push(error);
                             Catalog::bundled(ModulePlatform::Shadowrocket)
                         });
-                        hub.repository = repository.map_err(|error| warnings.push(error)).ok();
-                        hub.reset_workspace_selections();
+                        hub.reset_catalog_selection();
+                        hub.repository = None;
+                        hub.selected_changes.clear();
                         if !warnings.is_empty() {
                             hub.message = Some(warnings.join("\n"));
                         }
+                        if hub.page == Page::Tasks && hub.repository_open {
+                            hub.read_repository(cx);
+                        }
                     }
+                    Ok(None) => {}
                     Err(error) => {
-                        if hub.root.is_some() {
-                            hub.clear_workspace(requested, cx);
+                        if hub.root.take().is_some() {
+                            hub.surge = Catalog::bundled(ModulePlatform::Surge);
+                            hub.shadowrocket = Catalog::bundled(ModulePlatform::Shadowrocket);
+                            hub.reset_catalog_selection();
+                            hub.repository = None;
+                            hub.selected_changes.clear();
+                            hub.commit.update(cx, super::input::TextInput::clear);
+                            hub.templates.update(cx, |templates, cx| {
+                                templates.detach_workspace(cx);
+                            });
+                            hub.sources
+                                .update(cx, |sources, cx| sources.set_workspace(None, cx));
                         }
                         hub.message = Some(error);
                     }
@@ -140,15 +87,51 @@ impl Hub {
         cx.notify();
     }
 
-    pub(super) fn reload_repository(&mut self, cx: &mut Context<Self>) {
+    fn reset_catalog_selection(&mut self) {
+        self.checked_modules.clear();
+        self.checked_rules.clear();
+        self.inspect_module = None;
+        self.active_category = None;
+    }
+
+    pub(super) fn reload_project(&mut self, cx: &mut Context<Self>) {
         if self.working(cx) || !self.templates.read(cx).can_close() {
             return;
         }
+        if let Some(root) = self.root.clone() {
+            self.load_project(Some(root), cx);
+        }
+    }
+
+    pub(super) fn read_repository(&mut self, cx: &mut Context<Self>) {
         let Some(root) = self.root.clone() else {
             return;
         };
-        self.message = None;
-        self.read_workspace(root, cx);
+        if self.project_busy(cx) {
+            return;
+        }
+        self.repository_loading = true;
+        self.repository = None;
+        self.selected_changes.clear();
+        let task_root = root.clone();
+        let task = cx
+            .background_executor()
+            .spawn(async move { repository::snapshot(&task_root) });
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            let _ = this.update(cx, |hub, cx| {
+                hub.repository_loading = false;
+                if hub.root.as_ref() == Some(&root) {
+                    match result {
+                        Ok(repository) => hub.repository = Some(repository),
+                        Err(error) => hub.message = Some(error),
+                    }
+                }
+                cx.notify();
+            });
+        })
+        .detach();
+        cx.notify();
     }
 
     fn job_label(&self, job: JobKind) -> &'static str {
@@ -237,6 +220,7 @@ impl Hub {
         match Job::start(kind, options) {
             Ok(job) => {
                 self.job = Some(job);
+                self.repository_open = false;
                 self.log_query.update(cx, super::input::TextInput::clear);
                 self.problems_only = false;
                 self.history
@@ -264,7 +248,7 @@ impl Hub {
                                             JobKind::Validate | JobKind::RefreshCatalog
                                         )
                                     {
-                                        hub.reload_repository(cx);
+                                        hub.reload_project(cx);
                                     }
                                 }
                                 cx.notify();
@@ -283,90 +267,29 @@ impl Hub {
         cx.notify();
     }
 
-    fn choose_workspace_card(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
-        if self.loading {
-            return panel(palette)
-                .p_5()
-                .text_color(palette.muted)
-                .child(self.local(
-                    "Reading workspace…",
-                    "正在读取工作区…",
-                    "ワークスペースを読み込み中…",
-                ));
-        }
-        panel(palette)
-            .p_5()
+    fn repository_details(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
+        let page = div()
+            .flex()
+            .flex_col()
             .gap_3()
-            .child(self.local(
-                "Choose a Script Hub repository to use this page.",
-                "选择一个 Script Hub 仓库后即可使用此页面。",
-                "このページを使うには Script Hub のリポジトリを選びます。",
-            ))
             .child(
-                div().flex().child(
+                div().flex().items_center().gap_3().child(
                     button(
-                        "workspace-start",
-                        self.workspace_picker_label(),
+                        "repo-reload",
+                        self.local("Refresh status", "刷新状态", "状態を更新"),
                         palette,
-                        true,
+                        false,
                     )
-                    .on_click(cx.listener(|hub, _, _, cx| hub.pick_workspace(cx))),
+                    .on_click(cx.listener(|hub, _, _, cx| hub.read_repository(cx))),
                 ),
             )
-    }
-
-    pub(super) fn workspace_page(&self, palette: Palette, cx: &mut Context<Self>) -> Div {
-        let mut page = div().flex().flex_col().gap_5().child(heading(
-            self.tr(Text::Workspace),
-            self.local(
-                "Browse local changes, review the remote and choose what to commit.",
-                "查看本地变更、远端状态并选择需要提交的文件。",
-                "ローカルの変更とリモートの状態を確認し、コミットするファイルを選びます。",
-            ),
-            palette,
-        ));
-        let Some(root) = &self.root else {
-            return page.child(self.choose_workspace_card(palette, cx));
-        };
-        page = page.child(
-            panel(palette)
-                .p_5()
-                .gap_3()
-                .child(
-                    div()
-                        .flex()
-                        .justify_between()
-                        .items_center()
-                        .gap_3()
-                        .child(
-                            div()
-                                .min_w_0()
-                                .truncate()
-                                .font_weight(FontWeight::MEDIUM)
-                                .child(root.display().to_string()),
-                        )
-                        .child(
-                            button(
-                                "repo-reload",
-                                self.local("Refresh", "刷新", "更新"),
-                                palette,
-                                false,
-                            )
-                            .on_click(cx.listener(|hub, _, _, cx| {
-                                if !hub.project_action_blocked(cx) {
-                                    hub.reload_repository(cx);
-                                }
-                            })),
-                        ),
-                )
-                .when(self.loading, |node| {
-                    node.child(div().text_color(palette.muted).child(self.local(
-                        "Reading workspace…",
-                        "正在读取工作区…",
-                        "ワークスペースを読み込み中…",
-                    )))
-                }),
-        );
+            .when(self.repository_loading, |page| {
+                page.child(div().text_sm().text_color(palette.muted).child(self.local(
+                    "Reading Git status…",
+                    "正在读取 Git 状态…",
+                    "Git の状態を読み込み中…",
+                )))
+            });
         let Some(repo) = &self.repository else {
             return page;
         };
@@ -566,9 +489,6 @@ impl Hub {
                     )
                 }),
         )
-        .when_some(self.pending_job, |node, job| {
-            node.child(self.confirm_job(job, palette, cx))
-        })
     }
 
     fn confirm_job(&self, job: JobKind, palette: Palette, cx: &mut Context<Self>) -> Div {
@@ -581,9 +501,9 @@ impl Hub {
                     .child(self.job_label(job)),
             )
             .child(div().text_sm().text_color(palette.muted).child(self.local(
-                "Review the selected workspace before running this operation.",
-                "确认所选工作区后再执行此操作。",
-                "選択したワークスペースを確認してから実行してください。",
+                "Review this repository before continuing.",
+                "继续前请确认此仓库。",
+                "続行する前にリポジトリを確認してください。",
             )))
             .when_some(self.root.as_ref(), |node, path| {
                 node.child(div().text_sm().child(path.display().to_string()))
@@ -620,15 +540,12 @@ impl Hub {
         let mut page = div().flex().flex_col().gap_5().child(heading(
             self.tr(Text::Tasks),
             self.local(
-                "Validate and regenerate public artifacts for the selected workspace.",
-                "校验并重新生成所选工作区的公开产物。",
-                "選択したワークスペースの公開成果物を検証・再生成します。",
+                "Validate and update public rules, modules and release artifacts.",
+                "校验和更新公开规则、模块及发布产物。",
+                "公開ルール、モジュール、配布物を検証・更新します。",
             ),
             palette,
         ));
-        if self.root.is_none() {
-            return page.child(self.choose_workspace_card(palette, cx));
-        }
         let jobs = [
             JobKind::Validate,
             JobKind::RefreshCatalog,
@@ -674,25 +591,63 @@ impl Hub {
                             _ => Text::HelpGit,
                         },
                     )))
-                    .child(
-                        div().flex().child(
-                            button(
-                                "start-task",
-                                self.local(
-                                    "Run selected task",
-                                    "运行所选任务",
-                                    "選択したタスクを実行",
+                    .when(self.root.is_some(), |card| {
+                        card.child(
+                            div().flex().child(
+                                button(
+                                    "start-task",
+                                    self.local(
+                                        "Run selected task",
+                                        "运行所选任务",
+                                        "選択したタスクを実行",
+                                    ),
+                                    palette,
+                                    true,
+                                )
+                                .on_click(
+                                    cx.listener(|hub, _, _, cx| hub.queue_job(hub.job_kind, cx)),
                                 ),
-                                palette,
-                                true,
-                            )
-                            .on_click(cx.listener(|hub, _, _, cx| hub.queue_job(hub.job_kind, cx))),
-                        ),
-                    ),
+                            ),
+                        )
+                    })
+                    .when(self.root.is_none() && !self.loading, |card| {
+                        card.child(div().text_sm().text_color(palette.muted).child(self.local(
+                            "Local maintenance is available in a Script Hub checkout.",
+                            "维护任务在 Script Hub 仓库版中可用。",
+                            "メンテナンスタスクは Script Hub のチェックアウトで利用できます。",
+                        )))
+                    }),
             )
             .when_some(self.pending_job, |node, job| {
                 node.child(self.confirm_job(job, palette, cx))
             });
+        page = page.when(self.root.is_some(), |page| {
+            page.child(
+                panel(palette)
+                    .p_5()
+                    .gap_3()
+                    .child(
+                        div().flex().child(
+                            button(
+                                "show-repository",
+                                self.local("Version control", "版本管理", "バージョン管理"),
+                                palette,
+                                self.repository_open,
+                            )
+                            .on_click(cx.listener(|hub, _, _, cx| {
+                                hub.repository_open = !hub.repository_open;
+                                if hub.repository_open && hub.repository.is_none() {
+                                    hub.read_repository(cx);
+                                }
+                                cx.notify();
+                            })),
+                        ),
+                    )
+                    .when(self.repository_open, |section| {
+                        section.child(self.repository_details(palette, cx))
+                    }),
+            )
+        });
         if let Some(job) = &self.job {
             let view = if self.show_logs {
                 job.snapshot()
@@ -898,9 +853,6 @@ impl Hub {
         };
         let mut preferences = self.preferences.clone();
         preferences.singbox = self.singbox.read(cx).value().trim().into();
-        if let Some(root) = &self.root {
-            preferences.root = root.to_string_lossy().into();
-        }
         let saved = match settings::save(path, &preferences) {
             Ok(()) => {
                 self.preferences = preferences;
@@ -1008,15 +960,6 @@ impl Hub {
         let heading_style = |name| div().text_sm().font_weight(FontWeight::MEDIUM).child(name);
         let mut toggles = vec![
             (
-                "setting-reopen",
-                self.local(
-                    "Open workspace at startup",
-                    "启动时打开工作区",
-                    "起動時にワークスペースを開く",
-                ),
-                self.preferences.reopen_workspace,
-            ),
-            (
                 "setting-history",
                 self.local("Keep task history", "保留任务历史", "タスク履歴を保持"),
                 self.preferences.record_history,
@@ -1041,9 +984,9 @@ impl Hub {
             .child(heading(
                 self.tr(Text::Settings),
                 self.local(
-                    "Appearance and workspace preferences",
-                    "外观和工作区偏好",
-                    "外観とワークスペースの設定",
+                    "Appearance and application preferences",
+                    "外观和应用偏好",
+                    "外観とアプリの設定",
                 ),
                 palette,
             ))
@@ -1220,9 +1163,9 @@ impl Hub {
                     .p_5()
                     .gap_3()
                     .child(heading_style(self.local(
-                        "Workspace and tasks",
-                        "工作区与任务",
-                        "ワークスペースとタスク",
+                        "Maintenance",
+                        "维护",
+                        "メンテナンス",
                     )))
                     .child(self.singbox.clone())
                     .child(
@@ -1240,10 +1183,6 @@ impl Hub {
                                 .on_click(cx.listener(
                                     move |hub, _, _, cx| {
                                         match id {
-                                            "setting-reopen" => {
-                                                hub.preferences.reopen_workspace =
-                                                    !hub.preferences.reopen_workspace
-                                            }
                                             "setting-history" => {
                                                 hub.preferences.record_history =
                                                     !hub.preferences.record_history
@@ -1359,24 +1298,5 @@ impl Hub {
                     .on_click(cx.listener(|hub, _, _, cx| hub.open_demo(cx))),
                 ),
             )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn failed_explicit_selection_leaves_no_active_project() {
-        let previous = PathBuf::from("previous-workspace");
-        let mut root = Some(previous.clone());
-        let mut requested = Some(previous);
-        let invalid = PathBuf::new();
-
-        select_workspace(&mut root, &mut requested, invalid.clone());
-
-        assert!(validate_root(&invalid).is_err());
-        assert_eq!(root, None);
-        assert_eq!(requested, Some(invalid));
     }
 }

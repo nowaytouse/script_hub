@@ -1,8 +1,9 @@
+use crate::process::background_command;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::thread;
 
 const MAX_STATUS_BYTES: usize = 8 * 1024 * 1024;
@@ -94,7 +95,7 @@ fn run_git_with_ssh(
     limit: usize,
     default_ssh_command: Option<&str>,
 ) -> Result<GitOutput, String> {
-    let mut command = Command::new("git");
+    let mut command = background_command("git");
     command
         .arg("-c")
         .arg("credential.interactive=false")

@@ -4,7 +4,7 @@ use std::{
     io::{Read, Write},
     net::{IpAddr, TcpListener, TcpStream},
     path::{Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, Stdio},
     sync::{
         Mutex,
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -356,7 +356,7 @@ impl Process {
         if encoded.len() > 1024 * 1024 {
             return Err(EngineError::Infrastructure);
         }
-        let mut command = Command::new(engine);
+        let mut command = crate::process::background_command(engine);
         command
             .args([action, "-c", "stdin", "--disable-color"])
             .stdin(Stdio::piped())
@@ -377,11 +377,6 @@ impl Process {
             if let Some(value) = std::env::var_os(name) {
                 command.env(name, value);
             }
-        }
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            command.creation_flags(0x0800_0000);
         }
         let child = command.spawn().map_err(|_| EngineError::Unavailable)?;
         let mut process = Self {

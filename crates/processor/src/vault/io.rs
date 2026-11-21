@@ -186,15 +186,14 @@ fn write_private_windows(
 
 #[cfg(windows)]
 fn windows_system_command(name: &str) -> Result<std::process::Command, VaultError> {
-    use std::os::windows::process::CommandExt;
-    use std::process::{Command, Stdio};
+    use std::process::Stdio;
 
     let root = PathBuf::from(std::env::var_os("SystemRoot").ok_or(VaultError::Io)?);
     if !root.is_absolute() {
         return Err(VaultError::Io);
     }
-    let mut command = Command::new(root.join("System32").join(name));
-    command.stdin(Stdio::null()).creation_flags(0x0800_0000);
+    let mut command = crate::process::background_command(root.join("System32").join(name));
+    command.stdin(Stdio::null());
     Ok(command)
 }
 

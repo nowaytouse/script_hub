@@ -141,9 +141,6 @@ pub struct Preferences {
     pub scale_percent: u16,
     pub window: WindowSize,
     pub density: Density,
-    /// Opening protected folders is opt-in; merely launching the GUI stays local
-    /// to its own settings until a workspace is explicitly opened.
-    pub reopen_workspace: bool,
     pub record_history: bool,
     pub developer_mode: bool,
     pub diagnostic_logs: bool,
@@ -161,7 +158,6 @@ impl Default for Preferences {
             scale_percent: 100,
             window: WindowSize::default(),
             density: Density::default(),
-            reopen_workspace: false,
             record_history: true,
             developer_mode: false,
             diagnostic_logs: false,

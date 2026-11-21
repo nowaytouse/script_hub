@@ -107,7 +107,6 @@ impl Support {
 
     fn help(&self, palette: Palette) -> Div {
         let topics = [
-            (Text::Workspace, self.tr(Text::HelpWorkspace)),
             (Text::Tasks, self.tr(Text::HelpUpdates)),
             (Text::Sources, self.tr(Text::HelpSources)),
             (Text::Repository, self.tr(Text::HelpGit)),

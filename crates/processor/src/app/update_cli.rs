@@ -6,6 +6,14 @@ use std::process::{Command, ExitCode, Stdio};
 
 const MAX_GENERATED_FILE_BYTES: usize = 128 * 1024 * 1024;
 
+fn git_command() -> Command {
+    if matches!(std::env::var("SCRIPT_HUB_GUI_EVENTS").as_deref(), Ok("1")) {
+        crate::process::background_command("git")
+    } else {
+        Command::new("git")
+    }
+}
+
 fn read_batch_blob(
     input: &mut impl Write,
     output: &mut impl BufRead,
@@ -66,7 +74,7 @@ fn read_head_blob(
     output: &mut impl BufRead,
 ) -> Result<Option<Vec<u8>>, String> {
     if name.contains('\n') || name.contains('\r') {
-        let old = Command::new("git")
+        let old = git_command()
             .args([
                 "rev-parse",
                 "--verify",
@@ -87,7 +95,7 @@ fn read_head_blob(
 }
 
 fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
-    let names = Command::new("git")
+    let names = git_command()
         .args([
             "diff",
             "--name-only",
@@ -144,7 +152,7 @@ fn discard_semantic_noop_changes(root: &Path) -> Result<(), String> {
         return Ok(());
     }
 
-    let mut cat_file = Command::new("git")
+    let mut cat_file = git_command()
         .args(["cat-file", "--batch"])
         .current_dir(root)
         .stdin(Stdio::piped())
@@ -349,7 +357,7 @@ fn run(
         let providers = rust_processor::mihomo_generator::run_generator(root)?;
         println!("[INFO] synchronized {providers} policy-neutral Mihomo providers");
         discard_semantic_noop_changes(root)?;
-        let status = Command::new("git")
+        let status = git_command()
             .args(["diff", "--check"])
             .current_dir(root)
             .status()
