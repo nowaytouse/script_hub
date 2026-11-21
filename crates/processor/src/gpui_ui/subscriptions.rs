@@ -237,6 +237,8 @@ impl Subscriptions {
             activation: None,
         };
         cx.observe(&state.query, |_, _, cx| cx.notify()).detach();
+        cx.observe(&state.relay_save_name, |_, _, cx| cx.notify())
+            .detach();
         cx.subscribe(&state.relay_pipeline, |this, _, _: &PipelineChanged, cx| {
             if this.schedule_active() {
                 this.stop_schedule(cx);
