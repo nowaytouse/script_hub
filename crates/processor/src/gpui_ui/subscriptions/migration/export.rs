@@ -100,9 +100,9 @@ impl Subscriptions {
         };
         let unsafe_destination = localized(
             language,
-            "Choose a backup destination outside Git working trees and vault folders.",
-            "请选择 Git 工作区和保险库文件夹以外的备份位置。",
-            "Git ワークツリーと保管庫フォルダーの外にあるバックアップ先を選んでください。",
+            "Choose a backup destination outside Git repositories and vault folders.",
+            "请选择 Git 仓库和保险库文件夹以外的备份位置。",
+            "Git リポジトリと保管庫フォルダーの外にあるバックアップ先を選んでください。",
         );
         let picker_error = localized(
             language,
