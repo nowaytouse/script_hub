@@ -498,6 +498,9 @@ impl Subscriptions {
         if let Some(review) = self.node_review_panel(palette, cx) {
             return body.child(review);
         }
+        if self.reviewing_relay_save && self.current_preview(cx).is_some() {
+            return body.children(self.relay_save_controls(palette, cx));
+        }
         let source_title = match self.source {
             Source::Saved(Item::Entry(id)) => self.entry(id).map(|entry| entry.name.as_str()),
             Source::Saved(Item::Collection(id)) => {
