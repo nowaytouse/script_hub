@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Restore macOS desktop text by enabling GPUI's native font rasterizer when default features are disabled.
+
 - Add subscriptions in batches with an optional ordered collection. Save a relay preview's reviewed source and processing steps to the subscription library. Configure protocol and region filters, sorting, and result limits with native forms.
 
 - Open desktop panels directly. Detect local project files in the background, remove the project picker and startup switch, and keep Git tools under Tasks. Hide Windows console windows for Git, the task worker, and sing-box.

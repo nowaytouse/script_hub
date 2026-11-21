@@ -21,6 +21,24 @@ const COMMIT: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const MAC_HOST: &str = "aarch64-apple-darwin";
 const WINDOWS_HOST: &str = "x86_64-pc-windows-msvc";
 
+#[test]
+fn macos_gui_keeps_native_font_rasterization_enabled() {
+    let manifest = include_str!("../../processor/Cargo.toml");
+    let macos = manifest
+        .split("[target.'cfg(target_os = \"macos\")'.dependencies]")
+        .nth(1)
+        .unwrap_or("")
+        .split("\n[")
+        .next()
+        .unwrap();
+    assert!(
+        macos
+            .lines()
+            .any(|line| line.starts_with("gpui = ") && line.contains("\"font-kit\"")),
+        "macOS GPUI needs font-kit; otherwise it silently uses NoopTextSystem and renders no glyphs"
+    );
+}
+
 struct Fixture(PathBuf);
 impl Fixture {
     fn new() -> Self {
