@@ -951,7 +951,11 @@ fn cached_remote_preview_preserves_script_source_kind() {
         id: 1,
         enabled: true,
         operation: Operation::Script {
-            source: "fn transform(node, context) { node.name = context.source_kind; node }".into(),
+            source: r#"fn transform(node, context) {
+                node.name = context.source_kind + " " + node.name;
+                node
+            }"#
+            .into(),
             arguments: Default::default(),
         },
     }];
@@ -972,7 +976,7 @@ fn cached_remote_preview_preserves_script_source_kind() {
         )
         .unwrap();
         let nodes = model::Subscription::parse(&preview.content).unwrap();
-        assert_eq!(nodes.nodes()[0].name(), expected_kind);
+        assert_eq!(nodes.nodes()[0].name(), format!("{expected_kind} A"));
     }
     assert!(fixture.request_methods().is_empty());
 }

@@ -274,7 +274,8 @@ mod tests {
     #[test]
     fn saves_unmodified_cache_and_positional_edits_together() {
         let (config, preview) = edited_preview();
-        assert!(preview.content.starts_with("Edited ="));
+        let nodes = relay::model::Subscription::parse(&preview.content).unwrap();
+        assert_eq!(nodes.nodes()[0].name(), "Edited");
         let entry = reviewed_entry("Local".into(), &config, &preview).unwrap();
         assert_eq!(entry.content, RAW);
         assert!(entry.source.is_empty());
