@@ -4,6 +4,22 @@ use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
+fn local_exact_reject_keeps_tydevice_siblings_out_of_the_block() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let path = "rulesets/Sources/Local_Exact_Reject.list";
+    let input = fs::read_to_string(root.join(path)).unwrap();
+    let mut manager = AdBlockManager::new(root);
+    manager.load_whitelist().unwrap();
+    manager.extract_from_text(&input, "REJECT", "Local", false, false, path);
+    let matches: Vec<_> = manager.rules["REJECT"]["Local"]
+        .iter()
+        .filter(|line| line.contains("tydevice.com"))
+        .collect();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].as_str(), "DOMAIN,typdm.tydevice.com");
+}
+
+#[test]
 fn missing_or_truncated_declared_functional_sources_cannot_publish() {
     let root = std::env::temp_dir().join(format!(
         "promax-functional-inputs-{}-{}",

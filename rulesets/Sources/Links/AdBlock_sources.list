@@ -99,6 +99,7 @@ https://raw.githubusercontent.com/app2smile/rules/master/rule/tieba-ad.list|REJE
 
 # Explicit user-confirmed exact IP drops; no DNS or network-range expansion.
 /rulesets/Sources/IP_Drop_Reviewed.list|REJECT-DROP|auto|Local
+/rulesets/Sources/Local_Exact_Reject.list|REJECT|auto|Local
 
 # HaGeZi Multi ULTIMATE mixes ads, tracking and threats. The existing shard key
 # is kept for subscriptions. TIF Medium and phishing use separate threat shards.
