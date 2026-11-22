@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Block the user-designated untrusted `daacc.org` DNS service and its subdomains through PROMAX's maintained local Security source, without blocking shared cloud IPs.
+
 - Restore macOS desktop text by enabling GPUI's native font rasterizer when default features are disabled.
 
 - Add subscriptions in batches with an optional ordered collection. Save a relay preview's reviewed source and processing steps to the subscription library. Configure protocol and region filters, sorting, and result limits with native forms.

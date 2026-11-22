@@ -2,7 +2,8 @@
 # Purpose: 劫持 / 钓鱼 / BanProgram / HTTPDNS / skk reject
 # Category-Key: Security
 # Shard: 1/1
-# Total Rules: 3
+# Total Rules: 4
 DOMAIN,kuaishou.httpdns.pro
 DOMAIN,paydns.wechatpay.cn
 DOMAIN,twns.p2ptun.qq.com
+DOMAIN-SUFFIX,daacc.org
