@@ -1503,57 +1503,6 @@ fn shared_thumbnail_hosts_and_baidu_image_proxy_are_not_adblock_targets() {
 }
 
 #[test]
-fn reviewed_private_dns_block_is_persistent_and_matches_published_security_shard() {
-    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .unwrap();
-    let source = root.join("rulesets/Sources/Security_Reviewed.list");
-    let mut manager = AdBlockManager::new(root.clone());
-    manager.load_whitelist().unwrap();
-    assert!(manager.load_source_entries().iter().any(|entry| {
-        entry.resolved_path(&root).canonicalize().ok().as_ref() == Some(&source)
-            && entry.policy == "REJECT"
-            && entry.category.as_deref() == Some("Security")
-    }));
-    let published =
-        fs::read_to_string(root.join("rulesets/AdBlock/AdBlock_Security.list")).unwrap();
-    for input in [fs::read_to_string(source).unwrap(), published.clone()] {
-        manager.extract_from_text(
-            &input,
-            "REJECT",
-            "Security",
-            false,
-            false,
-            "reviewed-security",
-        );
-    }
-    let (_, artifacts) = manager.generate_ruleset().unwrap();
-    let security = artifacts
-        .iter()
-        .find(|artifact| {
-            artifact
-                .target
-                .ends_with("rulesets/AdBlock/AdBlock_Security.list")
-        })
-        .unwrap();
-    assert_eq!(security.content, published);
-    assert_eq!(
-        published
-            .lines()
-            .filter(|line| *line == "DOMAIN-SUFFIX,daacc.org")
-            .count(),
-        1
-    );
-    for product in crate::promax::published_products() {
-        let module = fs::read_to_string(root.join(product.path)).unwrap();
-        assert!(module.lines().any(|line| line.starts_with("RULE-SET,")
-            && (line.contains("/AdBlock_Security.list,REJECT")
-                || line.contains("AdBlock%5FSecurity%2Elist,REJECT"))));
-    }
-}
-
-#[test]
 fn reviewed_privacy_sources_survive_safety_filter_and_keep_suffixes_protected() {
     let repo_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")

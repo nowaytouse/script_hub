@@ -86,7 +86,6 @@ https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilte
 https://ublockorigin.github.io/uAssetsCDN/filters/badware.min.txt|REJECT|browser-domains|ThreatIntel
 # Internal exact-host privacy rules; not a public subscriber list.
 ../Privacy_Reviewed.list|REJECT|auto|Privacy
-../Security_Reviewed.list|REJECT|auto|Security
 https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/data/combined_disguised_ads_justdomains.txt|REJECT|domainset|Advertising
 
 # AdGuard CNAME privacy categories (MIT; see ../licenses/README.md).
