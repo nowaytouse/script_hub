@@ -375,6 +375,11 @@ const ALIDNS_OUTPUTS: &[(&str, &str, bool)] = &[
     ),
 ];
 
+const CRUSH_CLOUD_ZONE: &str = "*.node.daacc.org";
+const CRUSH_CLOUD_DOH_HOST: &str = "ddhjiadji6959dadaa.daacc.org";
+const CRUSH_CLOUD_SOURCE: &str =
+    "https://raw.githubusercontent.com/crushcloud91/Crush-Cloud/main/crushcloud-dns.sgmodule";
+
 fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
     let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
@@ -391,6 +396,10 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
             .iter()
             .map(|(host, addresses)| format!("{host} = {addresses}")),
     );
+    // Keep the reviewed split-DNS scope fixed; upstream changes must not alter the user's resolver.
+    hosts.push(format!(
+        "{CRUSH_CLOUD_ZONE} = server:https://{CRUSH_CLOUD_DOH_HOST}/dns-query"
+    ));
 
     let mut exclusions = crate::promax::safety::apple_mitm_exclusions();
     exclusions.extend(
@@ -398,6 +407,7 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
             .iter()
             .copied()
             .chain(PUBLIC_DOH_BOOTSTRAPS.iter().map(|&(host, _)| host))
+            .chain([CRUSH_CLOUD_DOH_HOST])
             .map(|host| format!("-{host}")),
     );
     exclusions.sort_unstable();
@@ -411,7 +421,7 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
     let mut output = vec![
         "#!name=🌟 AdBlock Helper".to_string(),
         format!(
-            "#!desc={prefix}保留已选 DNS 与分流。局域网名称及本地反查区交给系统 DNS，为常用 DoH 提供 IPv4 和 IPv6 引导地址，并排除相关 MITM。"
+            "#!desc={prefix}保留全局 DNS 与分流。局域网名称及本地反查区交给系统 DNS，为常用 DoH 提供双栈引导地址；*.node.daacc.org 使用 Crush Cloud DoH。"
         ),
         "#!author=ScriptHub".to_string(),
         "#!category=『 🔝 Head Expanse › 首端扩域 』".to_string(),
@@ -422,6 +432,9 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
     if !upstream_hosts.is_empty() {
         output.extend(super::helper_hosts::source_comments());
     }
+    output.push(format!(
+        "# Reviewed Crush Cloud split DNS: {CRUSH_CLOUD_SOURCE}"
+    ));
     output.extend(hosts);
     output.extend([
         String::new(),
@@ -701,6 +714,13 @@ mod tests {
                 .map(|line| line.split_once(" = ").unwrap())
             {
                 assert!(names.insert(host), "duplicate Host mapping: {host}");
+                if host == "*.node.daacc.org" {
+                    assert_eq!(
+                        mapping,
+                        "server:https://ddhjiadji6959dadaa.daacc.org/dns-query"
+                    );
+                    continue;
+                }
                 if let Some((_, expected)) = super::PUBLIC_DOH_BOOTSTRAPS
                     .iter()
                     .find(|&&(resolver, _)| resolver == host)
@@ -746,6 +766,7 @@ mod tests {
                 "my.router",
                 "router.ctc",
                 "leike.cc",
+                "*.node.daacc.org",
             ] {
                 assert!(names.contains(required), "missing Host mapping: {required}");
             }
@@ -757,6 +778,9 @@ mod tests {
                 "*.akamaized.net",
                 "doh.pub",
                 "dot.pub",
+                "*.daacc.org",
+                "node.daacc.org",
+                "ddhjiadji6959dadaa.daacc.org",
                 "*.expertwifi.net",
                 "*.keenetic.net",
                 "*.tplinkwifi.net",
@@ -779,6 +803,8 @@ mod tests {
             assert!(excluded.contains("-account.apple.com"));
             assert!(excluded.contains("-dns.alidns.com"));
             assert!(excluded.contains("-cloudflare-dns.com"));
+            assert!(excluded.contains("-ddhjiadji6959dadaa.daacc.org"));
+            assert!(!excluded.contains("-*.daacc.org"));
             for &(host, _) in super::PUBLIC_DOH_BOOTSTRAPS {
                 assert!(names.contains(host));
                 assert!(excluded.contains(format!("-{host}").as_str()));

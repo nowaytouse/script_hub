@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Use the reviewed Crush Cloud DoH endpoint for `*.node.daacc.org` in the Surge and Shadowrocket AdBlock Helper, without changing global DNS or routing.
+
 - Restore macOS desktop text by enabling GPUI's native font rasterizer when default features are disabled.
 
 - Add subscriptions in batches with an optional ordered collection. Save a relay preview's reviewed source and processing steps to the subscription library. Configure protocol and region filters, sorting, and result limits with native forms.
