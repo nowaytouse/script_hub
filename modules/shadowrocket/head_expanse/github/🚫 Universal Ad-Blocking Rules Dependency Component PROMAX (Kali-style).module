@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-21]
-#!desc=[🚀SR] 按用途分片(24片) + 应用内去广告(Port Reject=77, URL Rewrite=546, Map Local=1245, Script=272, Body Rewrite=90, MITM=765); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-22]
+#!desc=[🚀SR] 按用途分片(23片) + 应用内去广告(Port Reject=77, URL Rewrite=546, Map Local=1245, Script=272, Body Rewrite=90, MITM=765); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-21 20:49:52
+#!date=2026-11-22 20:45:17
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
 [Rule]
@@ -1342,7 +1342,6 @@ RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT,no-resolve
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT,no-resolve
-RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT,no-resolve
 # ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
 RULE-SET,https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT,no-resolve
 # Merged REJECT complex rules (209)
