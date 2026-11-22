@@ -74,7 +74,11 @@ static ADBLOCK_FILENAME_ALLOWLIST: &[&str] = &[
     "WeChat.ADBlock.sgmodule",
 ];
 
-static FUNCTIONAL_BLOCK_LOCAL_SOURCES: &[&str] = &["Reddit.ADBlock.sgmodule"];
+static FUNCTIONAL_BLOCK_LOCAL_SOURCES: &[&str] = &[
+    "Reddit.ADBlock.sgmodule",
+    "script_hub.surge.sgmodule",
+    "Sub-Store-Beta.sgmodule",
+];
 
 static CATEGORIES: &[&str] = &[
     "Local",

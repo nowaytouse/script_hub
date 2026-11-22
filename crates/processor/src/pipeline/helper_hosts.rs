@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use crate::promax::source::{DownloadConfig, Downloader};
 
+pub(super) mod crush_cloud;
 mod iana;
 mod v2fly;
 
@@ -189,7 +190,25 @@ fn publish_feed(root: &Path, feed: Feed, source: &str) -> Result<(), String> {
         Format::Iana { ipv6 } => iana::filtered(source, ipv6)?,
         Format::V2Fly => v2fly::filtered(source)?,
     };
-    let snapshot = root.join(feed.snapshot);
+    let text = format!(
+        "# Filtered local Host names from {}\n# {}\n{}\n",
+        feed.attribution,
+        feed.url,
+        hosts.into_iter().collect::<Vec<_>>().join("\n")
+    );
+    write_snapshot(root, feed.snapshot, &text)
+}
+
+fn write_snapshot(root: &Path, relative: &str, text: &str) -> Result<(), String> {
+    let snapshot = root.join(relative);
+    for parent in snapshot.ancestors().skip(1).take_while(|p| *p != root) {
+        if !fs::symlink_metadata(parent).is_ok_and(|m| m.is_dir()) {
+            return Err(format!(
+                "not a regular Host snapshot directory: {}",
+                parent.display()
+            ));
+        }
+    }
     match fs::symlink_metadata(&snapshot) {
         Ok(metadata) if !metadata.is_file() => {
             return Err("Host snapshot must be a regular file".into());
@@ -199,14 +218,8 @@ fn publish_feed(root: &Path, feed: Feed, source: &str) -> Result<(), String> {
         }
         _ => {}
     }
-    let text = format!(
-        "# Filtered local Host names from {}\n# {}\n{}\n",
-        feed.attribution,
-        feed.url,
-        hosts.into_iter().collect::<Vec<_>>().join("\n")
-    );
-    if !crate::safe_write_file_internal(&snapshot, &text, true) {
-        return Err("could not publish filtered local Host names".into());
+    if !crate::safe_write_file_internal(&snapshot, text, true) {
+        return Err(format!("could not publish Host snapshot: {relative}"));
     }
     Ok(())
 }
@@ -220,6 +233,11 @@ fn refresh_with(
         if let Err(error) = fetch(feed.url).and_then(|source| publish_feed(root, *feed, &source)) {
             failures.push(format!("{}: {error}", feed.url));
         }
+    }
+    if let Err(error) =
+        fetch(crush_cloud::SOURCE).and_then(|body| crush_cloud::publish(root, &body))
+    {
+        failures.push(format!("{}: {error}", crush_cloud::SOURCE));
     }
     if failures.is_empty() {
         Ok(())
@@ -238,7 +256,7 @@ pub(super) fn refresh(root: &Path) -> Result<(), String> {
         batch_timeout: Duration::from_secs(30),
         concurrency: 1,
         max_bytes: MAX_SOURCE_BYTES,
-        max_total_bytes: MAX_SOURCE_BYTES * FEEDS.len() as u64,
+        max_total_bytes: MAX_SOURCE_BYTES * (FEEDS.len() + 1) as u64,
         ..DownloadConfig::default()
     });
     refresh_with(root, |url| {
@@ -305,6 +323,11 @@ pub(super) fn load(root: &Path) -> Result<Vec<String>, String> {
 pub(super) fn seed_test_snapshots(root: &Path) {
     fs::create_dir_all(root.join("modules/source/local")).unwrap();
     refresh_with(root, |url| {
+        if url == crush_cloud::SOURCE {
+            return Ok(
+                "[Host]\n*.node.daacc.org = server:https://fixture.daacc.org/dns-query".into(),
+            );
+        }
         match FEEDS.iter().find(|feed| feed.url == url).unwrap().format {
             Format::Sukka => Ok("# Size: 1\nDOMAIN,unifi\n### EOF ###".into()),
             Format::V2Fly => Ok(v2fly::test_document(&v2fly::test_source())),
@@ -422,6 +445,84 @@ mod tests {
         }
         let hosts = load(&root).unwrap();
         assert!(hosts.windows(2).all(|pair| pair[0] < pair[1]));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn crush_rotation_reaches_both_clients_and_mirrors_without_importing_other_policy() {
+        let root = temp_root("helper-rotation");
+        seed_test_snapshots(&root);
+        let snapshot = root.join(crush_cloud::SNAPSHOT);
+        let old = fs::read_to_string(&snapshot).unwrap();
+        let update = "[General]\ndns-server = 1.1.1.1\n[Host]\n*.apple.com = server:system\n*.node.daacc.org = server:https://NEXT.daacc.org/v2/query\n[Rule]\nFINAL,REJECT";
+        // Other feeds can fail independently; the reviewed change still lands.
+        let mut attempted = Vec::new();
+        let failures = refresh_with(&root, |url| {
+            attempted.push(url.to_owned());
+            if url == crush_cloud::SOURCE {
+                Ok(update.into())
+            } else {
+                Err("offline".into())
+            }
+        })
+        .unwrap_err();
+        assert_eq!(
+            attempted
+                .iter()
+                .filter(|url| *url == crush_cloud::SOURCE)
+                .count(),
+            1
+        );
+        assert!(!failures.contains(crush_cloud::SOURCE));
+        assert_ne!(fs::read_to_string(&snapshot).unwrap(), old);
+        let saved = (
+            fs::read(&snapshot).unwrap(),
+            fs::metadata(&snapshot).unwrap().modified().unwrap(),
+        );
+        crush_cloud::publish(&root, &format!("#!version=tomorrow\n{update}")).unwrap();
+        for invalid in [
+            update.replace("NEXT.daacc.org", "daacc.org.example"),
+            update.replace("NEXT.daacc.org", "hidden.node.daacc.org"),
+            update.replace("NEXT.daacc.org", "user@one.daacc.org"),
+            update.replace("NEXT.daacc.org", "one.daacc.org:443"),
+            update.replace("https://", "http://"),
+            update.replace("v2/query", "v2/query?token=private"),
+            update.replace("*.node.daacc.org", "*.daacc.org"),
+            update.replace("[Host]", "[Script]"),
+            format!(
+                "{update}\n[Host]\n*.node.daacc.org = server:https://other.daacc.org/dns-query"
+            ),
+        ] {
+            assert!(crush_cloud::publish(&root, &invalid).is_err());
+        }
+        assert_eq!(
+            saved,
+            (
+                fs::read(&snapshot).unwrap(),
+                fs::metadata(&snapshot).unwrap().modified().unwrap()
+            )
+        );
+        crate::firewall_sync::refresh_security_modules(&root, "test").unwrap();
+        crate::url_rewriter::copy_github_variants(root.to_str().unwrap()).unwrap();
+        crate::firewall_sync::validate_published_helpers(&root).unwrap();
+        for (dir, ext) in [("surge", "sgmodule"), ("shadowrocket", "module")] {
+            for prefix in ["", "github/"] {
+                let path = format!("modules/{dir}/head_expanse/{prefix}🌟 AdBlock Helper .{ext}");
+                let body = fs::read_to_string(root.join(path)).unwrap();
+                assert!(body.contains("*.node.daacc.org = server:https://next.daacc.org/v2/query"));
+                assert!(body.contains("-next.daacc.org"));
+                for removed in [
+                    "fixture.daacc.org",
+                    "*.apple.com = server:system",
+                    "[General]",
+                    "[Rule]",
+                ] {
+                    assert!(!body.contains(removed));
+                }
+            }
+        }
+        fs::write(&snapshot, "[Host]\n*.daacc.org = server:system").unwrap();
+        assert!(crate::firewall_sync::validate_published_helpers(&root).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -555,10 +656,13 @@ DOMAIN,routerlogin.net.example.org
         assert!(!hosts.is_empty());
         let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let published_count = load(&repository).unwrap().len();
-        let snapshot_unchanged = FEEDS.iter().all(|feed| {
-            fs::read(root.join(feed.snapshot)).unwrap()
-                == fs::read(repository.join(feed.snapshot)).unwrap()
-        });
+        let snapshot_unchanged = FEEDS
+            .iter()
+            .map(|feed| feed.snapshot)
+            .chain([crush_cloud::SNAPSHOT])
+            .all(|path| {
+                fs::read(root.join(path)).unwrap() == fs::read(repository.join(path)).unwrap()
+            });
         let version = "live-test";
         let written = crate::firewall_sync::refresh_security_modules(&root, version).unwrap();
         let source = repository.join("rulesets/Sources/conf/SurgeConf_DirectPorts.list");

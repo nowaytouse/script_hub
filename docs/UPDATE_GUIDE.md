@@ -16,6 +16,8 @@ cargo run --locked --bin validate -- --root .
 `--exports-only --execute` regenerates client formats from the current lists without fetching upstreams; pass `--singbox` to include SRS.
 `--classify-only --execute` also reapplies local category boundaries before exporting.
 
+`--tools-only --execute` refreshes the Script Hub and Sub-Store Beta definitions and panel sources, then publishes the Surge and Shadowrocket tools bundles and their GitHub mirrors locally. The scheduled full update also refreshes these sources and the scoped Crush Cloud DNS mapping. Unknown handlers or invalid DNS endpoints do not replace the last good inputs. Manual rules, safety boundaries and restricted snapshots (including Kelee Speedtest) are not rolling feeds.
+
 ## Desktop translations
 
 Edit the English, Simplified Chinese, and Japanese JSON catalogs together. Keep the same keys and placeholder names in all three. Rust callers use the generated `Text` enum. [Translation catalogs](../crates/processor/assets/locales/)

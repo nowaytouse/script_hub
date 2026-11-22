@@ -4,7 +4,7 @@
 
 ## Unreleased
 
-- Use the reviewed Crush Cloud DoH endpoint for `*.node.daacc.org` in the Surge and Shadowrocket AdBlock Helper, without changing global DNS or routing.
+- Follow the Crush Cloud DoH endpoint for `*.node.daacc.org` in both Helpers without changing global DNS or routing. Refresh Script Hub and Sub-Store Beta module definitions for both tools bundles; preserve manual-first defaults. Rolling GitHub branch feeds prefer the publisher before the CDN.
 
 - Restore macOS desktop text by enabling GPUI's native font rasterizer when default features are disabled.
 

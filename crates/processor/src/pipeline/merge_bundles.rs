@@ -185,6 +185,10 @@ const VIDEO_DEFAULTS: &[(&str, &str)] = &[
 // Retain HTTPS media URLs without adding CDN MITM hosts.
 pub(crate) const BILIBILI_GLOBAL_DEFAULTS: &[(&str, &str)] = &[("ForceHost", r#""2""#)];
 const TOOL_DEFAULTS: &[(&str, &str)] = &[
+    (
+        "cors",
+        r#""https://sub-store.vercel.app,http://substore.stash,https://substore.stash,https://sub.xream.eu.org""#,
+    ),
     ("sync", "\"# Sub-Store Sync\""),
     ("produce", "\"# Sub-Store Produce\""),
     ("sync_success_notify", "false"),

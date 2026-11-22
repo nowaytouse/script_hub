@@ -588,9 +588,18 @@ fn download_candidates(url: &str) -> Vec<String> {
         && let Some((repository_ref, path)) = rest.split_once('/')
         && let Some((repository, reference)) = repository_ref.rsplit_once('@')
     {
-        candidates.push(format!(
-            "https://raw.githubusercontent.com/{owner}/{repository}/{reference}/{path}"
-        ));
+        let raw =
+            format!("https://raw.githubusercontent.com/{owner}/{repository}/{reference}/{path}");
+        // Branch-based subscriptions should see the publisher's current file first.
+        // Do not reinterpret CDN selectors, tags, or immutable versions as branches.
+        if matches!(
+            reference,
+            "main" | "master" | "release" | "meta" | "gh-pages"
+        ) {
+            candidates.insert(0, raw);
+        } else {
+            candidates.push(raw);
+        }
     }
     candidates
 }
@@ -1177,10 +1186,30 @@ mod tests {
         assert_eq!(
             download_candidates("https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list"),
             [
-                "https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list",
                 "https://raw.githubusercontent.com/acme/rules/main/Surge/ad.list",
+                "https://cdn.jsdelivr.net/gh/acme/rules@main/Surge/ad.list",
             ]
         );
+    }
+
+    #[test]
+    fn rolling_feed_origin_preference_preserves_pins_and_private_urls() {
+        for branch in ["main", "master", "release", "meta", "gh-pages"] {
+            let cdn = format!("https://cdn.jsdelivr.net/gh/owner/repo@{branch}/dir/feed.list");
+            assert_eq!(
+                download_candidates(&cdn),
+                [
+                    format!("https://raw.githubusercontent.com/owner/repo/{branch}/dir/feed.list"),
+                    cdn,
+                ]
+            );
+        }
+        for reference in ["v1.2.3", "a1b2c3d4", "latest"] {
+            let cdn = format!("https://cdn.jsdelivr.net/gh/owner/repo@{reference}/feed.list");
+            assert_eq!(download_candidates(&cdn)[0], cdn);
+        }
+        let private = "https://cdn.jsdelivr.net/gh/owner/repo@main/feed.list?key=fixture";
+        assert_eq!(download_candidates(private), [private]);
     }
 
     #[test]

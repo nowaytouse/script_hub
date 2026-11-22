@@ -4,6 +4,7 @@
 
 | Source | License |
 | --- | --- |
+| [Sub-Store Beta module](https://github.com/sub-store-org/Sub-Store/blob/master/config/Surge-Beta.sgmodule) (upstream snapshot; the tools bundle selects its handlers and overrides local defaults) | [AGPL-3.0](Sub-Store-AGPL-3.0.txt) |
 | [app2smile/rules](https://github.com/app2smile/rules) | [MIT](app2smile-MIT.txt) |
 | [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
 | [217heidai/adblockfilters maintainer supplement](https://github.com/217heidai/adblockfilters/blob/main/rules/myblock.txt) | [GPL-3.0](https://github.com/217heidai/adblockfilters/blob/main/LICENSE) |

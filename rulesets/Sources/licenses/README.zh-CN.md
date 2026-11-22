@@ -4,6 +4,7 @@
 
 | 来源 | 许可 |
 | --- | --- |
+| [Sub-Store Beta 模块](https://github.com/sub-store-org/Sub-Store/blob/master/config/Surge-Beta.sgmodule)（保留上游快照；工具合集选取处理脚本并应用本地默认偏好） | [AGPL-3.0](Sub-Store-AGPL-3.0.txt) |
 | [app2smile/rules](https://github.com/app2smile/rules) | [MIT](app2smile-MIT.txt) |
 | [AdGuard CNAME](https://github.com/AdguardTeam/cname-trackers) | [MIT](AdGuard-CNAME-MIT.txt) |
 | [217heidai/adblockfilters 维护者补充规则](https://github.com/217heidai/adblockfilters/blob/main/rules/myblock.txt) | [GPL-3.0](https://github.com/217heidai/adblockfilters/blob/main/LICENSE) |

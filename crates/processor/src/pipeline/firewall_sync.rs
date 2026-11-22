@@ -1,3 +1,4 @@
+use super::helper_hosts::crush_cloud;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
@@ -375,12 +376,11 @@ const ALIDNS_OUTPUTS: &[(&str, &str, bool)] = &[
     ),
 ];
 
-const CRUSH_CLOUD_ZONE: &str = "*.node.daacc.org";
-const CRUSH_CLOUD_DOH_HOST: &str = "ddhjiadji6959dadaa.daacc.org";
-const CRUSH_CLOUD_SOURCE: &str =
-    "https://raw.githubusercontent.com/crushcloud91/Crush-Cloud/main/crushcloud-dns.sgmodule";
-
-fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String>, Vec<String>) {
+fn helper_sections(
+    shadowrocket: bool,
+    upstream_hosts: &[String],
+    split: &crush_cloud::Mapping,
+) -> (Vec<String>, Vec<String>) {
     let mut hosts: Vec<String> = LOCAL_SYSTEM_DNS_HOSTS
         .iter()
         .copied()
@@ -396,10 +396,7 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
             .iter()
             .map(|(host, addresses)| format!("{host} = {addresses}")),
     );
-    // Keep the reviewed split-DNS scope fixed; upstream changes must not alter the user's resolver.
-    hosts.push(format!(
-        "{CRUSH_CLOUD_ZONE} = server:https://{CRUSH_CLOUD_DOH_HOST}/dns-query"
-    ));
+    hosts.push(split.host_line());
 
     let mut exclusions = crate::promax::safety::apple_mitm_exclusions();
     exclusions.extend(
@@ -407,7 +404,7 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
             .iter()
             .copied()
             .chain(PUBLIC_DOH_BOOTSTRAPS.iter().map(|&(host, _)| host))
-            .chain([CRUSH_CLOUD_DOH_HOST])
+            .chain([split.resolver.as_str()])
             .map(|host| format!("-{host}")),
     );
     exclusions.sort_unstable();
@@ -415,8 +412,13 @@ fn helper_sections(shadowrocket: bool, upstream_hosts: &[String]) -> (Vec<String
     (hosts, exclusions)
 }
 
-fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -> String {
-    let (hosts, exclusions) = helper_sections(shadowrocket, upstream_hosts);
+fn render_helper(
+    shadowrocket: bool,
+    version: &str,
+    upstream_hosts: &[String],
+    split: &crush_cloud::Mapping,
+) -> String {
+    let (hosts, exclusions) = helper_sections(shadowrocket, upstream_hosts, split);
     let prefix = if shadowrocket { "[🚀SR] " } else { "" };
     let mut output = vec![
         "#!name=🌟 AdBlock Helper".to_string(),
@@ -433,7 +435,8 @@ fn render_helper(shadowrocket: bool, version: &str, upstream_hosts: &[String]) -
         output.extend(super::helper_hosts::source_comments());
     }
     output.push(format!(
-        "# Reviewed Crush Cloud split DNS: {CRUSH_CLOUD_SOURCE}"
+        "# Reviewed Crush Cloud split DNS: {}",
+        crush_cloud::SOURCE
     ));
     output.extend(hosts);
     output.extend([
@@ -470,6 +473,7 @@ fn render_alidns(shadowrocket: bool, version: &str) -> String {
 fn dns_modules<'a>(
     version: &'a str,
     upstream_hosts: &'a [String],
+    split: &'a crush_cloud::Mapping,
 ) -> impl Iterator<Item = (&'static str, &'static str, String)> + 'a {
     HELPER_OUTPUTS
         .iter()
@@ -477,7 +481,7 @@ fn dns_modules<'a>(
             (
                 dir,
                 file,
-                render_helper(shadowrocket, version, upstream_hosts),
+                render_helper(shadowrocket, version, upstream_hosts, split),
             )
         })
         .chain(
@@ -499,7 +503,8 @@ fn render_firewall(shadowrocket: bool, version: &str) -> String {
 pub fn refresh_security_modules(root: &Path, version: &str) -> Result<usize, String> {
     let modules = root.join("modules");
     let upstream_hosts = super::helper_hosts::load(root)?;
-    let helpers = dns_modules(version, &upstream_hosts)
+    let split = crush_cloud::load(root)?;
+    let helpers = dns_modules(version, &upstream_hosts, &split)
         .map(|(dir, file, content)| (modules.join(dir).join(file), content));
     let firewalls = [
         (
@@ -534,7 +539,8 @@ fn helper_dns_settings(content: &str) -> Vec<&str> {
 
 pub(crate) fn validate_published_helpers(root: &Path) -> Result<(), String> {
     let upstream_hosts = super::helper_hosts::load(root)?;
-    for (dir, file, expected) in dns_modules("", &upstream_hosts) {
+    let split = crush_cloud::load(root)?;
+    for (dir, file, expected) in dns_modules("", &upstream_hosts, &split) {
         let expected = helper_dns_settings(&expected);
         let dir = root.join("modules").join(dir);
         for path in [dir.join(file), dir.join("github").join(file)] {
@@ -570,13 +576,14 @@ mod tests {
             std::env::temp_dir().join(format!("script-hub-helper-guard-{}", std::process::id()));
         super::super::helper_hosts::seed_test_snapshots(&root);
         super::refresh_security_modules(&root, "test").unwrap();
-        for (dir, file, _) in super::dns_modules("test", &[]) {
+        let split = super::crush_cloud::load(&root).unwrap();
+        for (dir, file, _) in super::dns_modules("test", &[], &split) {
             let dir = root.join("modules").join(dir);
             fs::create_dir_all(dir.join("github")).unwrap();
             fs::copy(dir.join(file), dir.join("github").join(file)).unwrap();
         }
         super::validate_published_helpers(&root).unwrap();
-        for (dir, file, _) in super::dns_modules("test", &[]) {
+        for (dir, file, _) in super::dns_modules("test", &[], &split) {
             let dir = root.join("modules").join(dir);
             for path in [dir.join(file), dir.join("github").join(file)] {
                 let original = fs::read_to_string(&path).unwrap();
@@ -687,6 +694,10 @@ mod tests {
 
     #[test]
     fn helper_preserves_the_users_dns_provider() {
+        let split = super::crush_cloud::parse(
+            "[Host]\n*.node.daacc.org = server:https://fixture.daacc.org/dns-query",
+        )
+        .unwrap();
         for shadowrocket in [false, true] {
             let module = render_helper(
                 shadowrocket,
@@ -701,6 +712,7 @@ mod tests {
                     "leike.cc".into(),
                     "router.asus.com".into(),
                 ],
+                &split,
             );
             assert!(!module.contains("[General]"));
             assert!(!module.contains("use-local-host-item-for-proxy"));
@@ -715,10 +727,7 @@ mod tests {
             {
                 assert!(names.insert(host), "duplicate Host mapping: {host}");
                 if host == "*.node.daacc.org" {
-                    assert_eq!(
-                        mapping,
-                        "server:https://ddhjiadji6959dadaa.daacc.org/dns-query"
-                    );
+                    assert_eq!(mapping, "server:https://fixture.daacc.org/dns-query");
                     continue;
                 }
                 if let Some((_, expected)) = super::PUBLIC_DOH_BOOTSTRAPS
@@ -780,7 +789,7 @@ mod tests {
                 "dot.pub",
                 "*.daacc.org",
                 "node.daacc.org",
-                "ddhjiadji6959dadaa.daacc.org",
+                "fixture.daacc.org",
                 "*.expertwifi.net",
                 "*.keenetic.net",
                 "*.tplinkwifi.net",
@@ -803,7 +812,7 @@ mod tests {
             assert!(excluded.contains("-account.apple.com"));
             assert!(excluded.contains("-dns.alidns.com"));
             assert!(excluded.contains("-cloudflare-dns.com"));
-            assert!(excluded.contains("-ddhjiadji6959dadaa.daacc.org"));
+            assert!(excluded.contains("-fixture.daacc.org"));
             assert!(!excluded.contains("-*.daacc.org"));
             for &(host, _) in super::PUBLIC_DOH_BOOTSTRAPS {
                 assert!(names.contains(host));

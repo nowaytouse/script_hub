@@ -241,6 +241,12 @@ fn run(
         emit_stage(Stage::Functional);
         let failures = rust_processor::functional_update::run_functional_updates(root);
         if !failures.is_empty() {
+            if std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true") {
+                println!(
+                    "::warning title=Upstream refresh incomplete::{} functional source or bundle steps did not refresh. See the updater log for affected sources.",
+                    failures.len()
+                );
+            }
             eprintln!(
                 "[WARN] {} functional update step(s) reported failures: {}",
                 failures.len(),
@@ -250,6 +256,12 @@ fn run(
         emit_stage(Stage::General);
         let failures = rust_processor::general_update::run_general_updates(root);
         if !failures.is_empty() {
+            if std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true") {
+                println!(
+                    "::warning title=Upstream refresh incomplete::{} general ruleset refresh errors. See the updater log for affected sources.",
+                    failures.len()
+                );
+            }
             eprintln!(
                 "[WARN] {} general ruleset(s) kept at their last validated version: {}",
                 failures.len(),
@@ -381,6 +393,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut classify_only = false;
     let mut rewrites_only = false;
     let mut geo_only = false;
+    let mut tools_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--root" => root = Some(arg_value(&mut args, "--root")),
@@ -393,9 +406,10 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--classify-only" => classify_only = true,
             "--rewrites-only" => rewrites_only = true,
             "--geo-only" => geo_only = true,
+            "--tools-only" => tools_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--rewrites-only|--geo-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--rewrites-only|--geo-only|--tools-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -414,6 +428,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         classify_only,
         rewrites_only,
         geo_only,
+        tools_only,
     ]
     .into_iter()
     .filter(|enabled| *enabled)
@@ -444,7 +459,12 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         None => None,
     };
 
-    let result = if geo_only && !execute {
+    let result = if tools_only && !execute {
+        println!("[INFO] dry run: tools refresh skipped");
+        Ok(())
+    } else if tools_only {
+        rust_processor::functional_update::refresh_tools_only(&root)
+    } else if geo_only && !execute {
         println!("[INFO] dry run: AIO country refresh skipped");
         Ok(())
     } else if geo_only {
@@ -557,6 +577,7 @@ mod tests {
             "--classify-only",
             "--rewrites-only",
             "--geo-only",
+            "--tools-only",
         ] {
             assert_eq!(
                 run_cli(
@@ -719,6 +740,7 @@ mod tests {
             "--classify-only",
             "--rewrites-only",
             "--geo-only",
+            "--tools-only",
         ];
         for (index, first) in modes.iter().enumerate() {
             for second in &modes[index + 1..] {

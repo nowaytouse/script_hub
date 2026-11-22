@@ -356,6 +356,13 @@ fn is_github_source(path: &Path) -> bool {
     false
 }
 
+pub(crate) fn github_variant(content: &str) -> std::borrow::Cow<'_, str> {
+    REVERSE_CDN_REGEX.replace_all(
+        content,
+        "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
+    )
+}
+
 pub fn copy_github_variants(root_dir: &str) -> Result<(), String> {
     let root = Path::new(root_dir);
     let modules_dir = root.join("modules");
@@ -415,10 +422,7 @@ pub fn copy_github_variants(root_dir: &str) -> Result<(), String> {
                 let content = fs::read_to_string(&src_path).map_err(|error| {
                     format!("cannot read mirror source {}: {error}", src_path.display())
                 })?;
-                let new_content = REVERSE_CDN_REGEX.replace_all(
-                    &content,
-                    "${1}https://raw.githubusercontent.com/${2}/${3}/${4}/${5}",
-                );
+                let new_content = github_variant(&content);
                 safe_write_file(&dest_path, &new_content)
                     .map_err(|error| format!("cannot write {}: {error}", dest_path.display()))?;
             }

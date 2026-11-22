@@ -1,4 +1,5 @@
 //! Rust-owned upstream refresh for functional modules and PROMAX build inputs.
+mod core_tools;
 
 use std::collections::HashMap;
 use std::fs;
@@ -42,10 +43,8 @@ const LOCAL_SOURCES: &[(&str, &str)] = &[
         "sukka_url_redirect.sgmodule",
         "https://ruleset.skk.moe/Modules/sukka_url_redirect.sgmodule",
     ),
-    (
-        "script_hub.surge.sgmodule",
-        "https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/main/modules/script-hub.surge.sgmodule",
-    ),
+    core_tools::HUB,
+    core_tools::STORE,
 ];
 
 const APPLE_OUTPUT: &str = "modules/surge/amplify_nexus/🍎 Apple服务增强合集.sgmodule";
@@ -217,22 +216,30 @@ fn downloader() -> Downloader {
 
 fn valid_module(content: &str) -> bool {
     let content = content.trim_start();
-    if content.len() < 80
-        || ["<!doctype html", "<html"].iter().any(|prefix| {
-            content
-                .get(..prefix.len())
-                .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
-        })
-    {
+    if ["<!doctype html", "<html"].iter().any(|prefix| {
+        content
+            .get(..prefix.len())
+            .is_some_and(|candidate| candidate.eq_ignore_ascii_case(prefix))
+    }) {
         return false;
     }
 
-    let (mut has_name, mut has_section) = (false, false);
+    let (mut has_name, mut has_section, mut has_body) = (false, false, false);
     for line in content.lines() {
         let line = line.trim();
-        has_name |= line.starts_with("#!name");
-        has_section |= line.starts_with('[') && line.ends_with(']');
-        if has_name && has_section {
+        if !has_section && let Some((key, value)) = line.split_once('=') {
+            has_name |= key.trim() == "#!name" && !value.trim().is_empty();
+        }
+        if line.starts_with('[') && line.ends_with(']') && line.len() > 2 {
+            has_section = true;
+        } else if has_section
+            && !line.is_empty()
+            && !line.starts_with(['#', ';'])
+            && !line.starts_with("//")
+        {
+            has_body = true;
+        }
+        if has_name && has_body {
             return true;
         }
     }
@@ -457,6 +464,33 @@ fn publish_bundle(
             content,
             kind: ArtifactKind::Surge,
         }];
+        if request.op == "devtools_merge" {
+            let relative = Path::new(DEVTOOLS_OUTPUT)
+                .strip_prefix("modules/surge")
+                .expect("constant Surge path");
+            artifacts.push(GeneratedArtifact {
+                target: root
+                    .join("modules/shadowrocket")
+                    .join(relative)
+                    .with_extension("module"),
+                content: crate::promax::artifact::convert_surge_to_shadowrocket(
+                    &artifacts[0].content,
+                ),
+                kind: ArtifactKind::Shadowrocket,
+            });
+            let mirrors: Vec<_> = artifacts
+                .iter()
+                .map(|artifact| GeneratedArtifact {
+                    target: artifact
+                        .target
+                        .with_file_name("github")
+                        .join(artifact.target.file_name().expect("constant module name")),
+                    content: crate::url_rewriter::github_variant(&artifact.content).into_owned(),
+                    kind: artifact.kind,
+                })
+                .collect();
+            artifacts.extend(mirrors);
+        }
         if let Some(target) = adblock_target {
             artifacts.push(GeneratedArtifact {
                 target,
@@ -505,6 +539,11 @@ fn refresh_local_source(
     url: &str,
     downloaded: Result<&str, &str>,
 ) -> Result<(), String> {
+    if (url == core_tools::HUB.1 || url == core_tools::STORE.1)
+        && let Ok(body) = downloaded
+    {
+        core_tools::project(url, body)?;
+    }
     let candidate = downloaded.and_then(|body| {
         if url == crate::promax::functional::X_WEB_SOURCE {
             crate::promax::functional::project_x_web_source(body).map(std::borrow::Cow::Owned)
@@ -923,6 +962,7 @@ fn publish_devtools_sources(
         url: "local:crates/processor/assets/DevTools.Base.sgmodule".to_string(),
         content: BASE.to_string(),
     }];
+    sources.extend(core_tools::load(root)?);
     sources.extend(panel_sources);
     sources.extend(custom_sources);
     let mut header_meta = crate::merge_bundles::module_metadata_pub(BASE);
@@ -984,6 +1024,24 @@ fn merge_devtools(
         fetch_sources(downloader, UTILITIES)?,
         fetch_custom_sources(downloader, custom_sources)?,
     )
+}
+
+/// Refresh only the two operator definitions, subscribed panels and their four publications.
+pub fn refresh_tools_only(root: &Path) -> Result<(), String> {
+    let custom: Vec<_> = custom_sources::load(root)?
+        .into_iter()
+        .filter(|source| source.category == SourceCategory::Devtools)
+        .collect();
+    let downloader = downloader();
+    for (file, url) in [core_tools::STORE, core_tools::HUB] {
+        let body = downloader.get(url).map_err(|e| format!("{file}: {e}"))?;
+        refresh_local_source(
+            &root.join("modules/source/local").join(file),
+            url,
+            Ok(&body),
+        )?;
+    }
+    merge_devtools(root, &downloader, &custom)
 }
 
 fn publish_apple_surge(root: &Path, mut sources: Vec<SourceInput>) -> Result<(), String> {
@@ -1663,6 +1721,14 @@ mod tests {
         assert!(!valid_module("<!doctype html><html>not a module</html>"));
         assert!(!valid_module("  <!DOCTYPE HTML><html>not a module</html>"));
         assert!(!valid_module("#!name=too short\n[Script]\n"));
+        assert!(!valid_module(
+            "#!namespace=looks similar\n[Host]\nlan = server:system"
+        ));
+        assert!(!valid_module(&format!(
+            "#!name=empty\n[Script]\n# {}",
+            "comment".repeat(24)
+        )));
+        assert!(valid_module("#!name=DNS\n[Host]\nlan = server:system"));
         assert!(valid_module(
             "#!name=Fixture functional module with enough bytes for validation\n#!desc=fixture\n[Script]\nfixture = type=generic,script-path=https://example.test/a.js\n"
         ));
@@ -1826,6 +1892,12 @@ mod tests {
     #[test]
     fn tools_keep_panels_and_core_when_custom_sources_are_removed() {
         let root = temporary_root("devtools-custom-marker");
+        let fixture_dir = root.join("modules/source/local");
+        std::fs::create_dir_all(&fixture_dir).unwrap();
+        let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../modules/source/local");
+        for (file, _) in [super::core_tools::STORE, super::core_tools::HUB] {
+            std::fs::copy(repository.join(file), fixture_dir.join(file)).unwrap();
+        }
         let custom_rule = "^https://custom-devtools\\.example\\.test/ads - reject";
         let panels = || {
             vec![SourceInput {
@@ -1945,6 +2017,27 @@ mod tests {
         let error = publish_devtools_sources(&root, changed_upstream, Vec::new()).unwrap_err();
         assert!(error.contains("EVENT_SCRIPT_NAME"));
         assert_eq!(std::fs::read_to_string(output).unwrap(), dated);
+        let hub = fixture_dir.join(super::core_tools::HUB.0);
+        let before = std::fs::read_to_string(&hub).unwrap();
+        let changed = before.replace("edit\\/", "upstream-edit\\/");
+        assert_ne!(before, changed);
+        super::refresh_local_source(&hub, super::core_tools::HUB.1, Ok(&changed)).unwrap();
+        publish_devtools_sources(&root, panels(), Vec::new()).unwrap();
+        for (client, ext) in [("surge", "sgmodule"), ("shadowrocket", "module")] {
+            for mirror in ["", "github/"] {
+                let file = root.join(format!(
+                    "modules/{client}/amplify_nexus/{mirror}🧰 Script Hub 配套工具合集.{ext}"
+                ));
+                let content = std::fs::read_to_string(file).unwrap();
+                assert_eq!(content.matches("upstream-edit\\/").count(), 1);
+                assert!(!content.contains("($|edit\\/"));
+            }
+        }
+        let wrong_origin = changed.replace("raw.githubusercontent.com/", "other.example/");
+        assert!(
+            super::refresh_local_source(&hub, super::core_tools::HUB.1, Ok(&wrong_origin)).is_err()
+        );
+        assert_eq!(std::fs::read_to_string(&hub).unwrap(), changed);
         let _ = std::fs::remove_dir_all(root);
     }
 }
