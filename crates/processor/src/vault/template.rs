@@ -110,7 +110,8 @@ pub fn project_surge_profiles(surge: &Template) -> Result<Vec<Template>, VaultEr
 
 const SLOT_PREFIX: &str = "{{SUBSCRIPTION_";
 const MAX_SUBSCRIPTION_BYTES: usize = 8192;
-pub(crate) const GEOIP_MANUAL_NOTE: &str = "# GeoIP Country database (manual): https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb";
+pub(crate) const GEOIP_MANUAL_NOTE: &str = "# GeoIP Country database (manual): https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/GeoData/Country.mmdb";
+pub(crate) const ASN_MANUAL_NOTE: &str = "# ASN database (manual): https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/GeoData/ASN.mmdb";
 static URLS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?i)https?://[^\s,<>"']+"#).expect("constant URL pattern"));
 static FIELD_ASSIGNMENTS: LazyLock<Regex> = LazyLock::new(|| {
@@ -273,7 +274,9 @@ pub fn sanitize(template: &Template) -> Result<Template, VaultError> {
         if trimmed.starts_with(['#', ';']) || trimmed.starts_with("//") {
             // Preserve this exact reviewed public resource note, while keeping
             // arbitrary URLs and possible subscriptions out of comments.
-            if trimmed == GEOIP_MANUAL_NOTE || !URLS.is_match(line) && !contains_credentials(line) {
+            if matches!(trimmed, GEOIP_MANUAL_NOTE | ASN_MANUAL_NOTE)
+                || !URLS.is_match(line) && !contains_credentials(line)
+            {
                 checked_push(&mut output, raw)?;
             }
             continue;

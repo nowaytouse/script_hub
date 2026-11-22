@@ -2,55 +2,31 @@
 
 mod mmdb;
 pub(super) mod model;
+mod project;
+mod release;
 
 use crate::promax::artifact::{ArtifactKind, GeneratedArtifact, publish_generated_artifacts};
 use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 use std::path::Path;
-use std::time::Duration;
 
 pub(crate) const COUNTRY_INPUTS: &str = "rulesets/Sources/compiled/geoip";
 pub(crate) const COUNTRIES: &[&str] = &["CN", "JP", "KR", "TW", "US"];
+pub(crate) fn validate_databases(root: &Path) -> Result<(), String> {
+    release::validate(root)
+}
 pub(crate) const MMDB_URL: &str =
-    "https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb";
+    "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/GeoData/Country.mmdb";
+#[cfg(feature = "gui")]
+pub(crate) const ASN_URL: &str =
+    "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/GeoData/ASN.mmdb";
 
 pub(crate) fn refresh_or_keep_countries(root: &Path) -> Result<(), String> {
-    if let Err(error) = refresh_countries(root) {
-        if !COUNTRIES.iter().all(|country| {
-            root.join(COUNTRY_INPUTS)
-                .join(format!("GeoIP_{country}.list"))
-                .is_file()
-        }) {
-            return Err(error);
-        }
-        eprintln!("[WARN] Keeping the last AIO country snapshots: {error}");
-    }
-    Ok(())
-}
-
-fn refresh_countries(root: &Path) -> Result<(), String> {
-    // Keep the source database in memory. Only selected country ranges are published.
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .https_only(true)
-        .timeout_global(Some(Duration::from_secs(120)))
-        .max_redirects(5)
-        .user_agent("ScriptHub GeoIP country refresh")
-        .build()
-        .into();
-    let mut response = agent
-        .get(MMDB_URL)
-        .call()
-        .map_err(|_| "AIO MMDB download failed")?;
-    let bytes = response
-        .body_mut()
-        .with_config()
-        .limit(mmdb::MAX_DB_BYTES as u64)
-        .read_to_vec()
-        .map_err(|_| "AIO MMDB download failed or exceeded its size limit")?;
+    let bytes = release::refresh(root)?;
     let countries: Vec<String> = COUNTRIES.iter().map(|code| (*code).to_owned()).collect();
     let extracted = mmdb::extract(&bytes, &countries)?;
-    if extracted.database_type != "GeoIP2-City" || extracted.ip_version != 6 {
-        return Err("Expected the combined IPv4/IPv6 AIO country database".into());
+    if extracted.database_type != "GeoLite2-Country" || extracted.ip_version != 6 {
+        return Err("Expected the converted IPv4/IPv6 Country database".into());
     }
     let mut digest = String::with_capacity(64);
     for byte in Sha256::digest(&bytes) {
@@ -61,7 +37,7 @@ fn refresh_countries(root: &Path) -> Result<(), String> {
         let name = format!("GeoIP_{country}");
         let mut content = crate::generate_header(
             &name,
-            "AIO country snapshot for the existing sing-box country fallback",
+            "ipgeo Community Edition country snapshot for the sing-box country fallback",
             cidrs.len(),
         );
         writeln!(
@@ -74,7 +50,7 @@ fn refresh_countries(root: &Path) -> Result<(), String> {
             || !cidrs.iter().any(|cidr| !cidr.contains(':'))
         {
             return Err(format!(
-                "AIO country {country} is missing one address family"
+                "ipgeo country {country} is missing one address family"
             ));
         }
         for cidr in &cidrs {
@@ -86,7 +62,7 @@ fn refresh_countries(root: &Path) -> Result<(), String> {
             writeln!(content, "{kind},{cidr}").expect("writing to a string");
         }
         println!(
-            "[INFO] {name}: {} CIDRs from AIO build {}",
+            "[INFO] {name}: {} CIDRs from ipgeo build {}",
             cidrs.len(),
             extracted.build_epoch
         );
@@ -97,4 +73,16 @@ fn refresh_countries(root: &Path) -> Result<(), String> {
         });
     }
     publish_generated_artifacts(root, &outputs)
+}
+
+pub(crate) fn update_country_assets(root: &Path, singbox: &Path) -> Result<(), String> {
+    refresh_or_keep_countries(root)?;
+    let binary = singbox.to_str().ok_or("Invalid sing-box executable path")?;
+    for code in COUNTRIES {
+        let list = root.join(COUNTRY_INPUTS).join(format!("GeoIP_{code}.list"));
+        if !super::srs_generator::compile_srs(&list, root, binary, false) {
+            return Err(format!("Failed to compile country rules for {code}"));
+        }
+    }
+    Ok(())
 }

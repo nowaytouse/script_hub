@@ -82,7 +82,7 @@ impl Network {
     }
 }
 
-fn country_code(value: &str) -> bool {
+pub(super) fn country_code(value: &str) -> bool {
     value.len() == 2 && value.bytes().all(|byte| byte.is_ascii_uppercase())
 }
 

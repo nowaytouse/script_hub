@@ -16,6 +16,8 @@ cargo run --locked --bin validate -- --root .
 `--exports-only --execute` regenerates client formats from the current lists without fetching upstreams; pass `--singbox` to include SRS.
 `--classify-only --execute` also reapplies local category boundaries before exporting.
 
+`--ipgeo-only --execute --singbox /path/to/sing-box` refreshes only the two MMDBs, release notices and native country lists/SRS. The scheduled full update runs this conversion too. A verified unchanged release needs only a manifest request.
+
 `--tools-only --execute` refreshes the Script Hub and Sub-Store Beta definitions and panel sources, then publishes the Surge and Shadowrocket tools bundles and their GitHub mirrors locally. The scheduled full update also refreshes these sources and the scoped Crush Cloud DNS mapping. Unknown handlers or invalid DNS endpoints do not replace the last good inputs. Manual rules, safety boundaries and restricted snapshots (including Kelee Speedtest) are not rolling feeds.
 
 ## Desktop translations

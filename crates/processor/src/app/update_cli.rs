@@ -393,6 +393,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
     let mut classify_only = false;
     let mut rewrites_only = false;
     let mut geo_only = false;
+    let mut ipgeo_only = false;
     let mut tools_only = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
@@ -406,10 +407,11 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
             "--classify-only" => classify_only = true,
             "--rewrites-only" => rewrites_only = true,
             "--geo-only" => geo_only = true,
+            "--ipgeo-only" => ipgeo_only = true,
             "--tools-only" => tools_only = true,
             "--help" | "-h" => {
                 println!(
-                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--rewrites-only|--geo-only|--tools-only]"
+                    "Usage: update --root <repository> [--execute|--unattended] [--singbox <path>] [--quick|--gaming-only|--adblock-only|--exports-only|--classify-only|--rewrites-only|--geo-only|--ipgeo-only|--tools-only]"
                 );
                 return ExitCode::SUCCESS;
             }
@@ -428,6 +430,7 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         classify_only,
         rewrites_only,
         geo_only,
+        ipgeo_only,
         tools_only,
     ]
     .into_iter()
@@ -464,9 +467,17 @@ pub fn run_cli(mut args: impl Iterator<Item = String>) -> ExitCode {
         Ok(())
     } else if tools_only {
         rust_processor::functional_update::refresh_tools_only(&root)
-    } else if geo_only && !execute {
-        println!("[INFO] dry run: AIO country refresh skipped");
+    } else if (geo_only || ipgeo_only) && !execute {
+        println!("[INFO] dry run: ipgeo refresh skipped");
         Ok(())
+    } else if ipgeo_only {
+        singbox
+            .as_deref()
+            .filter(|path| path.is_file())
+            .ok_or_else(|| "--ipgeo-only requires --singbox <executable>".to_owned())
+            .and_then(|path| {
+                rust_processor::pipeline::geo_rulesets::update_country_assets(&root, path)
+            })
     } else if geo_only {
         (|| {
             let singbox = singbox
@@ -577,6 +588,7 @@ mod tests {
             "--classify-only",
             "--rewrites-only",
             "--geo-only",
+            "--ipgeo-only",
             "--tools-only",
         ] {
             assert_eq!(
@@ -740,6 +752,7 @@ mod tests {
             "--classify-only",
             "--rewrites-only",
             "--geo-only",
+            "--ipgeo-only",
             "--tools-only",
         ];
         for (index, first) in modes.iter().enumerate() {

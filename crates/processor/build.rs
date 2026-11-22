@@ -19,7 +19,7 @@ fn collect_template_artifacts(
         } else if kind.is_file()
             && matches!(
                 path.extension().and_then(|ext| ext.to_str()),
-                Some("list" | "yaml" | "srs")
+                Some("list" | "yaml" | "srs" | "mmdb")
             )
             && entry.metadata()?.len() != 0
         {
@@ -49,6 +49,7 @@ fn write_template_artifacts(output: &Path) -> io::Result<()> {
         "rulesets/Mihomo",
         "rulesets/SingBox",
         "rulesets/AdBlock",
+        "rulesets/GeoData",
     ] {
         let directory = root.join(relative);
         println!("cargo:rerun-if-changed={}", directory.display());

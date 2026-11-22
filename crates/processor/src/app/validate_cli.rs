@@ -149,11 +149,13 @@ fn validate_tree(root: &Path) -> Result<(usize, usize), String> {
         || root.join("rulesets/SingBox/GeoIP_TW_Singbox.srs").is_file()
     {
         require_publication_directory(root, &country_inputs)?;
+        require_publication_directory(root, &root.join("rulesets/GeoData"))?;
+        rust_processor::pipeline::geo_rulesets::validate_databases(root)?;
         for country in rust_processor::pipeline::geo_rulesets::COUNTRIES {
             let source = country_inputs.join(format!("GeoIP_{country}.list"));
             let compiled = root.join(format!("rulesets/SingBox/GeoIP_{country}_Singbox.srs"));
             if !source.is_file() || !compiled.is_file() {
-                return Err(format!("Incomplete AIO country ruleset for {country}"));
+                return Err(format!("Incomplete ipgeo country ruleset for {country}"));
             }
         }
         ruleset_dirs.push(country_inputs);

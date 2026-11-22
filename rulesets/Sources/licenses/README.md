@@ -13,8 +13,7 @@
 | [AWAvenue Ads Rule Only.Ads](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
 | [Steven Black — own hosts only](https://github.com/StevenBlack/hosts/tree/master/data/StevenBlack) | [MIT](StevenBlack-MIT.txt) |
 | [MetaCubeX](https://github.com/MetaCubeX/meta-rules-dat) | [GPL-3.0](https://github.com/MetaCubeX/meta-rules-dat/blob/master/LICENSE) |
-| [GeoIP All in One country snapshots](https://github.com/daijro/geoip-all-in-one) | [Upstream license and source attributions](https://github.com/daijro/geoip-all-in-one#licenses) |
-| [laincat GeoIP ASN database](https://github.com/laincat/GeoIP), built from [IPtoASN](https://iptoasn.com/) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) for the release data; the FlClash template links to the upstream file |
+| [ipgeo Community Edition](https://github.com/whois-api-llc/ipgeo-community) | [CC BY-SA 4.0 and release attributions](../../GeoData/README.md); Country, ASN and derived country lists/SRS |
 | [fmz200 — X Web Ads endpoint and response schema](https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/XWebAds.srmodule) | [GPL-3.0](https://github.com/fmz200/wool_scripts/blob/main/LICENSE) |
 | [HaGeZi](https://github.com/hagezi/dns-blocklists) | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 | [V2Fly Domain List Community](https://github.com/v2fly/domain-list-community), private devices and reviewed service domains | [MIT](V2Fly-MIT.txt) |
@@ -26,7 +25,7 @@ The [source manifests](../Links/) define scope. Conversion, deduplication, class
 
 The advertising compiler reads 217heidai's maintained `myblock.txt` supplement and the AdGuard and AWAvenue originals directly. It projects unconditional domain blocks to exact hostname rules and evaluates each source's exceptions before merging. Shared service protections also apply to the projected rules. The published selection and format conversion retain the source attributions and GPL-3.0 terms.
 
-The `compiled/geoip` snapshots select country codes from the AIO MMDB by `country.iso_code` and aggregate adjacent CIDRs with the same country. Each list records its source URL, build epoch and SHA-256. These snapshots include IP2Location LITE data for [IP geolocation](https://lite.ip2location.com/), GeoLite2 Data created by [MaxMind](https://www.maxmind.com/), and [IP Geolocation by DB-IP](https://db-ip.com/). The upstream project documents the additional country sources and merge procedure.
+The `compiled/geoip` snapshots select countries from the converted Country MMDB and aggregate only equivalent CIDRs. Each list records the Country MMDB's URL, build epoch and SHA-256; [release.json](../../GeoData/release.json) identifies the original input.
 
 ## Brave browser selections
 

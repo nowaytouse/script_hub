@@ -16,6 +16,8 @@ cargo run --locked --bin validate -- --root .
 `--exports-only --execute` 从当前列表重建客户端格式，不拉取上游；搭配 `--singbox` 同时生成 SRS。
 `--classify-only --execute` 还会在导出前重新执行本地分类收束。
 
+`--ipgeo-only --execute --singbox /path/to/sing-box` 仅刷新两份 MMDB、上游署名及国家列表和 SRS。定时全量更新也会执行转换。已校验的同一版本仅需请求一次发布清单。
+
 `--tools-only --execute` 拉取 Script Hub、Sub-Store Beta 的模块定义和面板来源，并在本地生成 Surge、小火箭的工具合集及其 GitHub 镜像。定时全量更新也会刷新这些来源和 Crush Cloud 的限定域名解析。未知脚本或无效 DNS 端点不会覆盖上次有效输入。手写规则、安全边界和受限快照（如 Kelee 测速）不属于滚动源。
 
 ## 桌面应用翻译

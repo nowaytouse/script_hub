@@ -1,6 +1,8 @@
 *.sgmodule text eol=lf
 *.module text eol=lf
 *.srs binary
+*.mmdb binary
+/rulesets/GeoData/*.txt text eol=lf
 /rulesets/Mihomo/*.yaml text eol=lf
 /rulesets/AdBlock/Mihomo/*.yaml text eol=lf
 /rulesets/Sources/compiled/geoip/*.list text eol=lf

@@ -3,13 +3,12 @@
 use super::flclash::DNS6_BOOTSTRAP;
 use super::{Client, Template, VaultError, inline_comment, links, slot_ranges};
 use crate::pipeline::firewall_sync::PUBLIC_DOH_BOOTSTRAPS;
-use crate::pipeline::geo_rulesets::MMDB_URL;
+use crate::pipeline::geo_rulesets::{ASN_URL, MMDB_URL};
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 
 const RAW: &str = "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets/";
 const CDN: &str = "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/";
-const ASN_URL: &str = "https://github.com/laincat/GeoIP/releases/latest/download/GeoLite2-ASN.mmdb";
 const DNS_BOOTSTRAP: [&str; 2] = [
     "https://223.5.5.5/dns-query#DIRECT",
     "https://223.6.6.6/dns-query#DIRECT",
@@ -715,7 +714,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
     let mut yaml_providers = Map::new();
     let mut sing_rules = Vec::new();
     let mut sing_providers = BTreeMap::new();
-    let uses_aio = general
+    let uses_bundled_country = general
         .get("geoip-maxmind-url")
         .is_some_and(|source| source.trim_matches('"') == MMDB_URL);
     let mut sing_adblock_at = None;
@@ -820,7 +819,7 @@ pub(super) fn derive(surge: &Template) -> Result<Vec<Template>, VaultError> {
                         no_resolve,
                         &mut yaml_rules,
                         &mut sing_rules,
-                        uses_aio.then_some(&mut sing_providers),
+                        uses_bundled_country.then_some(&mut sing_providers),
                     )?;
                 }
             }
@@ -933,7 +932,7 @@ mod tests {
     #[test]
     fn aio_country_fallbacks_keep_source_order_and_policy_in_both_projections() {
         let source = Template {
-            name: "Synthetic AIO routing".into(),
+            name: "Synthetic country routing".into(),
             client: Client::Surge,
             content: format!(
                 "[General]\ngeoip-maxmind-url = {}\n[Proxy Group]\nProxy = select, policy-path={{{{SUBSCRIPTION_1}}}}\n[Rule]\nDOMAIN,service.example.test,Proxy\nGEOIP,US,Proxy\nGEOIP,JP,Proxy\nGEOIP,TW,Proxy\nGEOIP,CN,DIRECT,no-resolve\nFINAL,Proxy\n",

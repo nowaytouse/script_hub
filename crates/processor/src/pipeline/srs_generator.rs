@@ -101,7 +101,7 @@ pub(crate) fn compiler_command(singbox_path: &str, input: &Path, output: &Path) 
     command
 }
 
-fn compile_srs(
+pub(super) fn compile_srs(
     list_file: &Path,
     root_dir: &Path,
     singbox_path: &str,

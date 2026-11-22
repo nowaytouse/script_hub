@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Convert ipgeo Community releases into separate Country and ASN databases, verified before publication, and derive the sing-box country rules from the same data.
+
 - Follow the Crush Cloud DoH endpoint for `*.node.daacc.org` in both Helpers without changing global DNS or routing. Refresh Script Hub and Sub-Store Beta module definitions for both tools bundles; preserve manual-first defaults. Rolling GitHub branch feeds prefer the publisher before the CDN.
 
 - Restore macOS desktop text by enabling GPUI's native font rasterizer when default features are disabled.

@@ -41,8 +41,7 @@ fn documented_sample_password(document: &str) -> &str {
 
 #[test]
 fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
-    const GEOIP_URL: &str =
-        "https://github.com/daijro/geoip-all-in-one/releases/latest/download/geoip-aio-all.mmdb";
+    const GEOIP_URL: &str = crate::pipeline::geo_rulesets::MMDB_URL;
     const DIRECT_PROBE: &str = "http://www.msftconnecttest.com/connecttest.txt";
     const PROXY_PROBE: &str = "https://connectivitycheck.grapheneos.network/generate_204";
     let group_probe =
@@ -153,7 +152,7 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
             assert_eq!(config["geox-url"]["mmdb"], GEOIP_URL);
             assert_eq!(
                 config["geox-url"]["asn"],
-                "https://github.com/laincat/GeoIP/releases/latest/download/GeoLite2-ASN.mmdb"
+                crate::pipeline::geo_rulesets::ASN_URL
             );
             assert_eq!(config["geo-auto-update"], true);
             assert_eq!(config["geo-update-interval"], 168);
@@ -219,6 +218,11 @@ fn documented_public_password_authenticates_the_sanitized_encrypted_sample() {
                         .any(|line| line == template::GEOIP_MANUAL_NOTE)
                 );
                 assert!(!settings.contains_key("geoip-maxmind-url"));
+                assert!(
+                    rendered
+                        .lines()
+                        .any(|line| line == template::ASN_MANUAL_NOTE)
+                );
                 assert_eq!(group_count, 3);
                 assert!(!rendered.contains("[Ruleset "));
                 for (key, value) in [
