@@ -4720,7 +4720,7 @@ DEALINGS IN THE SOFTWARE.
 
 ==============================================================================
 MIT License
-Used by: const-random-macro 0.1.16; const-random 0.1.18; hashbrown 0.15.5; hashbrown 0.17.1;
+Used by: const-random-macro 0.1.16; const-random 0.1.18; hashbrown 0.15.5; hashbrown 0.17.2;
 ==============================================================================
 Copyright (c) 2016 Amanieu d'Antras
 
@@ -7272,7 +7272,7 @@ DEALINGS IN THE SOFTWARE.
 
 ==============================================================================
 MIT License
-Used by: annotate-snippets 0.12.18; anstyle 1.0.14; serde_spanned 0.6.9; serde_spanned 1.1.3; toml 0.8.23; toml 1.2.1+spec-1.1.0; toml_datetime 0.6.11; toml_datetime 1.1.3+spec-1.1.0; toml_edit 0.22.27; toml_parser 1.1.5+spec-1.1.0; toml_write 0.1.2; toml_writer 1.2.0+spec-1.1.0;
+Used by: annotate-snippets 0.12.18; anstyle 1.0.14; serde_spanned 0.6.9; serde_spanned 1.1.3; toml 0.8.23; toml 1.2.2+spec-1.1.0; toml_datetime 0.6.11; toml_datetime 1.1.3+spec-1.1.0; toml_edit 0.22.27; toml_parser 1.1.6+spec-1.1.0; toml_write 0.1.2; toml_writer 1.2.0+spec-1.1.0;
 ==============================================================================
 Copyright (c) Individual contributors
 
@@ -7636,7 +7636,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ==============================================================================
 MIT License
-Used by: zerocopy-derive 0.8.63; zerocopy 0.8.63;
+Used by: zerocopy-derive 0.8.64; zerocopy 0.8.64;
 ==============================================================================
 Copyright 2023 The Fuchsia Authors
 
@@ -7734,7 +7734,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 ==============================================================================
 MIT License
-Used by: psl 2.1.259;
+Used by: psl 2.1.261;
 ==============================================================================
 MIT License
 
@@ -8937,7 +8937,7 @@ DEALINGS IN THE SOFTWARE.
 
 ==============================================================================
 MIT License
-Used by: adler2 2.0.1; anyhow 1.0.104; async-channel 1.9.0; async-channel 2.5.0; async-executor 1.14.1; async-fs 2.2.0; async-global-executor 2.4.1; async-io 2.6.0; async-lock 3.5.0; async-net 2.0.0; async-process 2.5.0; async-signal 0.2.14; async-std 1.13.2; async-task 4.7.1; atomic-waker 1.1.2; basic-toml 0.1.10; blocking 1.7.0; concurrent-queue 2.5.0; curve25519-dalek-derive 0.1.1; displaydoc 0.2.7; dyn-clone 1.0.20; erased-serde 0.4.11; event-listener-strategy 0.5.4; event-listener 2.5.3; event-listener 5.4.2; fastrand 1.9.0; fastrand 2.5.0; find-crate 0.6.3; futures-lite 1.13.0; futures-lite 2.6.1; home 0.5.12; inventory 0.3.25; itoa 1.0.19; lazy_static 1.5.1; minimal-lexical 0.2.1; once_cell 1.21.4; parking 2.2.1; paste 1.0.15; pastey 0.1.1; pin-project-internal 1.2.0; pin-project-lite 0.2.18; pin-project 1.2.0; piper 0.2.5; polling 3.11.0; portable-atomic 1.15.0; prettyplease 0.2.37; prettyplease 0.3.0; proc-macro2 1.0.107; quote 1.0.47; ref-cast-impl 1.0.27; ref-cast 1.0.27; rustc-hash 1.1.0; rustix 0.38.44; rustix 1.1.6; rustversion 1.0.23; semver 1.0.28; serde-saphyr 2.2.0; serde 1.0.229; serde_core 1.0.229; serde_derive 1.0.229; serde_derive_internals 0.30.0; serde_json 1.0.154; serde_json_lenient 0.2.4; smol 2.0.2; syn 2.0.119; syn 3.0.10; thin-vec 0.2.21; thiserror-impl 1.0.69; thiserror-impl 2.0.21; thiserror 1.0.69; thiserror 2.0.21; typeid 1.0.3; unic-langid-impl 0.9.6; unic-langid 0.9.6; unicode-ident 1.0.27; utf-8 0.7.6; utf8-zero 0.8.1; waker-fn 1.2.0; zed-font-kit 0.14.1-zed; zmij 1.0.23;
+Used by: adler2 2.0.1; anyhow 1.0.105; async-channel 1.9.0; async-channel 2.5.0; async-executor 1.14.1; async-fs 2.2.0; async-global-executor 2.4.1; async-io 2.6.0; async-lock 3.5.0; async-net 2.0.0; async-process 2.5.0; async-signal 0.2.14; async-std 1.13.2; async-task 4.7.1; atomic-waker 1.1.2; basic-toml 0.1.10; blocking 1.7.0; concurrent-queue 2.5.0; curve25519-dalek-derive 0.1.1; displaydoc 0.2.7; dyn-clone 1.0.20; erased-serde 0.4.11; event-listener-strategy 0.5.4; event-listener 2.5.3; event-listener 5.4.2; fastrand 1.9.0; fastrand 2.5.0; find-crate 0.6.3; futures-lite 1.13.0; futures-lite 2.6.1; home 0.5.12; inventory 0.3.25; itoa 1.0.19; lazy_static 1.5.1; minimal-lexical 0.2.1; once_cell 1.21.4; parking 2.2.1; paste 1.0.15; pastey 0.1.1; pin-project-internal 1.2.0; pin-project-lite 0.2.18; pin-project 1.2.0; piper 0.2.5; polling 3.11.0; portable-atomic 1.15.0; prettyplease 0.2.37; prettyplease 0.3.0; proc-macro2 1.0.107; quote 1.0.47; ref-cast-impl 1.0.27; ref-cast 1.0.27; rustc-hash 1.1.0; rustix 0.38.44; rustix 1.1.6; rustversion 1.0.23; semver 1.0.28; serde-saphyr 2.2.0; serde 1.0.229; serde_core 1.0.229; serde_derive 1.0.229; serde_derive_internals 0.30.0; serde_json 1.0.154; serde_json_lenient 0.2.4; smol 2.0.2; syn 2.0.119; syn 3.0.10; thin-vec 0.2.21; thiserror-impl 1.0.69; thiserror-impl 2.0.21; thiserror 1.0.69; thiserror 2.0.21; typeid 1.0.3; unic-langid-impl 0.9.6; unic-langid 0.9.6; unicode-ident 1.0.27; utf-8 0.7.6; utf8-zero 0.8.1; waker-fn 1.2.0; zed-font-kit 0.14.1-zed; zmij 1.0.23;
 ==============================================================================
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -9227,7 +9227,7 @@ THE SOFTWARE.
 
 ==============================================================================
 MIT License
-Used by: aho-corasick 1.1.5; byteorder-lite 0.1.0; byteorder 1.5.0; encoding_rs_io 0.1.8; globset 0.4.21; memchr 2.8.3; termcolor 1.4.1; walkdir 2.5.0;
+Used by: aho-corasick 1.1.5; byteorder-lite 0.1.0; byteorder 1.5.0; encoding_rs_io 0.1.8; globset 0.4.22; memchr 2.8.3; termcolor 1.4.1; walkdir 2.5.1;
 ==============================================================================
 The MIT License (MIT)
 
@@ -9690,7 +9690,7 @@ SOFTWARE.
 
 ==============================================================================
 MIT License
-Used by: async-compression 0.4.52; compression-codecs 0.4.47; compression-core 0.4.34;
+Used by: async-compression 0.4.52; compression-codecs 0.4.48; compression-core 0.4.34;
 ==============================================================================
 The MIT License (MIT)
 
