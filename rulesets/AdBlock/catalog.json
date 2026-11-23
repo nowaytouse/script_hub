@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-23 09:03:48",
+  "updated": "2026-11-23 22:55:28",
   "rules_per_shard_max": 100000,
   "modules": {
     "shadowrocket_promax_cdn": {
@@ -40,8 +40,8 @@
   "verified_rolling_feeds": {
     "ThreatIntel_TIF": {
       "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt",
-      "version": "2026.1122.2308.38",
-      "declared_entries": 378317
+      "version": "2026.1123.0807.08",
+      "declared_entries": 373012
     }
   },
   "shards": [
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 55029,
+      "rule_count": 54859,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -241,7 +241,7 @@
       "label_zh": "Anti-AD",
       "purpose": "privacy-protection-tools anti-AD 主列表与 discretion",
       "shard_index": 1,
-      "rule_count": 4376,
+      "rule_count": 4368,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAntiAD%2Elist"
     },
@@ -261,7 +261,7 @@
       "label_zh": "综合拦截·Ultimate",
       "purpose": "HaGeZi Multi ULTIMATE（广告、跟踪与安全混合源）",
       "shard_index": 2,
-      "rule_count": 55593,
+      "rule_count": 58384,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -291,7 +291,7 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 3,
-      "rule_count": 85903,
+      "rule_count": 81142,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F03%2Elist"
     },
@@ -301,7 +301,7 @@
       "label_zh": "威胁情报·补充",
       "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
       "shard_index": 1,
-      "rule_count": 75917,
+      "rule_count": 76270,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
     }
