@@ -4,7 +4,7 @@
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-25 06:36:05
+#!date=2026-11-25 22:38:04
 #!requirement=CORE_VERSION>=6010000
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
@@ -3707,7 +3707,7 @@ http-response ^https?:\/\/m\.lkcoffee\.com\/capi\/resource\/m\/growUp\/main "\"p
 http-response ^https?:\/\/dyncdn\.me\/static\/\d{0,2}\/js\/showads\.js$ true false
 http-response-jq ^https://www\.tailgdd\.com/v8/smart/app/config/get$ 'if (getpath([]) | has("data")) then (setpath(["data"]; {})) else . end'
 http-response ^https?:\/\/tft-app\.cdtft\.cn\/gateway-customer\/tftapp\/tft-ams\/api\/appAd officialAdvertResultVo fmz200
-http-response ^https?:\/\/chl\.tf\.cn\/channelmg\/sys\/socso\/order\/queryOrderInfo imgUrl response-body
+http-response ^https?:\/\/chl\.tf\.cn\/channelmg\/sys\/socso\/order\/queryOrderInfo imgUrl fmz200
 http-response ^https?:\/\/client\.tujia\.com\/bnbapp-node\/app\/portal\/getportalconfig\/bnb\/v2 "\"banners\":\[.+\]," "\"banners\":[],"
 http-response-jq ^https:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api '.data.objects["OpenAPP-&-FlashAD"] = [] | .data.objects["InTheaters-&-BoxAD"] = []'
 http-response ^https?:\/\/misc-api-prd-mx\.wandafilm\.com\/commend\/common_banner_batch\.api\?bannerInfos=%5B%7B%22cinemaI WX_index_mp-&-boxAD fmz200
