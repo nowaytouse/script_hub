@@ -382,6 +382,15 @@ pub(super) fn script_fields(node: &Node, mutation: &Mutation) -> ScriptFields {
         NodeSource::SubStore(value) | NodeSource::Mihomo(value) => {
             let value = &value.0;
             let tls = json_tls(node, value).ok();
+            let network = value.get("network").and_then(Value::as_str);
+            let network = if protocol == "vless"
+                && network == Some("ws")
+                && value["ws-opts"]["v2ray-http-upgrade"] == true
+            {
+                Some("httpupgrade")
+            } else {
+                network
+            };
             ScriptFields {
                 udp: value.get("udp").and_then(Value::as_bool),
                 tfo: value.get("tfo").and_then(Value::as_bool),
@@ -401,7 +410,7 @@ pub(super) fn script_fields(node: &Node, mutation: &Mutation) -> ScriptFields {
                 alpn: (tls == Some(true))
                     .then(|| json_alpn(value.get("alpn")?))
                     .flatten(),
-                transport: transport(protocol, value.get("network").and_then(Value::as_str)),
+                transport: transport(protocol, network),
                 ..Default::default()
             }
         }
@@ -447,7 +456,13 @@ pub(super) fn script_fields(node: &Node, mutation: &Mutation) -> ScriptFields {
                 alpn: (tls == Some(true))
                     .then(|| bounded_alpn(field("alpn")?.split(',').map(str::trim)))
                     .flatten(),
-                transport: transport(protocol, None),
+                transport: transport(
+                    protocol,
+                    (protocol == "vless"
+                        && boolean("ws") == Some(true)
+                        && boolean("ws-http-upgrade") == Some(true))
+                    .then_some("httpupgrade"),
+                ),
                 ..Default::default()
             }
         }

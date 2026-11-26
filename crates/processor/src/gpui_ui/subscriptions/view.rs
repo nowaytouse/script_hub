@@ -501,6 +501,9 @@ impl Subscriptions {
         if self.reviewing_relay_save && self.current_preview(cx).is_some() {
             return body.children(self.relay_save_controls(palette, cx));
         }
+        if let Some(profile) = self.mihomo_profile_form(palette, cx) {
+            return body.child(profile);
+        }
         let source_title = match self.source {
             Source::Saved(Item::Entry(id)) => self.entry(id).map(|entry| entry.name.as_str()),
             Source::Saved(Item::Collection(id)) => {
@@ -730,23 +733,24 @@ impl Subscriptions {
                             },
                         )
                         .when(!preview.result.content.is_empty(), |row| {
-                            row.child(self.action(
-                                "relay-prepared-details",
-                                if preview.details.is_hidden() {
-                                    text(self.language, Text::RelayReviewRevealOutput)
-                                } else {
-                                    localized(
-                                        self.language,
-                                        "Hide node details",
-                                        "隐藏节点详情",
-                                        "ノード詳細を隠す",
-                                    )
-                                },
-                                palette,
-                                false,
-                                cx,
-                                Self::toggle_preview_details,
-                            ))
+                            row.child(self.mihomo_profile_button(palette, cx))
+                                .child(self.action(
+                                    "relay-prepared-details",
+                                    if preview.details.is_hidden() {
+                                        text(self.language, Text::RelayReviewRevealOutput)
+                                    } else {
+                                        localized(
+                                            self.language,
+                                            "Hide node details",
+                                            "隐藏节点详情",
+                                            "ノード詳細を隠す",
+                                        )
+                                    },
+                                    palette,
+                                    false,
+                                    cx,
+                                    Self::toggle_preview_details,
+                                ))
                         })
                         .when(
                             !preview.result.content.is_empty()

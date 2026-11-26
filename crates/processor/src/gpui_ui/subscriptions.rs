@@ -7,6 +7,7 @@ mod nodes;
 mod output;
 mod pipeline;
 mod preview_details;
+mod profile_export;
 mod relay_save;
 mod schedule;
 mod session;
@@ -57,6 +58,7 @@ enum Source {
 enum FileMode {
     Nodes,
     LibraryNodes,
+    MihomoTemplate,
 }
 
 struct Preview {
@@ -110,6 +112,8 @@ enum Completed {
     Notice(&'static str),
     Published(Box<RelayResult>, Option<output::Receipt>),
     FormatChecked(output::FormatCheck),
+    ProfileTemplate(Result<profile_export::Form, String>),
+    ProfileExported(&'static str),
     RelayFailed(relay::RelayError),
     Cancelled,
 }
@@ -148,6 +152,7 @@ pub(super) struct Subscriptions {
     migration: migration::Migration,
     health: health::Controls,
     output: output::Controls,
+    profile_export: Option<profile_export::Form>,
     reviewed_source: Option<ReviewedSource>,
     allow_resolution: bool,
     schedule: schedule::Controls,
@@ -217,6 +222,7 @@ impl Subscriptions {
             migration: migration::Migration::default(),
             health,
             output,
+            profile_export: None,
             reviewed_source: None,
             allow_resolution: false,
             schedule,
@@ -293,6 +299,7 @@ impl Subscriptions {
     pub(super) fn show_relay(&mut self, showing: bool, cx: &mut Context<Self>) {
         if self.showing_relay != showing {
             self.showing_relay = showing;
+            self.profile_export = None;
             self.clear_library_passwords(cx);
             self.clear_relay_save(cx);
             self.conceal_preview(cx);
@@ -338,6 +345,7 @@ impl Subscriptions {
 
     fn invalidate_preview(&mut self, cx: &mut Context<Self>) {
         self.preview = None;
+        self.profile_export = None;
         self.resume_relay_save = false;
         self.clear_relay_save(cx);
         self.last_publication = None;
@@ -536,6 +544,11 @@ impl Subscriptions {
             }
             Ok(Completed::Copied(_)) => cx.notify(),
             Ok(Completed::Notice(notice)) => self.feedback(true, notice, cx),
+            Ok(Completed::ProfileTemplate(result)) => self.finish_mihomo_template(result, cx),
+            Ok(Completed::ProfileExported(notice)) => {
+                self.profile_export = None;
+                self.feedback(true, notice, cx);
+            }
             Ok(Completed::FormatChecked(check)) => self.finish_format_check(check, cx),
             Ok(Completed::Published(result, receipt)) => {
                 let verification = if result.unchanged {
@@ -871,28 +884,37 @@ impl Subscriptions {
         self.pending = true;
         self.set_pipeline_busy(true, cx);
         self.notice = None;
+        let title = match mode {
+            FileMode::MihomoTemplate => {
+                self.tr("Open Mihomo YAML template", "打开 Mihomo YAML 模板")
+            }
+            _ => self.tr("Open subscription file", "打开订阅文件"),
+        };
         let pick = cx.prompt_for_paths(PathPromptOptions {
             files: true,
             directories: false,
             multiple: false,
-            prompt: Some(self.tr("Open subscription file", "打开订阅文件").into()),
+            prompt: Some(title.into()),
         });
         let executor = cx.background_executor().clone();
+        let language = self.language;
         cx.spawn(async move |weak, cx| {
             let result = match pick.await {
                 Ok(Ok(Some(files))) => {
                     executor
                         .spawn(async move {
                             let path = files.first().ok_or("Choose a regular file.")?;
+                            if matches!(mode, FileMode::MihomoTemplate) {
+                                return Ok(Completed::ProfileTemplate(profile_export::Form::load(
+                                    path, language,
+                                )));
+                            }
                             let bytes = read_limited(path, MAX_INPUT)?;
-                            let content = Zeroizing::new(
-                                std::str::from_utf8(&bytes)
-                                    .map_err(|_| "The subscription is not UTF-8 text.")?
-                                    .to_owned(),
-                            );
-                            validate_nodes(&content)?;
+                            let content = std::str::from_utf8(&bytes)
+                                .map_err(|_| "The selected file is not UTF-8 text.")?;
+                            validate_nodes(content)?;
                             Ok(Completed::Loaded(
-                                content,
+                                Zeroizing::new(content.to_owned()),
                                 matches!(mode, FileMode::LibraryNodes),
                             ))
                         })
@@ -1198,11 +1220,28 @@ impl Subscriptions {
         let content = preview.result.content.clone();
         self.allow_plaintext = false;
         let format = self.output.local_format();
-        let directory = documents_directory();
         let suggested_name = format!("scripthub-nodes.{}", format.extension());
-        let prompt = cx.prompt_for_new_path(&directory, Some(&suggested_name));
-        let executor = cx.background_executor().clone();
         let notice = self.tr("Subscription exported", "订阅已导出");
+        self.save_text_export(
+            &suggested_name,
+            move || export_subscription(&content, format).map_err(message),
+            |path, output| crate::vault::destination::write_private_export(path, output.as_bytes()),
+            Completed::Notice(notice),
+            cx,
+        );
+    }
+
+    fn save_text_export(
+        &mut self,
+        suggested_name: &str,
+        produce: impl FnOnce() -> Result<Zeroizing<String>, String> + Send + 'static,
+        write: fn(&Path, &str) -> Result<(), String>,
+        completed: Completed,
+        cx: &mut Context<Self>,
+    ) {
+        let directory = documents_directory();
+        let prompt = cx.prompt_for_new_path(&directory, Some(suggested_name));
+        let executor = cx.background_executor().clone();
         self.pending = true;
         self.set_pipeline_busy(true, cx);
         self.notice = None;
@@ -1211,13 +1250,9 @@ impl Subscriptions {
                 Ok(Ok(Some(path))) => {
                     executor
                         .spawn(async move {
-                            if !crate::desktop::template_paths::safe_export_destination(&path, None) {
-                                return Err("Choose an export file outside Git working trees and vault folders.".into());
-                            }
-                            let output = export_subscription(&content, format).map_err(message)?;
-                            crate::vault::write_private(&path, output.as_bytes(), false)
-                                .map_err(message)?;
-                            Ok(Completed::Notice(notice))
+                            let output = produce()?;
+                            write(&path, &output)?;
+                            Ok(completed)
                         })
                         .await
                 }

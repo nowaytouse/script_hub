@@ -4,7 +4,7 @@ use serde_json::Value;
 use zeroize::Zeroizing;
 
 use super::{ModelError, append_surge_tls_parameters, quote_surge};
-use crate::relay::model::{valid_surge_reality_key, valid_surge_reality_short_id};
+use crate::relay::model::{http_upgrade, valid_surge_reality_key, valid_surge_reality_short_id};
 
 pub(super) fn append(source: &Value, row: &mut Zeroizing<String>) -> Result<(), ModelError> {
     if source
@@ -100,19 +100,35 @@ pub(super) fn append(source: &Value, row: &mut Zeroizing<String>) -> Result<(), 
     if let Some(transport) = transport {
         let options = transport.as_object().ok_or(ModelError::Unsupported)?;
         match transport["type"].as_str() {
-            Some("ws")
+            Some(kind @ ("ws" | "httpupgrade"))
                 if reality.is_none()
-                    && options
-                        .keys()
-                        .all(|key| ["type", "path", "headers"].contains(&key.as_str())) =>
+                    && options.keys().all(|key| {
+                        ["type", "path", "headers"].contains(&key.as_str())
+                            || (kind == "httpupgrade" && key == "host")
+                    }) =>
             {
                 row.push_str(", ws=true");
+                let upgrade = kind == "httpupgrade";
+                if upgrade {
+                    row.push_str(", ws-http-upgrade=true");
+                }
                 if let Some(path) = options.get("path") {
                     let path = path
                         .as_str()
-                        .filter(|path| path.starts_with('/'))
+                        .filter(|path| {
+                            path.starts_with('/') && (!upgrade || http_upgrade::valid_path(path))
+                        })
                         .ok_or(ModelError::Unsupported)?;
                     append_string(row, "ws-path", path)?;
+                }
+                let mut joined = Zeroizing::new(String::new());
+                if upgrade {
+                    let host = options
+                        .get("host")
+                        .and_then(Value::as_str)
+                        .filter(|host| http_upgrade::valid_authority(host))
+                        .ok_or(ModelError::Unsupported)?;
+                    write!(joined, "Host:{host}").map_err(|_| ModelError::Render)?;
                 }
                 if let Some(headers) = options.get("headers") {
                     let headers = headers
@@ -122,7 +138,6 @@ pub(super) fn append(source: &Value, row: &mut Zeroizing<String>) -> Result<(), 
                     // Keep the exported header order stable across JSON map implementations.
                     let mut headers = headers.iter().collect::<Vec<_>>();
                     headers.sort_unstable_by_key(|&(name, _)| name);
-                    let mut joined = Zeroizing::new(String::new());
                     for (key, value) in headers {
                         if key.is_empty()
                             || !key.bytes().all(|byte| {
@@ -135,11 +150,16 @@ pub(super) fn append(source: &Value, row: &mut Zeroizing<String>) -> Result<(), 
                             .as_str()
                             .filter(|value| !value.is_empty() && !value.contains('|'))
                             .ok_or(ModelError::Unsupported)?;
+                        if upgrade && !http_upgrade::valid_header(key, value) {
+                            return Err(ModelError::Unsupported);
+                        }
                         if !joined.is_empty() {
                             joined.push('|');
                         }
                         write!(joined, "{key}:{value}").map_err(|_| ModelError::Render)?;
                     }
+                }
+                if !joined.is_empty() {
                     append_string(row, "ws-headers", &joined)?;
                 }
             }

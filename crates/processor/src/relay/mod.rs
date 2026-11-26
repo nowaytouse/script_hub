@@ -15,6 +15,7 @@ pub mod library_refresh;
 pub mod library_store;
 pub mod model;
 pub mod plan;
+pub mod profile;
 pub mod resolve;
 pub mod schedule;
 #[cfg(any(target_os = "windows", target_os = "macos"))]

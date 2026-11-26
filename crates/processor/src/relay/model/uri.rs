@@ -779,6 +779,31 @@ impl UriNode {
                 }
                 out["transport"] = transport;
             }
+            "httpupgrade" if protocol == "vless" => {
+                if security == "reality" || get("flow").is_some() || get("serviceName").is_some() {
+                    return Err(ModelError::Unsupported);
+                }
+                let path = get("path");
+                if path.is_some_and(|path| !http_upgrade::valid_path(path)) {
+                    return Err(ModelError::Unsupported);
+                }
+                let host = match get("host") {
+                    Some(host) if http_upgrade::valid_authority(host) => host.to_owned(),
+                    Some(_) => return Err(ModelError::Unsupported),
+                    None => http_upgrade::authority(
+                        get("sni").or_else(|| get("peer")).unwrap_or(&self.server),
+                        None,
+                    ),
+                };
+                if !http_upgrade::valid_authority(&host) {
+                    return Err(ModelError::Unsupported);
+                }
+                let mut transport = json!({"type":"httpupgrade", "host":host});
+                if let Some(path) = path {
+                    transport["path"] = path.into();
+                }
+                out["transport"] = transport;
+            }
             "grpc" if matches!(protocol, "vless" | "trojan") => {
                 if get("host").is_some() || get("path").is_some() {
                     return Err(ModelError::Unsupported);

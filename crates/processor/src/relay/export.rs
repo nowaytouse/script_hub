@@ -109,6 +109,7 @@ fn surge(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> {
         };
         let mut normalized = node.export_surge_projection().map_err(at_node)?;
         default_socks_version(&mut normalized.0);
+        super::model::http_upgrade::normalize_defaults(&mut normalized.0).map_err(at_node)?;
         let line = surge_node(&normalized.0).map_err(at_node)?;
         surge_vless::normalize(&mut normalized.0);
         if output.len() + line.len() + 1 > MAX_CONTENT {
@@ -319,6 +320,15 @@ fn mihomo(subscription: &Subscription) -> Result<Zeroizing<String>, RelayError> 
         };
         let mut normalized = node.export_sing_box().map_err(at_node)?;
         default_socks_version(&mut normalized.0);
+        if normalized.0["type"] == "vless" && normalized.0["transport"]["type"] == "httpupgrade" {
+            super::model::http_upgrade::normalize_defaults(&mut normalized.0).map_err(at_node)?;
+            // Mihomo derives the TLS name from the Host header when servername is absent.
+            if normalized.0["tls"]["enabled"] == true
+                && normalized.0["tls"].get("server_name").is_none()
+            {
+                normalized.0["tls"]["server_name"] = normalized.0["server"].clone();
+            }
+        }
         let mut converted = mihomo_node(&normalized.0).map_err(at_node)?;
         converted.0.sort_all_objects();
         // A JSON object is a YAML flow mapping. Serialize it instead of
@@ -394,6 +404,9 @@ fn mihomo_node(source: &Value) -> Result<PrivateJson, ModelError> {
         {
             ("ss", &["method", "password"])
         }
+        Some("vless") if source["transport"]["type"] == "httpupgrade" => {
+            ("vless", &["uuid", "tls", "transport", "packet_encoding"])
+        }
         _ => return Err(ModelError::Unsupported),
     };
     if object
@@ -411,6 +424,9 @@ fn mihomo_node(source: &Value) -> Result<PrivateJson, ModelError> {
         "type": kind, "name": source["tag"], "server": source["server"],
         "port": source["server_port"], "udp": udp,
     }));
+    if kind == "vless" {
+        mihomo_http_upgrade(source, &mut converted.0)?;
+    }
     if let Some(detour) = source.get("detour") {
         let target = detour
             .as_str()
@@ -428,6 +444,54 @@ fn mihomo_node(source: &Value) -> Result<PrivateJson, ModelError> {
         }
     }
     Ok(converted)
+}
+
+fn mihomo_http_upgrade(source: &Value, node: &mut Value) -> Result<(), ModelError> {
+    use super::model::http_upgrade;
+    let transport = &source["transport"];
+    let host = transport["host"]
+        .as_str()
+        .filter(|s| http_upgrade::valid_authority(s))
+        .ok_or(ModelError::Unsupported)?;
+    let mut headers = serde_json::Map::new();
+    if let Some(values) = transport.get("headers") {
+        for (name, value) in values.as_object().ok_or(ModelError::Unsupported)? {
+            if !value
+                .as_str()
+                .is_some_and(|v| http_upgrade::valid_header(name, v))
+            {
+                return Err(ModelError::Unsupported);
+            }
+            headers.insert(name.to_owned(), value.clone());
+        }
+    }
+    headers.insert("Host".into(), host.into());
+    node["uuid"] = source["uuid"].clone();
+    node["network"] = "ws".into();
+    node["ws-opts"] = json!({"v2ray-http-upgrade": true, "headers": headers});
+    if let Some(path) = transport.get("path") {
+        if !path.as_str().is_some_and(http_upgrade::valid_path) {
+            return Err(ModelError::Unsupported);
+        }
+        node["ws-opts"]["path"] = path.clone();
+    }
+    if let Some(encoding) = source.get("packet_encoding") {
+        node["packet-encoding"] = encoding.clone();
+    }
+    if let Some(tls) = source.get("tls") {
+        node["tls"] = tls["enabled"].clone();
+        for (source_key, target_key) in [
+            ("server_name", "servername"),
+            ("alpn", "alpn"),
+            ("insecure", "skip-cert-verify"),
+        ] {
+            if let Some(value) = tls.get(source_key) {
+                node[target_key] = value.clone();
+            }
+        }
+    }
+    // The common projection check rejects any additional setting lost in this conversion.
+    Ok(())
 }
 
 fn export_text(output: &[u8]) -> Result<Zeroizing<String>, RelayError> {
@@ -865,6 +929,90 @@ mod tests {
             output.as_str(),
             "XUDP = vless, example.invalid, 443, username=\"fixture\"\n"
         );
+    }
+
+    #[test]
+    fn vless_http_upgrade_round_trips_through_surge_with_explicit_host_and_tls() {
+        for input in [
+            r#"[Proxy]
+Fixture = vless, example.invalid, 443, username=12345678-1234-4234-8234-123456789abc, tls=true, sni=identity.example.invalid, ws=true, ws-http-upgrade=true, ws-path="/up?route=probe", ws-headers="Host:front.example.invalid|X-Test:fixture"
+"#,
+            r#"proxies:
+  - {name: Fixture, type: vless, server: example.invalid, port: 443, uuid: 12345678-1234-4234-8234-123456789abc, udp: true, tls: true, servername: identity.example.invalid, network: ws, ws-opts: {path: /up?route=probe, headers: {Host: front.example.invalid, X-Test: fixture}, v2ray-http-upgrade: true, v2ray-http-upgrade-fast-open: false}}
+"#,
+            r#"[{"type":"vless","tag":"Fixture","server":"example.invalid","server_port":443,"uuid":"12345678-1234-4234-8234-123456789abc","tls":{"enabled":true,"server_name":"identity.example.invalid"},"transport":{"type":"httpupgrade","path":"/up?route=probe","host":"front.example.invalid","headers":{"X-Test":"fixture"}}}]"#,
+        ] {
+            let surge = export_subscription(input, OutputFormat::Surge).unwrap();
+            assert!(surge.contains("ws=true, ws-http-upgrade=true"));
+            assert!(surge.contains("ws-path=\"/up?route=probe\""));
+            let projected = export_subscription(&surge, OutputFormat::SingBox).unwrap();
+            let json: Value = serde_json::from_str(&projected).unwrap();
+            let node = &json["outbounds"][0];
+            assert_eq!(node["tls"]["server_name"], "identity.example.invalid");
+            assert_eq!(
+                node["transport"],
+                json!({
+                    "type": "httpupgrade",
+                    "path": "/up?route=probe",
+                    "host": "front.example.invalid",
+                    "headers": {"X-Test": "fixture"}
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn vless_http_upgrade_handles_share_links_and_preserves_distinct_host_defaults() {
+        let uri = "vless://12345678-1234-4234-8234-123456789abc@example.invalid:443?security=tls&sni=identity.example.invalid&type=httpupgrade&host=front.example.invalid&path=%2Fup#Fixture";
+        let surge = export_subscription(uri, OutputFormat::Surge).unwrap();
+        for source in [uri, surge.as_str()] {
+            let provider = export_subscription(source, OutputFormat::Mihomo).unwrap();
+            let projection = export_subscription(&provider, OutputFormat::SingBox).unwrap();
+            let projected: Value = serde_json::from_str(&projection).unwrap();
+            let node = &projected["outbounds"][0];
+            assert_eq!(node["transport"]["type"], "httpupgrade");
+            assert_eq!(node["transport"]["host"], "front.example.invalid");
+            assert_eq!(node["tls"]["server_name"], "identity.example.invalid");
+            assert_eq!(node["transport"]["path"], "/up");
+        }
+        assert!(surge.contains(
+            "ws-http-upgrade=true, ws-path=\"/up\", ws-headers=\"Host:front.example.invalid\""
+        ));
+        let sing_box = r#"[{"type":"vless","tag":"Fixture","server":"example.invalid","server_port":8080,"uuid":"12345678-1234-4234-8234-123456789abc","transport":{"type":"httpupgrade","host":"","path":"","headers":{}}}]"#;
+        let surge = export_subscription(sing_box, OutputFormat::Surge).unwrap();
+        assert!(surge.contains("ws-headers=\"Host:example.invalid:8080\""));
+        let surge = "Fixture = vless, example.invalid, 8080, username=12345678-1234-4234-8234-123456789abc, ws=true, ws-http-upgrade=true";
+        let projected = export_subscription(surge, OutputFormat::SingBox).unwrap();
+        let json: Value = serde_json::from_str(&projected).unwrap();
+        assert_eq!(json["outbounds"][0]["transport"]["host"], "example.invalid");
+    }
+
+    #[test]
+    fn vless_http_upgrade_refuses_non_equivalent_options_without_dropping_nodes() {
+        for input in [
+            "Fixture = vless, example.invalid, 443, username=12345678-1234-4234-8234-123456789abc, ws-http-upgrade=true",
+            "Fixture = vless, example.invalid, 443, username=12345678-1234-4234-8234-123456789abc, ws=true, ws-http-upgrade=true, ws-path=/up?%65d=64",
+            "vless://12345678-1234-4234-8234-123456789abc@example.invalid:443?security=tls&type=httpupgrade&path=%2Fup%3Fed%3D64#Fixture",
+            r#"proxies:
+  - {name: Fixture, type: vless, server: example.invalid, port: 443, uuid: 12345678-1234-4234-8234-123456789abc, tls: true, network: ws, ws-opts: {v2ray-http-upgrade: true, v2ray-http-upgrade-fast-open: true}}
+"#,
+            r#"[{"type":"vless","tag":"Fixture","server":"example.invalid","server_port":443,"uuid":"12345678-1234-4234-8234-123456789abc","transport":{"type":"httpupgrade","host":"front.example.invalid","headers":{"Host":"second.example.invalid"}}}]"#,
+        ] {
+            assert!(export_subscription(input, OutputFormat::Surge).is_err());
+            assert_eq!(
+                export_subscription(input, OutputFormat::Original)
+                    .unwrap()
+                    .as_str(),
+                input
+            );
+        }
+        let provider = r#"proxies:
+  - {name: Fixture, type: vless, server: example.invalid, port: 443, uuid: 12345678-1234-4234-8234-123456789abc, tls: true, network: ws, ws-opts: {v2ray-http-upgrade: true}}
+"#;
+        assert!(export_subscription(provider, OutputFormat::Surge).is_err());
+        let projected = export_subscription(provider, OutputFormat::SingBox).unwrap();
+        let json: Value = serde_json::from_str(&projected).unwrap();
+        assert_eq!(json["outbounds"][0]["network"], "tcp");
     }
 
     #[test]

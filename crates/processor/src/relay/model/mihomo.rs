@@ -1,6 +1,28 @@
 use super::*;
 
 pub(super) fn parse_yaml(input: &str) -> Result<PrivateJson, ModelError> {
+    let document = parse_yaml_document(input)?;
+    match &document.0 {
+        Value::Array(_) => {}
+        Value::Object(map) if map.len() == 1 && map.get("proxies").is_some_and(Value::is_array) => {
+        }
+        _ => return Err(ModelError::InvalidInput),
+    }
+    Ok(document)
+}
+
+pub(in crate::relay) fn parse_yaml_document(input: &str) -> Result<PrivateJson, ModelError> {
+    parse_yaml_with_merge_policy(input, serde_saphyr::MergeKeyPolicy::Error)
+}
+
+pub(in crate::relay) fn parse_yaml_template(input: &str) -> Result<PrivateJson, ModelError> {
+    parse_yaml_with_merge_policy(input, serde_saphyr::MergeKeyPolicy::Merge)
+}
+
+fn parse_yaml_with_merge_policy(
+    input: &str,
+    merge_keys: serde_saphyr::MergeKeyPolicy,
+) -> Result<PrivateJson, ModelError> {
     if input.len() > 8 * 1024 * 1024 {
         return Err(ModelError::InvalidInput);
     }
@@ -23,7 +45,7 @@ pub(super) fn parse_yaml(input: &str) -> Result<PrivateJson, ModelError> {
             max_alias_expansions_per_anchor: 1024,
         },
         duplicate_keys: serde_saphyr::DuplicateKeyPolicy::Error,
-        merge_keys: serde_saphyr::MergeKeyPolicy::Error,
+        merge_keys: merge_keys,
         reject_unsupported_tags: true,
         strict_booleans: true,
         no_schema: true,
@@ -31,16 +53,10 @@ pub(super) fn parse_yaml(input: &str) -> Result<PrivateJson, ModelError> {
     };
     let UniqueValue(value) = serde_saphyr::from_str_with_options(input, options)
         .map_err(|_| ModelError::InvalidInput)?;
-    match &value {
-        Value::Array(_) => {}
-        Value::Object(map) if map.len() == 1 && map.get("proxies").is_some_and(Value::is_array) => {
-        }
-        _ => return Err(ModelError::InvalidInput),
-    }
     Ok(PrivateJson(value))
 }
 
-pub(super) fn render(value: &Value) -> Result<Zeroizing<String>, ModelError> {
+pub(in crate::relay) fn render(value: &Value) -> Result<Zeroizing<String>, ModelError> {
     serde_saphyr::to_string(value)
         .map(Zeroizing::new)
         .map_err(|_| ModelError::Render)
@@ -60,7 +76,7 @@ pub(super) fn project(
         "trojan" => ("trojan", true, &["password"]),
         "anytls" => ("anytls", true, &["password"]),
         "vmess" => ("vmess", false, &["uuid", "cipher", "alterId"]),
-        "vless" => ("vless", false, &["uuid", "flow"]),
+        "vless" => ("vless", false, &["uuid", "flow", "packet-encoding"]),
         "hysteria2" => ("hysteria2", true, &["password"]),
         "tuic" => (
             "tuic",
@@ -133,6 +149,13 @@ pub(super) fn project(
     }
     for key in fields {
         if let Some(value) = object.get(*key) {
+            if *key == "packet-encoding" {
+                if !matches!(value.as_str(), Some("packetaddr" | "xudp")) {
+                    return Err(ModelError::Unsupported);
+                }
+                out["packet_encoding"] = value.clone();
+                continue;
+            }
             if *key == "alterId" {
                 if !value.as_u64().is_some_and(|n| n <= u16::MAX.into()) {
                     return Err(ModelError::Unsupported);
@@ -262,22 +285,7 @@ pub(super) fn project(
                 }
                 let mut result = json!({"type":"ws"});
                 if let Some(opts) = object.get("ws-opts") {
-                    only_keys(opts, &["path", "headers"])?;
-                    if let Some(path) = opts.get("path") {
-                        if !path.as_str().is_some_and(valid_label) {
-                            return Err(ModelError::Unsupported);
-                        }
-                        result["path"] = path.clone();
-                    }
-                    if let Some(headers) = opts.get("headers") {
-                        if !headers.as_object().is_some_and(|h| {
-                            h.iter()
-                                .all(|(k, v)| valid_label(k) && v.as_str().is_some_and(valid_label))
-                        }) {
-                            return Err(ModelError::Unsupported);
-                        }
-                        result["headers"] = headers.clone();
-                    }
+                    result = websocket_transport(node, &mut out, opts, protocol == "vless", tls)?;
                 }
                 Some(result)
             }
@@ -300,6 +308,10 @@ pub(super) fn project(
             _ => return Err(ModelError::Unsupported),
         };
         if let Some(transport) = transport {
+            if mihomo_defaults && transport["type"] == "httpupgrade" && udp.is_none() {
+                // Mihomo has UDP disabled unless the provider opts in.
+                out["network"] = "tcp".into();
+            }
             out["transport"] = transport;
         }
     } else if object.contains_key("ws-opts") || object.contains_key("grpc-opts") {
@@ -307,6 +319,82 @@ pub(super) fn project(
     }
     validate_native(&out, compatibility)?;
     Ok(out)
+}
+
+fn websocket_transport(
+    node: &Node,
+    outbound: &mut Value,
+    opts: &Value,
+    vless: bool,
+    tls: bool,
+) -> Result<Value, ModelError> {
+    let keys: &[&str] = if vless {
+        &[
+            "path",
+            "headers",
+            "v2ray-http-upgrade",
+            "v2ray-http-upgrade-fast-open",
+        ]
+    } else {
+        &["path", "headers"]
+    };
+    only_keys(opts, keys)?;
+    let upgrade = opts
+        .get("v2ray-http-upgrade")
+        .map(|value| value.as_bool().ok_or(ModelError::Unsupported))
+        .transpose()?
+        .unwrap_or(false);
+    if opts
+        .get("v2ray-http-upgrade-fast-open")
+        .is_some_and(|value| value.as_bool() != Some(false))
+        || upgrade && (outbound.get("flow").is_some() || outbound["tls"].get("reality").is_some())
+    {
+        return Err(ModelError::Unsupported);
+    }
+    let kind = if upgrade { "httpupgrade" } else { "ws" };
+    let mut transport = json!({"type": kind});
+    if let Some(path) = opts.get("path") {
+        let valid: fn(&str) -> bool = if upgrade {
+            http_upgrade::valid_path
+        } else {
+            valid_label
+        };
+        if !path.as_str().is_some_and(valid) {
+            return Err(ModelError::Unsupported);
+        }
+        transport["path"] = path.clone();
+    }
+    if let Some(headers) = opts.get("headers") {
+        let headers = headers.as_object().ok_or(ModelError::Unsupported)?;
+        for (name, value) in headers {
+            let value = value.as_str().ok_or(ModelError::Unsupported)?;
+            if upgrade {
+                http_upgrade::insert_header(&mut transport, name, value)?;
+            } else if !valid_label(name) || !valid_label(value) {
+                return Err(ModelError::Unsupported);
+            }
+        }
+        if !upgrade {
+            transport["headers"] = json!(headers);
+        }
+    }
+    if upgrade {
+        if let Some(host) = transport.get("host").and_then(Value::as_str) {
+            // Mihomo uses a supplied WS Host as TLS SNI when servername is absent.
+            if tls && outbound["tls"].get("server_name").is_none() {
+                if !valid_host(host) {
+                    return Err(ModelError::Unsupported);
+                }
+                outbound["tls"]["server_name"] = host.into();
+            }
+        } else if tls {
+            transport["host"] = http_upgrade::authority(node.server(), None).into();
+        } else {
+            // Mihomo generates a random Host for cleartext WS when none is supplied.
+            return Err(ModelError::Unsupported);
+        }
+    }
+    Ok(transport)
 }
 
 #[cfg(test)]

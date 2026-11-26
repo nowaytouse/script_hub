@@ -1,6 +1,7 @@
 //! Password-encrypted template libraries. Plaintext exists only while explicitly unlocked.
 
 mod crypto;
+pub(crate) mod destination;
 mod io;
 pub(crate) mod managed;
 pub mod provision;

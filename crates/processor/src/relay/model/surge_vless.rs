@@ -1,4 +1,7 @@
-use super::{ModelError, Node, PrivateJson, parse_bool, required_field, valid_host, valid_label};
+use super::{
+    ModelError, Node, PrivateJson, http_upgrade, parse_bool, required_field, valid_host,
+    valid_label,
+};
 use base64::{Engine as _, engine::general_purpose::*};
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -55,6 +58,7 @@ pub(super) fn project(
         "reality-public-key",
         "reality-short-id",
         "ws",
+        "ws-http-upgrade",
         "ws-path",
         "ws-headers",
         "grpc",
@@ -110,11 +114,12 @@ pub(super) fn project(
         return Err(ModelError::Unsupported);
     }
     let ws = boolean("ws")? == Some(true);
+    let upgrade = boolean("ws-http-upgrade")? == Some(true);
     let grpc = boolean("grpc")? == Some(true);
     let flow = get("flow");
     if (ws && (grpc || public_key.is_some()))
         || (grpc && !tls_enabled)
-        || (!ws && (get("ws-path").is_some() || get("ws-headers").is_some()))
+        || (!ws && (upgrade || get("ws-path").is_some() || get("ws-headers").is_some()))
         || (!grpc
             && ["grpc-service-name", "grpc-mode", "grpc-authority"]
                 .iter()
@@ -167,9 +172,13 @@ pub(super) fn project(
         }
     }
     if ws {
-        out.0["transport"] = json!({"type":"ws"});
+        let kind = if upgrade { "httpupgrade" } else { "ws" };
+        out.0["transport"] = json!({"type":kind});
         if let Some(path) = get("ws-path") {
-            if !path.starts_with('/') || !valid_label(path) {
+            if !path.starts_with('/')
+                || !valid_label(path)
+                || (upgrade && !http_upgrade::valid_path(path))
+            {
                 return Err(ModelError::Unsupported);
             }
             out.0["transport"]["path"] = path.into();
@@ -178,6 +187,10 @@ pub(super) fn project(
             let mut seen = std::collections::HashSet::new();
             for header in headers.split('|') {
                 let (key, value) = header.split_once(':').ok_or(ModelError::Unsupported)?;
+                if upgrade {
+                    http_upgrade::insert_header(&mut out.0["transport"], key, value)?;
+                    continue;
+                }
                 if !valid_label(value)
                     || !seen.insert(key.to_ascii_lowercase())
                     || !header_name(key)
@@ -191,6 +204,10 @@ pub(super) fn project(
                 };
                 out.0["transport"]["headers"][key] = value.into();
             }
+        }
+        if upgrade && out.0["transport"].get("host").is_none() {
+            out.0["transport"]["host"] =
+                http_upgrade::authority(sni.unwrap_or(node.server()), None).into();
         }
     } else if grpc {
         out.0["transport"] = json!({"type":"grpc"});
