@@ -51,7 +51,7 @@ regex = "1.13"
 fancy-regex = "0.20.2"
 once_cell = "1.21"
 walkdir = "2.5.1"
-psl = "2.1.261"
+psl = "2.1.263"
 percent-encoding = "2.3"
 chrono = "0.4"
 md5 = "0.8"
@@ -67,7 +67,7 @@ zeroize = { version = "1.9", optional = true, features = ["derive"] }
 url = { version = "2.5", optional = true }
 base64 = "0.23.1"
 serde-saphyr = { version = "2.2", optional = true, default-features = false, features = ["serialize", "deserialize"] }
-hickory-proto = { version = "0.26.3", optional = true, default-features = false, features = ["std"] }
+hickory-proto = { version = "0.26.4", optional = true, default-features = false, features = ["std"] }
 ipnet = "2.12.2"
 # Temporary security hold: age 0.12 pulls in the P-256 path affected by RUSTSEC-2026-0387.
 age = { version = "=0.11.5", optional = true, default-features = false, features = ["armor"] }
@@ -79,7 +79,7 @@ libc = { version = "0.2", optional = true }
 [target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies]
 # Pathfinder's ARM backend uses LLVM intrinsics that break on current nightlies.
 # https://github.com/rust-lang/rust/issues/165959
-pathfinder_simd = { version = "0.5.6", optional = true, features = ["pf-no-simd"] }
+pathfinder_simd = { version = "0.5.7", optional = true, features = ["pf-no-simd"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 sys-locale = "0.3.2"
