@@ -290,7 +290,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let name = format!("profile-choice-{}-{id}.yaml", std::process::id());
-        let path = std::env::temp_dir().join(&name);
+        let path = std::env::temp_dir().canonicalize().unwrap().join(&name);
         let single = "proxy-groups:\n  - {name: First, type: select, proxies: [DIRECT]}\n";
         std::fs::write(&path, single).unwrap();
         let first = Form::load(&path, Language::En).unwrap();
