@@ -1,10 +1,10 @@
-#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-25]
-#!desc=按用途分片(23片) + 应用内去广告(Port Reject=77, IP Rewrite=1193, URL Rewrite=546, Map Local=1245, Script=272, Body Rewrite=90, MITM=765); 索引 rulesets/AdBlock/catalog.json
+#!name=🚫 Universal Ad-Blocking Rules (PROMAX) - [2026-11-28]
+#!desc=按用途分片(25片) + 应用内去广告(Port Reject=77, IP Rewrite=1193, URL Rewrite=546, Map Local=1245, Script=272, Body Rewrite=90, MITM=765); 索引 rulesets/AdBlock/catalog.json
 #!author=ScriptHub-Automated
 #!icon=https://cdn.jsdelivr.net/gh/luestr/IconResource@main/Other_icon/120px/KeLee.png
 #!category=『 🔝 Head Expanse › 首端扩域 』
 #!tag=AdBlock, Firewall, Dependency, HTTPDNS, Script
-#!date=2026-11-25 22:38:04
+#!date=2026-11-28 10:51:37
 #!requirement=CORE_VERSION>=6010000
 # app2smile/rules + AdGuard CNAME + Steven Black original hosts: MIT; notices: rulesets/Sources/licenses/README.md
 
@@ -1249,6 +1249,8 @@ RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlo
 # ── 威胁情报·TIF · HaGeZi TIF medium 威胁情报 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_01.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_02.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_03.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
+RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel_TIF_04.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # ── 威胁情报·补充 · HaGeZi / skk 其它威胁与钓鱼域名集 ──
 RULE-SET,https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets/AdBlock/AdBlock_ThreatIntel.list,REJECT,extended-matching,pre-matching,update-interval=86400,no-resolve
 # Merged REJECT complex rules (209)
