@@ -7,9 +7,9 @@ use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde_json::Value;
 use zeroize::{Zeroize, Zeroizing};
 
-use super::{RelayConfig, input, model};
+use super::{RelayConfig, export, input, model};
 use model::pipeline::{self, Operation, Step};
-use model::properties::Setting;
+use model::properties::{EcnMode, Setting};
 
 const MAX_ENCODED: usize = 8 * 1024 * 1024;
 const MAX_JSON: usize = 4 * 1024 * 1024;
@@ -91,12 +91,15 @@ fn name(value: &Value) -> Option<Zeroizing<String>> {
 
 pub(super) fn valid_node_content(value: &str) -> bool {
     model::Subscription::parse(value).is_ok_and(|sub| {
-        !sub.nodes().is_empty()
-            && sub.validate_export_dependencies().is_ok()
-            && sub
-                .nodes()
-                .iter()
-                .all(|node| node.export_sing_box().is_ok())
+        if sub.nodes().is_empty() || sub.validate_export_dependencies().is_err() {
+            return false;
+        }
+        // A local backup can contain Surge-only settings. Require a complete,
+        // validated export in a supported target before accepting its content.
+        sub.nodes()
+            .iter()
+            .all(|node| node.export_sing_box().is_ok())
+            || export::export_parsed(&sub, value, export::OutputFormat::Surge).is_ok()
     })
 }
 
@@ -320,6 +323,11 @@ fn quick_settings(item: &Value) -> Option<Vec<Operation>> {
             },
             ("tfo", "ENABLED" | "DISABLED") => Setting::TcpFastOpen {
                 enabled: mode == "ENABLED",
+            },
+            ("ecn", "ENABLED") => Setting::SurgeEcn { mode: EcnMode::On },
+            ("ecn", "DISABLED") => Setting::SurgeEcn { mode: EcnMode::Off },
+            ("ecn", mode @ ("auto" | "on" | "off")) => Setting::SurgeEcn {
+                mode: EcnMode::parse(mode).ok()?,
             },
             ("scert", "DISABLED") => Setting::VerifyTls,
             // A partially migrated operator could bypass a filter or weaken TLS.
@@ -1004,6 +1012,55 @@ mod tests {
         assert_eq!(result.retained, [0, 1]);
         for setting in ["udp-relay=true", "tfo=false", "skip-cert-verify=false"] {
             assert!(result.content.contains(setting), "missing {setting}");
+        }
+    }
+
+    #[test]
+    fn ecn_backup_modes_reach_surge_export_and_keep_unedited_values() {
+        for (saved, expected) in [
+            ("DEFAULT", "off"),
+            ("auto", "auto"),
+            ("on", "on"),
+            ("off", "off"),
+            ("ENABLED", "on"),
+            ("DISABLED", "off"),
+        ] {
+            let backup = serde_json::json!({"subs":[{"name":"Local","source":"local","content":"TCP = socks5, tcp.example.invalid, 1080, ecn=off\nQUIC = hysteria2, quic.example.invalid, 443, password=fixture, ecn=off",
+                "process":[{"type":"Quick Setting Operator","args":{"ecn":saved}}]}]});
+            let report = import(&serde_json::to_vec(&backup).unwrap()).unwrap();
+            assert_eq!(report.unsupported_count, 0);
+            let config = report.select_item(0, false).unwrap();
+            let source =
+                model::Subscription::parse(config.local_content.as_ref().unwrap()).unwrap();
+            let result = source
+                .render_processed(
+                    &[model::Health::Unknown; 2],
+                    &model::EnhanceOptions {
+                        rename: false,
+                        sort: false,
+                    },
+                    &config.processing,
+                )
+                .unwrap();
+            let output = crate::relay::export::export_subscription(
+                &result.content,
+                crate::relay::export::OutputFormat::Surge,
+            )
+            .unwrap();
+            assert_eq!(
+                output.matches(&format!("ecn={expected}")).count(),
+                2,
+                "{saved}"
+            );
+        }
+        let invalid = serde_json::json!({
+            "type": "Quick Setting Operator", "args": {"tfo": "ENABLED", "ecn": "invalid"}
+        });
+        assert!(quick_settings(&invalid).is_none());
+        for options in ["ecn=unknown", "ecn=on, skip-cert-verify=true", "tos=256"] {
+            let input =
+                format!("Test = trojan, tls.example.invalid, 443, password=fixture, {options}");
+            assert!(!valid_node_content(&input));
         }
     }
 

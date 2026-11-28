@@ -12,9 +12,47 @@ pub enum Setting {
     Udp { enabled: bool },
     UdpOverTcp { enabled: bool },
     TcpFastOpen { enabled: bool },
+    SurgeEcn { mode: EcnMode },
     VerifyTls,
     ServerName { value: String },
     Alpn { values: Vec<String> },
+}
+
+/// Surge's per-policy explicit congestion notification setting.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Zeroize)]
+#[serde(rename_all = "lowercase")]
+pub enum EcnMode {
+    Auto,
+    On,
+    Off,
+}
+
+impl EcnMode {
+    pub(in crate::relay) fn parse(value: &str) -> Result<Self, ModelError> {
+        match value {
+            "auto" => Ok(Self::Auto),
+            "on" | "true" => Ok(Self::On),
+            "off" | "false" => Ok(Self::Off),
+            _ => Err(ModelError::Unsupported),
+        }
+    }
+
+    pub(in crate::relay) fn from_value(value: &Value) -> Result<Self, ModelError> {
+        match value {
+            Value::Bool(true) => Ok(Self::On),
+            Value::Bool(false) => Ok(Self::Off),
+            Value::String(value) => Self::parse(value),
+            _ => Err(ModelError::Unsupported),
+        }
+    }
+
+    pub(in crate::relay) fn as_str(self) -> &'static str {
+        match self {
+            Self::Auto => "auto",
+            Self::On => "on",
+            Self::Off => "off",
+        }
+    }
 }
 
 #[derive(Clone, Default, PartialEq, Eq, Serialize, Zeroize, ZeroizeOnDrop)]
@@ -37,6 +75,7 @@ fn kind(setting: &Setting) -> u8 {
         Setting::Udp { .. } => 0,
         Setting::UdpOverTcp { .. } => 7,
         Setting::TcpFastOpen { .. } => 1,
+        Setting::SurgeEcn { .. } => 8,
         Setting::VerifyTls => 2,
         Setting::ServerName { .. } => 3,
         Setting::Alpn { .. } => 4,
@@ -654,6 +693,12 @@ pub(super) fn apply_json(
                     value["udp_over_tcp"] = json!({"enabled": enabled});
                 }
             }
+            Setting::SurgeEcn { mode } if matches!(node.source, NodeSource::SubStore(_)) => {
+                if let Some(existing) = value.get("ecn") {
+                    EcnMode::from_value(existing)?;
+                }
+                value["ecn"] = mode.as_str().into();
+            }
             Setting::TcpFastOpen { enabled } if native => {
                 if value.get("tcp_fast_open").is_some_and(|v| !v.is_boolean()) {
                     return Err(ModelError::Unsupported);
@@ -743,10 +788,18 @@ pub(super) fn surge_edits(
     let NodeSource::Surge(source) = &node.source else {
         return Err(ModelError::Unsupported);
     };
-    if !matches!(
+    let ecn_only = mutation.address.is_none()
+        && mutation.port.is_none()
+        && !mutation.settings.is_empty()
+        && mutation
+            .settings
+            .iter()
+            .all(|setting| matches!(setting, Setting::SurgeEcn { .. }));
+    if !(matches!(
         node.protocol(),
         "socks5" | "http" | "https" | "ss" | "trojan" | "anytls" | "vmess"
-    ) || uncertain_identity(source).iter().any(Option::is_some)
+    ) || (ecn_only && matches!(node.protocol(), "vless" | "hysteria2")))
+        || uncertain_identity(source).iter().any(Option::is_some)
     {
         return Err(ModelError::Unsupported);
     }
@@ -801,7 +854,7 @@ pub(super) fn surge_edits(
     }
     let mut additions = Vec::<(String, Zeroizing<String>)>::new();
     let mut set = |key: &str, value: String| -> Result<(), ModelError> {
-        let encoded = if matches!(key, "udp-relay" | "tfo" | "skip-cert-verify") {
+        let encoded = if matches!(key, "udp-relay" | "tfo" | "skip-cert-verify" | "ecn") {
             Zeroizing::new(value)
         } else {
             quote_surge(&value)?
@@ -830,6 +883,12 @@ pub(super) fn surge_edits(
         match setting {
             Setting::Udp { enabled } => set("udp-relay", enabled.to_string())?,
             Setting::TcpFastOpen { enabled } => set("tfo", enabled.to_string())?,
+            Setting::SurgeEcn { mode } => {
+                if let Some(existing) = field("ecn") {
+                    EcnMode::parse(&existing.value)?;
+                }
+                set("ecn", mode.as_str().to_owned())?;
+            }
             Setting::VerifyTls if tls => set("skip-cert-verify", "false".into())?,
             Setting::ServerName { value } if tls => set("sni", value.clone())?,
             Setting::Alpn { values } if tls => set("alpn", values.join(","))?,

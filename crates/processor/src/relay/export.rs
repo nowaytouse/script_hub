@@ -53,15 +53,23 @@ pub fn export_subscription(
     format: OutputFormat,
 ) -> Result<Zeroizing<String>, RelayError> {
     let subscription = Subscription::parse(content).map_err(RelayError::Model)?;
+    export_parsed(&subscription, content, format)
+}
+
+pub(super) fn export_parsed(
+    subscription: &Subscription,
+    content: &str,
+    format: OutputFormat,
+) -> Result<Zeroizing<String>, RelayError> {
     subscription
         .validate_export_dependencies()
         .map_err(RelayError::Model)?;
     match format {
         OutputFormat::Surge if !subscription.is_surge_policy_list() => {
-            return surge(&subscription);
+            return surge(subscription);
         }
         OutputFormat::Mihomo if !subscription.is_mihomo_provider() => {
-            return mihomo(&subscription);
+            return mihomo(subscription);
         }
         OutputFormat::Surge => {
             for (index, node) in subscription.nodes().iter().enumerate() {
@@ -72,7 +80,7 @@ pub fn export_subscription(
                     })?;
             }
         }
-        OutputFormat::SingBox => return sing_box(&subscription),
+        OutputFormat::SingBox => return sing_box(subscription),
         _ => {}
     }
     Ok(Zeroizing::new(content.to_owned()))
@@ -131,6 +139,8 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         "server_port",
         "tcp_fast_open",
         "detour",
+        "ecn",
+        "tos",
     ];
     let object = source.as_object().ok_or(ModelError::Unsupported)?;
     let field = |key: &str| {
@@ -159,7 +169,7 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         {
             ("ss", &["method", "password", "network"])
         }
-        kind @ ("trojan" | "anytls") => (kind, &["password", "tls"]),
+        kind @ ("trojan" | "anytls" | "hysteria2") => (kind, &["password", "tls"]),
         "vless" => (
             "vless",
             &["uuid", "flow", "packet_encoding", "tls", "transport"],
@@ -201,6 +211,17 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
         };
         write!(row, ", udp-relay={udp}").map_err(|_| ModelError::Render)?;
     }
+    if let Some(tos) = object.get("tos") {
+        let byte = tos
+            .as_u64()
+            .and_then(|n| u8::try_from(n).ok())
+            .ok_or(ModelError::Unsupported)?;
+        write!(row, ", tos={byte}").map_err(|_| ModelError::Render)?;
+    }
+    if let Some(ecn) = object.get("ecn") {
+        let ecn = super::model::properties::EcnMode::from_value(ecn)?;
+        write!(row, ", ecn={}", ecn.as_str()).map_err(|_| ModelError::Render)?;
+    }
     if let Some(tfo) = object.get("tcp_fast_open") {
         let tfo = tfo.as_bool().ok_or(ModelError::Unsupported)?;
         write!(row, ", tfo={tfo}").map_err(|_| ModelError::Render)?;
@@ -226,7 +247,7 @@ fn surge_node(source: &Value) -> Result<Zeroizing<String>, ModelError> {
             write!(row, ", {key}={}", value.as_str()).map_err(|_| ModelError::Render)?;
         }
     }
-    if matches!(kind, "trojan" | "anytls") {
+    if matches!(kind, "trojan" | "anytls" | "hysteria2") {
         let tls = source["tls"].as_object().ok_or(ModelError::Unsupported)?;
         if source["tls"]["enabled"] != true
             || tls
@@ -533,6 +554,78 @@ mod tests {
             parsed.nodes()[1].to_probe_sing_box(false),
             Err(ModelError::Unsupported)
         ));
+    }
+
+    #[test]
+    fn surge_policy_switches_and_tos_survive_validated_exports() {
+        let direct = "Entry = socks5, entry.example.invalid, 1080, ecn=true, tos=0X2e\n";
+        for (input, canonical) in [
+            (json!("auto"), "auto"),
+            (json!("on"), "on"),
+            (json!("off"), "off"),
+            (json!(true), "on"),
+            (json!(false), "off"),
+        ] {
+            let substore = json!([
+                {"type":"socks5","name":"Entry","server":"entry.example.invalid","port":1080},
+                {"type":"hysteria2","name":"Exit","server":"exit.example.invalid","port":443,"password":"fixture","sni":"tls.example.invalid","underlying-proxy":"Entry","ecn":input,"tos":"0x2e"}
+            ]).to_string();
+            let output = export_subscription(&substore, OutputFormat::Surge).unwrap();
+            let exit = output.lines().nth(1).unwrap();
+            for option in [
+                format!("ecn={canonical}"),
+                "tos=46".into(),
+                "underlying-proxy=\"Entry\"".into(),
+                "sni=tls.example.invalid".into(),
+            ] {
+                assert!(exit.contains(&option), "missing {option}");
+            }
+            assert_eq!(
+                export_subscription(&output, OutputFormat::Surge)
+                    .unwrap()
+                    .as_str(),
+                output.as_str()
+            );
+            for target in [OutputFormat::Mihomo, OutputFormat::SingBox] {
+                assert!(matches!(
+                    export_subscription(&substore, target),
+                    Err(RelayError::ExportNode { index: 2, .. })
+                ));
+            }
+        }
+        assert_eq!(
+            export_subscription(direct, OutputFormat::Surge)
+                .unwrap()
+                .as_str(),
+            direct
+        );
+    }
+
+    #[test]
+    fn invalid_policy_values_and_insecure_tls_fail_the_whole_surge_export() {
+        for bad in [
+            "ecn=unknown",
+            "tos=-1",
+            "tos=+1",
+            "tos=0x100",
+            "tos=256",
+            "ecn=on, skip-cert-verify=true",
+        ] {
+            let source = format!(
+                "First = socks5, first.example.invalid, 1080\nSecond = trojan, second.example.invalid, 443, password=fixture, {bad}\n"
+            );
+            assert!(
+                matches!(
+                    export_subscription(&source, OutputFormat::Surge),
+                    Err(RelayError::ExportNode { index: 2, .. })
+                ),
+                "{bad}"
+            );
+        }
+        for tos in ["0", "255", "0xff"] {
+            let input = format!("Test = socks5, fixture.example.invalid, 1080, tos={tos}\n");
+            assert!(export_subscription(&input, OutputFormat::Surge).is_ok());
+        }
     }
 
     #[test]

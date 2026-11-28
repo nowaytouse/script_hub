@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Set Surge ECN, TCP Fast Open and UDP relay from the desktop processing form. Migrate old ECN toggles and current Sub-Store quick settings. Validated Surge exports preserve ECN and the IP ToS byte on supported policies, including single-port Hysteria 2. Other target formats report unrepresentable policy settings during their compatibility check.
+
 - Build a private FlClash or Mihomo profile from a local YAML template and a reviewed subscription or collection. Select a proxy group in the desktop relay or use the offline relay CLI. Preserve supported VLESS HTTPUpgrade settings, including distinct HTTP Host and TLS server names, across Surge, Mihomo and sing-box.
 
 - Convert ipgeo Community releases into separate Country and ASN databases, verified before publication, and derive the sing-box country rules from the same data.

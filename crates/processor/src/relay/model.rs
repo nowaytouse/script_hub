@@ -280,37 +280,87 @@ impl Node {
         };
         // The common line grammar alone cannot distinguish Shadowrocket-only options
         // or enforce the same TLS policy as a converted Surge export.
-        if self.protocol() == "vless" {
-            return self.export_surge_projection().map(drop);
+        self.surge_policy_projection(source).map(drop)
+    }
+
+    /// Preserve validated Surge policy parameters alongside the projected transport.
+    fn surge_policy_projection(&self, source: &SurgeNode) -> Result<PrivateJson, ModelError> {
+        let mut fields = surge_fields(source)?;
+        let ecn = fields
+            .remove("ecn")
+            .map(properties::EcnMode::parse)
+            .transpose()?;
+        let tos = fields.remove("tos").map(surge_tos).transpose()?;
+        let mut value = PrivateJson(self.project_surge_fields(&fields, false, true)?);
+        if let Some(ecn) = ecn {
+            value.0["ecn"] = ecn.as_str().into();
         }
-        self.project_surge(source, false).map(PrivateJson).map(drop)
+        if let Some(tos) = tos {
+            value.0["tos"] = tos.into();
+        }
+        if let Some(dependency) = &self.dependency {
+            value.0["detour"] = dependency.as_str().into();
+        }
+        if matches!(self.protocol(), "socks5" | "ss")
+            && !fields
+                .get("udp-relay")
+                .map(|v| parse_bool(v))
+                .transpose()?
+                .unwrap_or(false)
+        {
+            value.0["network"] = "tcp".into();
+        }
+        Ok(value)
     }
 
     pub(super) fn export_surge_projection(&self) -> Result<PrivateJson, ModelError> {
-        if self.protocol() == "vless" {
-            match &self.source {
-                NodeSource::Surge(source) => {
-                    let mut value = PrivateJson(surge_vless::project(
-                        self,
-                        &surge_fields(source)?,
-                        false,
-                        true,
-                    )?);
-                    if let Some(dependency) = &self.dependency {
-                        value.0["detour"] = dependency.as_str().into();
+        match &self.source {
+            NodeSource::Surge(source) => self.surge_policy_projection(source),
+            NodeSource::SubStore(source)
+                if ["ecn", "tos"].iter().any(|key| source.0.get(key).is_some()) =>
+            {
+                let ecn = source
+                    .0
+                    .get("ecn")
+                    .map(properties::EcnMode::from_value)
+                    .transpose()?;
+                let tos = source
+                    .0
+                    .get("tos")
+                    .map(|v| match v {
+                        Value::String(text) => surge_tos(text),
+                        _ => v
+                            .as_u64()
+                            .and_then(|n| u8::try_from(n).ok())
+                            .ok_or(ModelError::Unsupported),
+                    })
+                    .transpose()?;
+                let mut data = PrivateJson(source.0.clone());
+                let fields = data.0.as_object_mut().ok_or(ModelError::Unsupported)?;
+                fields.remove("ecn");
+                fields.remove("tos");
+                if self.dependency.is_some() {
+                    for key in ["underlying-proxy", "dialer-proxy", "detour"] {
+                        fields.remove(key);
                     }
-                    return Ok(value);
                 }
-                NodeSource::Uri(source) => {
-                    if self.dependency.is_some() {
-                        return Err(ModelError::Unsupported);
-                    }
-                    return source.project_for_surge().map(PrivateJson);
+                let mut projected = PrivateJson(self.project_substore(&data.0, false)?);
+                if let Some(ecn) = ecn {
+                    projected.0["ecn"] = ecn.as_str().into();
                 }
-                _ => {}
+                if let Some(tos) = tos {
+                    projected.0["tos"] = tos.into();
+                }
+                if let Some(target) = &self.dependency {
+                    projected.0["detour"] = target.as_str().into();
+                }
+                Ok(projected)
             }
+            NodeSource::Uri(source) if self.protocol() == "vless" && self.dependency.is_none() => {
+                source.project_for_surge().map(PrivateJson)
+            }
+            _ => self.export_sing_box(),
         }
-        self.export_sing_box()
     }
 
     pub fn to_probe_sing_box(&self, compatibility: bool) -> Result<(Value, bool), ModelError> {
@@ -351,9 +401,17 @@ impl Node {
     }
 
     fn project_surge(&self, source: &SurgeNode, compatibility: bool) -> Result<Value, ModelError> {
-        let fields = surge_fields(source)?;
+        self.project_surge_fields(&surge_fields(source)?, compatibility, false)
+    }
+
+    fn project_surge_fields(
+        &self,
+        fields: &HashMap<&str, &str>,
+        compatibility: bool,
+        surge_output: bool,
+    ) -> Result<Value, ModelError> {
         if self.protocol() == "vless" {
-            return surge_vless::project(self, &fields, compatibility, false);
+            return surge_vless::project(self, fields, compatibility, surge_output);
         }
         let boolean = |key: &str| -> Result<Option<bool>, ModelError> {
             fields.get(key).map(|value| parse_bool(value)).transpose()
@@ -364,7 +422,7 @@ impl Node {
         }
         let (protocol, required_tls, protocol_fields): (&str, bool, &[&str]) = match self.protocol()
         {
-            "anytls" => ("anytls", true, &["password"]),
+            kind @ ("anytls" | "hysteria2") => (kind, true, &["password"]),
             "trojan" => ("trojan", true, &["password"]),
             "ss" => ("shadowsocks", false, &["password", "encrypt-method"]),
             "socks5" => ("socks", false, &["username", "password"]),
@@ -418,10 +476,10 @@ impl Node {
                 outbound["version"] = "5".into();
             }
             "shadowsocks" => {
-                outbound["method"] = required_field(&fields, "encrypt-method")?.into();
+                outbound["method"] = required_field(fields, "encrypt-method")?.into();
             }
             "vmess" => {
-                outbound["uuid"] = required_field(&fields, "username")?.into();
+                outbound["uuid"] = required_field(fields, "username")?.into();
                 outbound["security"] = fields
                     .get("encrypt-method")
                     .copied()
@@ -436,8 +494,8 @@ impl Node {
             }
             _ => {}
         }
-        if matches!(protocol, "anytls" | "trojan" | "shadowsocks") {
-            outbound["password"] = required_field(&fields, "password")?.into();
+        if matches!(protocol, "anytls" | "trojan" | "shadowsocks" | "hysteria2") {
+            outbound["password"] = required_field(fields, "password")?.into();
         } else if protocol != "vmess" {
             for key in ["username", "password"] {
                 if let Some(value) = fields.get(key) {
@@ -1295,6 +1353,26 @@ fn uncertain_token(source: &SurgeNode, range: Range<usize>) -> Option<&str> {
         }
     }
     None
+}
+
+// Surge accepts a decimal byte or a 0x-prefixed hexadecimal byte.
+fn surge_tos(text: &str) -> Result<u8, ModelError> {
+    let (digits, radix) = text
+        .strip_prefix("0x")
+        .or_else(|| text.strip_prefix("0X"))
+        .map_or((text, 10), |digits| (digits, 16));
+    if digits.is_empty()
+        || !digits.bytes().all(|b| {
+            if radix == 16 {
+                b.is_ascii_hexdigit()
+            } else {
+                b.is_ascii_digit()
+            }
+        })
+    {
+        return Err(ModelError::Unsupported);
+    }
+    u8::from_str_radix(digits, radix).map_err(|_| ModelError::Unsupported)
 }
 
 fn surge_fields(source: &SurgeNode) -> Result<HashMap<&str, &str>, ModelError> {

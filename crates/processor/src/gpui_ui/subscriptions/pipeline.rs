@@ -8,6 +8,7 @@ use crate::desktop::operations::{
 use crate::relay::{
     model::{
         pipeline::{self, Operation, RegexSortUnmatched, SortKey, Step},
+        properties::{EcnMode, Setting},
         script::{SyntaxError, check_syntax},
     },
     plan,
@@ -56,6 +57,9 @@ impl SyntaxFeedback {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Forms {
+    Udp(bool),
+    Tfo(bool),
+    SurgeEcn(EcnMode),
     NameFilter {
         keep: bool,
     },
@@ -92,6 +96,16 @@ impl Forms {
     fn fields(operation: &Operation) -> Option<(Self, String, String)> {
         let empty = String::new;
         Some(match operation {
+            Operation::SetProperty { setting } => (
+                match setting {
+                    Setting::Udp { enabled } => Self::Udp(*enabled),
+                    Setting::TcpFastOpen { enabled } => Self::Tfo(*enabled),
+                    Setting::SurgeEcn { mode } => Self::SurgeEcn(*mode),
+                    _ => return None,
+                },
+                empty(),
+                empty(),
+            ),
             Operation::NameFilter { pattern, keep } => {
                 (Self::NameFilter { keep: *keep }, pattern.clone(), empty())
             }
@@ -177,6 +191,15 @@ impl Forms {
     fn operation(self, primary: &str, secondary: &str) -> Option<Operation> {
         let entries = || primary.lines().map(str::to_owned).collect();
         Some(match self {
+            Self::Udp(enabled) => Operation::SetProperty {
+                setting: Setting::Udp { enabled },
+            },
+            Self::Tfo(enabled) => Operation::SetProperty {
+                setting: Setting::TcpFastOpen { enabled },
+            },
+            Self::SurgeEcn(mode) => Operation::SetProperty {
+                setting: Setting::SurgeEcn { mode },
+            },
             Self::NameFilter { keep } => Operation::NameFilter {
                 pattern: primary.into(),
                 keep,
@@ -735,6 +758,55 @@ impl PipelineEditor {
                     palette,
                     cx,
                 )),
+            Forms::Udp(_) | Forms::Tfo(_) | Forms::SurgeEcn(_) => {
+                let on = self.tr("On", "开启", "オン");
+                let off = self.tr("Off", "关闭", "オフ");
+                let tfo = !matches!(form, Forms::Tfo(false));
+                let udp = !matches!(form, Forms::Udp(false));
+                let ecn = match form {
+                    Forms::SurgeEcn(mode) => mode,
+                    _ => EcnMode::Auto,
+                };
+                let fields = fields.child(self.form_choices(
+                    "pipeline-property",
+                    form,
+                    [
+                        (Forms::Tfo(tfo), "TCP Fast Open"),
+                        (Forms::Udp(udp), self.tr("UDP relay", "UDP 转发", "UDP リレー")),
+                        (Forms::SurgeEcn(ecn), "Surge ECN"),
+                    ],
+                    palette,
+                    cx,
+                ));
+                if matches!(form, Forms::SurgeEcn(_)) {
+                    fields
+                        .child(self.form_choices(
+                            "pipeline-ecn",
+                            form,
+                            [
+                                (Forms::SurgeEcn(EcnMode::Auto), self.tr("Auto", "自动", "自動")),
+                                (Forms::SurgeEcn(EcnMode::On), on),
+                                (Forms::SurgeEcn(EcnMode::Off), off),
+                            ],
+                            palette,
+                            cx,
+                        ))
+                        .child(help(self.tr(
+                            "Applies to supported Surge and Sub-Store nodes. Disable this step to keep existing ECN settings.",
+                            "适用于支持的 Surge 和 Sub-Store 节点。停用此步骤可保留原有 ECN 设置。",
+                            "対応する Surge と Sub-Store のノードに適用します。元の ECN 設定を保持するには、このステップを無効にします。",
+                        )))
+                } else {
+                    let setting = if matches!(form, Forms::Tfo(_)) { Forms::Tfo } else { Forms::Udp };
+                    fields.child(self.form_choices(
+                        "pipeline-property-value",
+                        form,
+                        [(setting(true), on), (setting(false), off)],
+                        palette,
+                        cx,
+                    ))
+                }
+            }
             Forms::Limit => fields.child(primary(count)),
             Forms::Slice => fields
                 .child(primary(self.tr("Nodes to skip", "开头跳过的节点数", "先頭から飛ばすノード数")))
@@ -770,6 +842,39 @@ impl PipelineEditor {
         )
     }
 
+    fn step_title(&self, operation: &Operation) -> String {
+        let toggle = |enabled| {
+            if enabled {
+                self.tr("On", "开启", "オン")
+            } else {
+                self.tr("Off", "关闭", "オフ")
+            }
+        };
+        let (property, value) = match operation {
+            Operation::SetProperty {
+                setting: Setting::SurgeEcn { mode },
+            } => (
+                "Surge ECN",
+                match mode {
+                    EcnMode::Auto => self.tr("Auto", "自动", "自動"),
+                    EcnMode::On => toggle(true),
+                    EcnMode::Off => toggle(false),
+                },
+            ),
+            Operation::SetProperty {
+                setting: Setting::TcpFastOpen { enabled },
+            } => ("TCP Fast Open", toggle(*enabled)),
+            Operation::SetProperty {
+                setting: Setting::Udp { enabled },
+            } => (
+                self.tr("UDP relay", "UDP 转发", "UDP リレー"),
+                toggle(*enabled),
+            ),
+            _ => return text(self.language, operation_label(operation)).to_owned(),
+        };
+        format!("{property} · {value}")
+    }
+
     fn step_row(&self, index: usize, step: &Step, palette: Palette, cx: &Context<Self>) -> Div {
         let id = step.id;
         let status = if step.enabled {
@@ -795,7 +900,7 @@ impl PipelineEditor {
                             .child(format!(
                                 "{}. {}",
                                 index + 1,
-                                text(self.language, operation_label(&step.operation)),
+                                self.step_title(&step.operation),
                             )),
                     )
                     .child(div().text_sm().text_color(palette.muted).child(status)),
@@ -1160,6 +1265,20 @@ mod tests {
     #[test]
     fn structured_fields_preserve_operations() {
         for operation in [
+            Operation::SetProperty {
+                setting: Setting::SurgeEcn {
+                    mode: EcnMode::Auto,
+                },
+            },
+            Operation::SetProperty {
+                setting: Setting::SurgeEcn { mode: EcnMode::Off },
+            },
+            Operation::SetProperty {
+                setting: Setting::Udp { enabled: false },
+            },
+            Operation::SetProperty {
+                setting: Setting::TcpFastOpen { enabled: true },
+            },
             Operation::ProtocolFilter {
                 protocols: vec!["ss".into(), "vless".into()],
                 keep: false,
