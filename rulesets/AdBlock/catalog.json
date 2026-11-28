@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-28 10:51:36",
+  "updated": "2026-11-28 21:12:36",
   "rules_per_shard_max": 100000,
   "modules": {
     "shadowrocket_promax_cdn": {
@@ -40,8 +40,8 @@
   "verified_rolling_feeds": {
     "ThreatIntel_TIF": {
       "source": "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/adblock/tif.medium.txt",
-      "version": "2026.1127.2309.11",
-      "declared_entries": 425458
+      "version": "2026.1128.0812.36",
+      "declared_entries": 419634
     }
   },
   "shards": [
@@ -111,7 +111,7 @@
       "label_zh": "通用广告",
       "purpose": "blackmatrix7 / ACL4SSR / geekdada / 广告联盟等通用域名",
       "shard_index": 4,
-      "rule_count": 62168,
+      "rule_count": 62286,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FAdvertising%5F04%2Elist"
     },
@@ -271,7 +271,7 @@
       "label_zh": "综合拦截·Ultimate",
       "purpose": "HaGeZi Multi ULTIMATE（广告、跟踪与安全混合源）",
       "shard_index": 2,
-      "rule_count": 57650,
+      "rule_count": 55533,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FUltimate%5F02%2Elist"
     },
@@ -311,7 +311,7 @@
       "label_zh": "威胁情报·TIF",
       "purpose": "HaGeZi TIF medium 威胁情报",
       "shard_index": 4,
-      "rule_count": 44828,
+      "rule_count": 41131,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%5FTIF%5F04%2Elist"
     },
@@ -321,7 +321,7 @@
       "label_zh": "威胁情报·补充",
       "purpose": "HaGeZi / skk 其它威胁与钓鱼域名集",
       "shard_index": 1,
-      "rule_count": 75088,
+      "rule_count": 76546,
       "cdn_url": "https://cdn.jsdelivr.net/gh/nowaytouse/script_hub@master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist",
       "github_url": "https://raw.githubusercontent.com/nowaytouse/script_hub/master/rulesets%2FAdBlock%2FAdBlock%5FThreatIntel%2Elist"
     }
